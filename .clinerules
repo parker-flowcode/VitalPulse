@@ -1,0 +1,19 @@
+# Reglas de Agente (Cline/AI) para VitalPulse
+
+## Entorno y Sistema Operativo
+- **Terminal:** El entorno de desarrollo es Windows y la terminal es PowerShell. 
+- **Restricción Estricta:** PROHIBIDO utilizar comandos de consola exclusivos de Unix/Linux (como `killall`, `rm -rf`, `export`, etc.). Adapta cualquier comando de terminal para que sea compatible y ejecutable en PowerShell.
+
+## Arquitectura del Proyecto
+- **Framework:** El proyecto utiliza estrictamente **Expo (SDK 54)**.
+- **Restricción Estricta:** PROHIBIDO usar comandos de React Native CLI puro (ej. `npx react-native run-android`). No intentes buscar, acceder, ni modificar carpetas nativas `/android` o `/ios`, ya que es un proyecto Expo gestionado. Los permisos nativos se configuran exclusivamente a través de los plugins en `app.json`.
+
+## Estándares de Diseño y UI/UX
+- **Exigencia Visual:** Aplica un estándar altísimo en la interfaz. Presta extrema atención a la alineación perfecta de iconos, consistencia de márgenes (padding/margin) y jerarquía visual.
+- **Estética:** Los assets y componentes deben lucir modernos, atléticos y limpios. Evita sombras excesivas, texturas plastificadas o brillos irreales que den un aspecto "metálico" o anticuado. 
+- **Gráficos:** Asegúrate de que los gráficos de `victory-native` se rendericen de forma clara, sin solapamiento de datos y respetando la paleta de colores.
+
+## Flujo de Trabajo y Buenas Prácticas
+- Analiza siempre el contexto y piensa paso a paso antes de modificar el código.
+- Vigila especialmente los memory leaks al desmontar componentes pesados como `vision-camera`.
+- No elimines ni modifiques archivos ajenos al requerimiento actual.

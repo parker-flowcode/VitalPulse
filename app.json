@@ -1,24 +1,59 @@
 {
   "expo": {
     "name": "VitalPulse",
-    "slug": "VitalPulse",
-    "version": "1.0.0",
+    "slug": "vitalpulse",
+    "version": "4.0.0",
+    "sdkVersion": "54.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "image": "./assets/splash.png",
+      "backgroundColor": "#1C2B2A",
+      "resizeMode": "contain"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "description": "Monitor cardiovascular personal. Mide tu pulso y estima tu presión arterial usando la cámara de tu móvil.",
+    "githubUrl": "https://github.com/PoleyDev/VitalPulse",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": false,
+      "bundleIdentifier": "com.vitalpulse.app",
+      "buildNumber": "1",
+      "infoPlist": {
+        "NSCameraUsageDescription": "VitalPulse necesita la cámara para medir tu pulso mediante fotopletismografía (PPG).",
+        "NSMotionUsageDescription": "VitalPulse usa el acelerómetro para detectar movimiento durante la medición.",
+        "NSPhotoLibraryAddUsageDescription": "VitalPulse puede guardar capturas de tus resultados."
+      }
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
-        "monochromeImage": "./assets/android-icon-monochrome.png"
-      }
+        "foregroundImage": "./assets/icon.png",
+        "backgroundColor": "#1C2B2A"
+      },
+      "package": "com.vitalpulse.app",
+      "versionCode": 4,
+      "permissions": [
+        "android.permission.CAMERA"
+      ]
     },
-    "web": {
-      "favicon": "./assets/favicon.png"
+    "plugins": [
+      "expo-dev-client",
+      [
+        "react-native-vision-camera",
+        {
+          "cameraPermissionText": "VitalPulse necesita la cámara para medir tu pulso.",
+          "enableMicrophonePermission": false
+        }
+      ],
+      "expo-file-system",
+      "expo-sharing"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "5728de1e-a6ed-4218-aff7-6db69db192fb"
+      }
     }
   }
 }
