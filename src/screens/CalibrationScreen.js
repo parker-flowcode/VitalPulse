@@ -26,13 +26,13 @@ export default function CalibrationScreen({ navigation, route }) {
     // Si disponemos de la medición original, incluimos sus datos para la calibración multi‑punto
     const extra = measurement
       ? {
-          morphology: measurement.morphology,
+          morphology: measurement.bp?.morphology || measurement.morphology,
           bpm: measurement.bpm,
           sdnn: measurement.sdnn,
         }
       : {};
     await addCalibrationPoint({ realSystolic: sys, realDiastolic: dia, ...extra });
-    Alert.alert('✅ Calibración guardada', 'El punto de calibración se ha añadido.');
+    Alert.alert('Calibración guardada', 'El punto de calibración se ha añadido.');
     navigation.goBack();
   };
 
@@ -40,6 +40,9 @@ export default function CalibrationScreen({ navigation, route }) {
     <SafeAreaView style={styles.safe}>
       <View style={styles.container}>
         <Text style={styles.title}>Calibración manual</Text>
+        <Text style={styles.subtitle}>
+          Introduce los valores de tu tensiómetro real para mejorar la precisión.
+        </Text>
         <Text style={styles.label}>Presión sistólica (mmHg)</Text>
         <TextInput
           style={styles.input}
@@ -47,7 +50,7 @@ export default function CalibrationScreen({ navigation, route }) {
           onChangeText={setSystolic}
           keyboardType="number-pad"
           placeholder="120"
-          placeholderTextColor="#4A6A67"
+          placeholderTextColor="#94A3B8"
         />
         <Text style={styles.label}>Presión diastólica (mmHg)</Text>
         <TextInput
@@ -56,13 +59,16 @@ export default function CalibrationScreen({ navigation, route }) {
           onChangeText={setDiastolic}
           keyboardType="number-pad"
           placeholder="80"
-          placeholderTextColor="#4A6A67"
+          placeholderTextColor="#94A3B8"
         />
         <TouchableOpacity style={styles.saveBtn} onPress={handleSave}>
           <Text style={styles.saveBtnText}>Guardar punto de calibración</Text>
         </TouchableOpacity>
         {calibration?.points?.length > 0 && (
-          <Text style={styles.info}>Puntos guardados: {calibration.points.length}</Text>
+          <View style={styles.infoCard}>
+            <Text style={styles.infoIcon}>📏</Text>
+            <Text style={styles.infoText}>Puntos guardados: {calibration.points.length}</Text>
+          </View>
         )}
       </View>
     </SafeAreaView>
@@ -70,27 +76,40 @@ export default function CalibrationScreen({ navigation, route }) {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#0D1918' },
+  safe: { flex: 1, backgroundColor: '#FFFFFF' },
   container: { padding: 24 },
-  title: { color: '#fff', fontSize: 24, fontWeight: '700', marginBottom: 16 },
-  label: { color: '#8BBAB5', fontSize: 14, marginBottom: 6 },
+  title: { color: '#1E293B', fontSize: 24, fontWeight: '700', marginBottom: 8 },
+  subtitle: { color: '#64748B', fontSize: 14, lineHeight: 20, marginBottom: 24 },
+  label: { color: '#2563EB', fontSize: 14, fontWeight: '600', marginBottom: 6 },
   input: {
-    backgroundColor: '#132220',
+    backgroundColor: '#F1F5F9',
     borderRadius: 12,
     padding: 14,
-    color: '#fff',
+    color: '#1E293B',
     fontSize: 16,
     borderWidth: 1,
-    borderColor: '#1A7F6E33',
+    borderColor: '#E2E8F0',
     marginBottom: 12,
   },
   saveBtn: {
-    backgroundColor: '#1A7F6E',
+    backgroundColor: '#2563EB',
     borderRadius: 12,
     padding: 14,
     alignItems: 'center',
     marginTop: 8,
   },
-  saveBtnText: { color: '#fff', fontSize: 15, fontWeight: '600' },
-  info: { color: '#8BBAB5', fontSize: 13, marginTop: 12, textAlign: 'center' },
+  saveBtnText: { color: '#FFFFFF', fontSize: 15, fontWeight: '600' },
+  infoCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#EFF6FF',
+    borderRadius: 10,
+    padding: 14,
+    marginTop: 16,
+    borderWidth: 1,
+    borderColor: '#DBEAFE',
+    gap: 10,
+  },
+  infoIcon: { fontSize: 18 },
+  infoText: { color: '#2563EB', fontSize: 13, fontWeight: '600' },
 });

@@ -128,19 +128,6 @@ const useHealthStore = create((set, get) => ({
     await removeItemWithChecksum(CALIBRATION_KEY);
   },
 
-  // ─── Obtener conteo de mediciones de hoy ──────────────────────────────────
-  getTodayMeasurementCount: () => {
-    const { history } = get();
-    const today = new Date().toDateString();
-    return history.filter((h) => {
-      try {
-        return new Date(h.timestamp).toDateString() === today;
-      } catch {
-        return false;
-      }
-    }).length;
-  },
-
   // ─── Mediciones ────────────────────────────────────────────────────────────
   addMeasurement: async (measurement) => {
     const entry = {
@@ -159,23 +146,31 @@ const useHealthStore = create((set, get) => ({
 
   // ─── Carga inicial ─────────────────────────────────────────────────────────
   loadAll: async () => {
-    try {
-    const [historyRaw, calRaw, profileRaw, onboardingRaw] = await Promise.all([
+    // 🔧 FIX BUG#5: Usar allSettled para que una clave corrupta no bloquee las demás
+    const results = await Promise.allSettled([
       getItemWithChecksum(STORAGE_KEY),
       getItemWithChecksum(CALIBRATION_KEY),
       getItemWithChecksum(PROFILE_KEY),
       getItemWithChecksum(ONBOARDING_KEY),
     ]);
 
-      const updates = {};
-      if (historyRaw)    updates.history        = JSON.parse(historyRaw);
-      if (calRaw)        updates.calibration     = JSON.parse(calRaw);
-      if (profileRaw)    updates.userProfile     = { ...get().userProfile, ...JSON.parse(profileRaw) };
-      if (onboardingRaw) updates.onboardingDone  = true;
-      set(updates);
-    } catch (e) {
-      console.warn('Error cargando datos:', e);
-    }
+    const [historyRaw, calRaw, profileRaw, onboardingRaw] = results.map(r =>
+      r.status === 'fulfilled' ? r.value : null
+    );
+
+    results.forEach((r, i) => {
+      if (r.status === 'rejected') {
+        const keys = [STORAGE_KEY, CALIBRATION_KEY, PROFILE_KEY, ONBOARDING_KEY];
+        console.warn(`Error cargando clave ${keys[i]}:`, r.reason);
+      }
+    });
+
+    const updates = {};
+    if (historyRaw)    updates.history        = JSON.parse(historyRaw);
+    if (calRaw)        updates.calibration     = JSON.parse(calRaw);
+    if (profileRaw)    updates.userProfile     = { ...get().userProfile, ...JSON.parse(profileRaw) };
+    if (onboardingRaw) updates.onboardingDone  = true;
+    set(updates);
   },
 
   updateSettings: (newSettings) =>

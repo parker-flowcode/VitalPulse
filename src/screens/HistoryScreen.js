@@ -1,18 +1,79 @@
-import React, { useCallback, useRef } from 'react';
+import React, { useCallback, useRef, useMemo, useState } from 'react';
 import {
-  View, Text, FlatList, TouchableOpacity, StyleSheet, Alert,
-  Animated, RefreshControl,
+  View, Text, SectionList, TouchableOpacity, StyleSheet, Alert,
+  Animated, RefreshControl, PanResponder, TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import useHealthStore from '../store/healthstore';
 import { classifyBPM, classifyBP } from '../utils/bpEstimator';
+import BannerAd from '../components/BannerAd';
+import { COLORS, SHADOWS, SPACING, RADIUS } from '../theme/designTokens';
 
 const SWIPE_THRESHOLD = -80;
 
+const SECTION_ORDER = ['Hoy', 'Ayer', 'Esta semana', 'Este mes', 'Anteriores'];
+
+function getDateGroup(timestamp) {
+  const date = new Date(timestamp);
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const dateStart = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const diffDays = Math.round((today - dateStart) / (1000 * 60 * 60 * 24));
+
+  if (diffDays === 0) return 'Hoy';
+  if (diffDays === 1) return 'Ayer';
+
+  const dayOfWeek = today.getDay();
+  const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+  const monday = new Date(today);
+  monday.setDate(monday.getDate() + mondayOffset);
+  if (dateStart >= monday) return 'Esta semana';
+
+  const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+  if (dateStart >= monthStart) return 'Este mes';
+
+  return 'Anteriores';
+}
+
 function SwipeableItem({ item, onDelete }) {
   const translateX = useRef(new Animated.Value(0)).current;
-  const panRef = useRef(null);
   const isSwipedOpen = useRef(false);
+
+  const panResponder = useMemo(() => PanResponder.create({
+    onStartShouldSetPanResponder: () => true,
+    onMoveShouldSetPanResponder: (_, gs) =>
+      Math.abs(gs.dx) > 10 && Math.abs(gs.dx) > Math.abs(gs.dy),
+    onPanResponderGrant: () => {},
+    onPanResponderMove: (_, gs) => {
+      const clamped = Math.max(-120, Math.min(0, gs.dx));
+      translateX.setValue(clamped);
+      isSwipedOpen.current = clamped < SWIPE_THRESHOLD;
+    },
+    onPanResponderRelease: () => {
+      if (isSwipedOpen.current) {
+        Animated.timing(translateX, {
+          toValue: -100,
+          duration: 200,
+          useNativeDriver: true,
+        }).start();
+      } else {
+        Animated.timing(translateX, {
+          toValue: 0,
+          duration: 200,
+          useNativeDriver: true,
+        }).start();
+        isSwipedOpen.current = false;
+      }
+    },
+    onPanResponderTerminate: () => {
+      Animated.timing(translateX, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true,
+      }).start();
+      isSwipedOpen.current = false;
+    },
+  }), [translateX]);
 
   const resetPosition = (animated = true) => {
     Animated.timing(translateX, {
@@ -25,8 +86,10 @@ function SwipeableItem({ item, onDelete }) {
 
   const handleDelete = () => {
     Alert.alert(
-      'Eliminar medición',
-      `¿Eliminar la medición de ${new Date(item.timestamp).toLocaleDateString('es-ES')}?`,
+      'Eliminar medicion',
+      'Eliminar la medicion de ' +
+        new Date(item.timestamp).toLocaleDateString('es-ES') +
+        '?',
       [
         { text: 'Cancelar', style: 'cancel', onPress: resetPosition },
         { text: 'Eliminar', style: 'destructive', onPress: () => onDelete(item.id) },
@@ -34,7 +97,6 @@ function SwipeableItem({ item, onDelete }) {
     );
   };
 
-  // BPM data
   const bpm = item.bpm || 0;
   const bpmClass = classifyBPM(bpm);
   const bpClass =
@@ -45,87 +107,117 @@ function SwipeableItem({ item, onDelete }) {
   let dateStr = '';
   try {
     dateStr = new Date(item.timestamp).toLocaleString('es-ES', {
-      day: '2-digit', month: 'short',
-      hour: '2-digit', minute: '2-digit',
+      day: '2-digit',
+      month: 'short',
+      hour: '2-digit',
+      minute: '2-digit',
     });
   } catch {
     dateStr = 'Fecha desconocida';
   }
 
-  const onTouchStart = (evt) => {
-    panRef.current = { startX: evt.nativeEvent.pageX, startY: evt.nativeEvent.pageY };
-  };
-
-  const onTouchMove = (evt) => {
-    if (!panRef.current) return;
-    const dx = evt.nativeEvent.pageX - panRef.current.startX;
-    const dy = evt.nativeEvent.pageY - panRef.current.startY;
-    // Only horizontal swipes
-    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 10) {
-      const clamped = Math.max(-120, Math.min(0, dx));
-      translateX.setValue(clamped);
-      isSwipedOpen.current = clamped < SWIPE_THRESHOLD;
-    }
-  };
-
-  const onTouchEnd = () => {
-    if (isSwipedOpen.current) {
-      Animated.timing(translateX, {
-        toValue: -100,
-        duration: 200,
-        useNativeDriver: true,
-      }).start();
-    } else {
-      resetPosition();
-    }
-    panRef.current = null;
-  };
+  const dotColor = bpmClass?.color || COLORS.textMuted;
+  const badgeBg = bpmClass?.color ? bpmClass.color + '18' : COLORS.border;
 
   return (
     <View style={styles.swipeContainer}>
-      {/* Delete button behind */}
-      <TouchableOpacity style={styles.deleteAction} onPress={handleDelete}>
-        <Text style={styles.deleteActionText}>🗑️</Text>
+      <TouchableOpacity
+        style={styles.deleteAction}
+        onPress={handleDelete}
+        activeOpacity={0.8}
+      >
+        <Text style={styles.deleteActionIcon}>🗑</Text>
         <Text style={styles.deleteActionLabel}>Eliminar</Text>
       </TouchableOpacity>
 
-      {/* Foreground item */}
       <Animated.View
-        style={[styles.item, { transform: [{ translateX }] }]}
-        onTouchStart={onTouchStart}
-        onTouchMove={onTouchMove}
-        onTouchEnd={onTouchEnd}
+        style={[
+          styles.item,
+          SHADOWS.card,
+          { transform: [{ translateX }] },
+        ]}
+        {...panResponder.panHandlers}
       >
-        <View style={styles.itemLeft}>
-          <Text style={styles.itemDate}>{dateStr}</Text>
-          <View style={styles.itemMetrics}>
-            <Text style={[styles.bpm, { color: bpmClass.color }]}>{bpm} BPM</Text>
-            {bpClass && item.bp && (
-              <Text style={[styles.bp, { color: bpClass.color }]}>
-                {item.bp.systolic}/{item.bp.diastolic} mmHg
+        <View style={styles.itemContent}>
+          <View style={styles.itemTopRow}>
+            <View style={styles.dotWrapper}>
+              <View style={[styles.dot, { backgroundColor: dotColor }]} />
+            </View>
+            <Text style={styles.itemDate}>{dateStr}</Text>
+          </View>
+          <View style={styles.itemBottomRow}>
+            <View style={styles.metricsBlock}>
+              <Text style={[styles.bpmValue, { color: bpmClass?.color || COLORS.textPrimary }]}>
+                {bpm}
               </Text>
+              <Text style={styles.bpmUnit}>BPM</Text>
+            </View>
+            {bpClass && item.bp && (
+              <View style={styles.bpBlock}>
+                <Text style={[styles.bpValue, { color: COLORS.textSecondary }]}>
+                  {item.bp.systolic}/{item.bp.diastolic}
+                </Text>
+                <Text style={styles.bpUnit}>mmHg</Text>
+              </View>
             )}
           </View>
         </View>
-        <View style={styles.itemRight}>
-          <View style={[styles.statusDot, { backgroundColor: bpmClass.color }]} />
-          <Text style={[styles.statusLabel, { color: bpmClass.color }]}>
-            {bpmClass.label}
-          </Text>
+        <View style={styles.itemRightSection}>
+          <View style={[styles.badge, { backgroundColor: badgeBg }]}>
+            <Text style={[styles.badgeText, { color: bpmClass?.color || COLORS.textSecondary }]}>
+              {bpmClass?.label || '--'}
+            </Text>
+          </View>
+          {bpClass && (
+            <Text style={[styles.bpCategory, { color: bpClass.color }]}>
+              {bpClass.label}
+            </Text>
+          )}
         </View>
       </Animated.View>
     </View>
   );
 }
 
+function SearchBar({ value, onChangeText }) {
+  return (
+    <View style={styles.searchOuter}>
+      <View style={styles.searchContainer}>
+        <Text style={styles.searchIcon}>🔍</Text>
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Buscar por fecha o BPM..."
+          placeholderTextColor={COLORS.textMuted}
+          value={value}
+          onChangeText={onChangeText}
+          returnKeyType="search"
+          autoCorrect={false}
+        />
+        {value.length > 0 && (
+          <TouchableOpacity
+            onPress={() => onChangeText('')}
+            style={styles.searchClearHit}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Text style={styles.searchClearIcon}>✕</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+    </View>
+  );
+}
+
 export default function HistoryScreen() {
   const { history, clearHistory, deleteMeasurement, loadAll } = useHealthStore();
-  const [refreshing, setRefreshing] = React.useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [search, setSearch] = useState('');
+
+  const handleScrollBeginDrag = useCallback(() => {}, []);
 
   const handleClear = useCallback(() => {
     Alert.alert(
       'Borrar historial',
-      '¿Seguro que quieres eliminar todas las mediciones? Esta acción no se puede deshacer.',
+      'Seguro que quieres eliminar todas las mediciones? Esta accion no se puede deshacer.',
       [
         { text: 'Cancelar', style: 'cancel' },
         { text: 'Borrar todo', style: 'destructive', onPress: clearHistory },
@@ -133,9 +225,12 @@ export default function HistoryScreen() {
     );
   }, [clearHistory]);
 
-  const handleDeleteItem = useCallback(async (id) => {
-    await deleteMeasurement(id);
-  }, [deleteMeasurement]);
+  const handleDeleteItem = useCallback(
+    async (id) => {
+      await deleteMeasurement(id);
+    },
+    [deleteMeasurement]
+  );
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -143,42 +238,95 @@ export default function HistoryScreen() {
     setRefreshing(false);
   }, [loadAll]);
 
+  const sections = useMemo(() => {
+    const base = search.trim()
+      ? history.filter((item) => {
+          const dateStr = new Date(item.timestamp).toLocaleDateString('es-ES');
+          const bpmStr = String(item.bpm || '');
+          const q = search.toLowerCase();
+          return dateStr.toLowerCase().includes(q) || bpmStr.includes(search);
+        })
+      : [...history];
+
+    const groups = {};
+    base.forEach((item) => {
+      const group = getDateGroup(item.timestamp);
+      if (!groups[group]) groups[group] = [];
+      groups[group].push(item);
+    });
+
+    return SECTION_ORDER.filter((key) => groups[key]?.length > 0).map((key) => ({
+      title: key,
+      data: groups[key],
+    }));
+  }, [history, search]);
+
+  const hasData = history.length > 0;
+  const hasFilteredData = sections.some((s) => s.data.length > 0);
+  const isSearching = search.trim().length > 0;
+
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.header}>
         <Text style={styles.title}>Historial</Text>
-        {history.length > 0 && (
-          <TouchableOpacity onPress={handleClear} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+        {hasData && (
+          <TouchableOpacity
+            onPress={handleClear}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
             <Text style={styles.clearBtn}>Borrar todo</Text>
           </TouchableOpacity>
         )}
       </View>
 
-      {history.length === 0 ? (
+      <SearchBar value={search} onChangeText={setSearch} />
+
+      {!hasData && !isSearching ? (
         <View style={styles.empty}>
           <Text style={styles.emptyIcon}>📋</Text>
-          <Text style={styles.emptyText}>Sin mediciones guardadas</Text>
+          <Text style={styles.emptyTitle}>Sin mediciones guardadas</Text>
           <Text style={styles.emptySub}>
-            Las mediciones aparecerán aquí automáticamente
+            Las mediciones apareceran aqui automaticamente
+          </Text>
+        </View>
+      ) : !hasFilteredData ? (
+        <View style={styles.empty}>
+          <Text style={styles.emptyIcon}>🔍</Text>
+          <Text style={styles.emptyTitle}>Sin resultados</Text>
+          <Text style={styles.emptySub}>
+            Intenta con otra busqueda
           </Text>
         </View>
       ) : (
-        <FlatList
-          data={history}
+        <SectionList
+          sections={sections}
           keyExtractor={(item) => item.id || item.timestamp}
           renderItem={({ item }) => (
             <SwipeableItem item={item} onDelete={handleDeleteItem} />
           )}
+          renderSectionHeader={({ section }) => (
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionHeaderText}>
+                {section.title.toUpperCase()}
+              </Text>
+              <Text style={styles.sectionCount}>{section.data.length}</Text>
+            </View>
+          )}
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
-          ItemSeparatorComponent={() => <View style={styles.separator} />}
+          onScrollBeginDrag={handleScrollBeginDrag}
+          ListFooterComponent={() => (
+            <View style={styles.footer}>
+              <BannerAd compact />
+            </View>
+          )}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
               onRefresh={onRefresh}
-              tintColor="#2BBFA4"
-              colors={['#2BBFA4']}
-              progressBackgroundColor="#132220"
+              tintColor={COLORS.primary}
+              colors={[COLORS.primary]}
+              progressBackgroundColor={COLORS.bg}
             />
           }
         />
@@ -188,52 +336,225 @@ export default function HistoryScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#0D1918' },
+  safe: {
+    flex: 1,
+    backgroundColor: COLORS.bg,
+  },
   header: {
-    flexDirection: 'row', justifyContent: 'space-between',
-    alignItems: 'center', padding: 20, paddingBottom: 12,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 8,
   },
-  title: { color: '#fff', fontSize: 26, fontWeight: '700' },
-  clearBtn: { color: '#F25C54', fontSize: 15 },
-  list: { paddingHorizontal: 20, paddingBottom: 32 },
-  swipeContainer: { position: 'relative' },
-  item: {
-    flexDirection: 'row', justifyContent: 'space-between',
-    backgroundColor: '#132220', borderRadius: 14,
-    padding: 16, borderWidth: 1, borderColor: '#1A7F6E22',
+  title: {
+    fontSize: 26,
+    fontWeight: '700',
+    color: COLORS.textPrimary,
+    letterSpacing: -0.3,
   },
-  itemLeft: { flex: 1 },
-  itemDate: { color: '#4A6A67', fontSize: 12, marginBottom: 8 },
-  itemMetrics: { flexDirection: 'row', gap: 16, alignItems: 'center' },
-  bpm: { fontSize: 20, fontWeight: '700' },
-  bp: { fontSize: 15, fontWeight: '600' },
-  itemRight: { alignItems: 'flex-end', justifyContent: 'center', gap: 4 },
-  statusDot: { width: 8, height: 8, borderRadius: 4 },
-  statusLabel: { fontSize: 12, fontWeight: '600' },
+  clearBtn: {
+    color: COLORS.danger,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  searchOuter: {
+    paddingHorizontal: 20,
+    paddingBottom: 10,
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.bgCard,
+    borderRadius: RADIUS.md,
+    paddingHorizontal: 12,
+    height: 42,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  searchIcon: {
+    fontSize: 14,
+    marginRight: 8,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 14,
+    color: COLORS.textPrimary,
+    paddingVertical: 0,
+  },
+  searchClearHit: {
+    padding: 4,
+    marginLeft: 4,
+  },
+  searchClearIcon: {
+    fontSize: 14,
+    color: COLORS.textMuted,
+    fontWeight: '600',
+  },
+  list: {
+    paddingHorizontal: 20,
+    paddingBottom: 32,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: COLORS.primarySubtle,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: RADIUS.sm,
+    marginTop: 12,
+    marginBottom: 6,
+  },
+  sectionHeaderText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: COLORS.textPrimary,
+    letterSpacing: 0.5,
+  },
+  sectionCount: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: COLORS.textSecondary,
+  },
+  swipeContainer: {
+    position: 'relative',
+    marginBottom: 8,
+  },
   deleteAction: {
     position: 'absolute',
     right: 0,
     top: 0,
     bottom: 0,
-    width: 100,
-    backgroundColor: '#F25C5422',
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: '#F25C5433',
+    width: 90,
+    backgroundColor: COLORS.dangerLight,
+    borderRadius: RADIUS.md,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  deleteActionText: { fontSize: 20 },
-  deleteActionLabel: { color: '#F25C54', fontSize: 11, fontWeight: '600', marginTop: 2 },
-  separator: { height: 8 },
-  empty: {
-    flex: 1, justifyContent: 'center',
-    alignItems: 'center', padding: 40,
+  deleteActionIcon: {
+    fontSize: 18,
+    marginBottom: 2,
   },
-  emptyIcon: { fontSize: 48, marginBottom: 16 },
-  emptyText: { color: '#fff', fontSize: 18, fontWeight: '600' },
+  deleteActionLabel: {
+    color: COLORS.danger,
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  item: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    backgroundColor: COLORS.bg,
+    borderRadius: RADIUS.md,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  itemContent: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  itemTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  dotWrapper: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    marginRight: 8,
+    overflow: 'hidden',
+  },
+  dot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+  },
+  itemDate: {
+    color: COLORS.textMuted,
+    fontSize: 12,
+  },
+  itemBottomRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 16,
+  },
+  metricsBlock: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 4,
+  },
+  bpmValue: {
+    fontSize: 20,
+    fontWeight: '700',
+  },
+  bpmUnit: {
+    fontSize: 12,
+    color: COLORS.textSecondary,
+    fontWeight: '600',
+  },
+  bpBlock: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 3,
+  },
+  bpValue: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  bpUnit: {
+    fontSize: 11,
+    color: COLORS.textMuted,
+  },
+  itemRightSection: {
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+    marginLeft: 12,
+  },
+  badge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: RADIUS.sm,
+    marginBottom: 4,
+  },
+  badgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  bpCategory: {
+    fontSize: 10,
+    fontWeight: '600',
+  },
+  separator: {
+    height: 0,
+  },
+  footer: {
+    marginTop: 12,
+    paddingBottom: 20,
+  },
+  empty: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 40,
+    paddingBottom: 60,
+  },
+  emptyIcon: {
+    fontSize: 48,
+    marginBottom: 16,
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: COLORS.textPrimary,
+    marginBottom: 8,
+  },
   emptySub: {
-    color: '#4A6A67', fontSize: 14,
-    textAlign: 'center', marginTop: 8,
+    fontSize: 14,
+    color: COLORS.textSecondary,
+    textAlign: 'center',
+    lineHeight: 20,
   },
 });

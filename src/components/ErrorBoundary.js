@@ -14,6 +14,8 @@
 import React, { Component } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { COLORS } from '../theme/designTokens';
 
 export default class ErrorBoundary extends Component {
   constructor(props) {
@@ -43,8 +45,6 @@ export default class ErrorBoundary extends Component {
 
   handleClearAndRestart = async () => {
     try {
-      // Intentar limpiar AsyncStorage (import dinámico para evitar dependencia directa)
-      const AsyncStorage = require('@react-native-async-storage/async-storage').default;
       const keys = await AsyncStorage.getAllKeys();
       const vitalKeys = keys.filter(k => k.startsWith('@vitalpulse_'));
       await AsyncStorage.multiRemove(vitalKeys);
@@ -115,7 +115,7 @@ export default class ErrorBoundary extends Component {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#0D1918' },
+  safe: { flex: 1, backgroundColor: COLORS.bg },
   container: {
     padding: 24,
     paddingBottom: 48,
@@ -125,63 +125,63 @@ const styles = StyleSheet.create({
   },
   icon: { fontSize: 64, marginBottom: 20 },
   title: {
-    color: '#F25C54',
+    color: COLORS.danger,
     fontSize: 24,
     fontWeight: '700',
     marginBottom: 8,
     textAlign: 'center',
   },
   subtitle: {
-    color: '#8BBAB5',
+    color: COLORS.textSecondary,
     fontSize: 15,
     textAlign: 'center',
     lineHeight: 22,
     marginBottom: 24,
   },
   debugBox: {
-    backgroundColor: '#132220',
+    backgroundColor: COLORS.bgCard,
     borderRadius: 12,
     padding: 14,
     marginBottom: 20,
     width: '100%',
     borderWidth: 1,
-    borderColor: '#F25C5433',
+    borderColor: COLORS.border,
   },
   debugLabel: {
-    color: '#F25C54',
+    color: COLORS.danger,
     fontSize: 11,
     fontWeight: '700',
     marginBottom: 6,
   },
   debugText: {
-    color: '#FFA500',
+    color: COLORS.warning,
     fontSize: 13,
     fontFamily: 'monospace',
     marginBottom: 8,
   },
   debugStack: {
-    color: '#4A6A67',
+    color: COLORS.textMuted,
     fontSize: 10,
     fontFamily: 'monospace',
     lineHeight: 14,
   },
   card: {
-    backgroundColor: '#132220',
+    backgroundColor: COLORS.bgCard,
     borderRadius: 16,
     padding: 20,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: '#1A7F6E33',
+    borderColor: COLORS.border,
     width: '100%',
   },
   cardText: {
-    color: '#8BBAB5',
+    color: COLORS.textSecondary,
     fontSize: 14,
     lineHeight: 22,
     textAlign: 'center',
   },
   primaryBtn: {
-    backgroundColor: '#1A7F6E',
+    backgroundColor: COLORS.primary,
     borderRadius: 16,
     padding: 18,
     alignItems: 'center',
@@ -200,16 +200,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#F25C5466',
+    borderColor: COLORS.danger,
     width: '100%',
   },
   dangerBtnText: {
-    color: '#F25C54',
+    color: COLORS.danger,
     fontSize: 15,
     fontWeight: '600',
   },
   hint: {
-    color: '#4A6A67',
+    color: COLORS.textMuted,
     fontSize: 12,
     textAlign: 'center',
     lineHeight: 18,

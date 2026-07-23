@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { COLORS } from '../theme/designTokens';
 
 export default function LegalDisclaimer({ compact = false }) {
   if (compact) {
@@ -24,18 +25,23 @@ export default function LegalDisclaimer({ compact = false }) {
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
-    backgroundColor: 'rgba(242, 92, 84, 0.12)',
+    backgroundColor: COLORS.bg,
     borderRadius: 10,
     padding: 12,
     marginVertical: 8,
     alignItems: 'flex-start',
     borderLeftWidth: 3,
-    borderLeftColor: '#F25C54',
+    borderLeftColor: COLORS.danger,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderTopColor: COLORS.border,
+    borderRightColor: COLORS.border,
+    borderBottomColor: COLORS.border,
   },
   icon: { fontSize: 16, marginRight: 8, marginTop: 1 },
-  text: { flex: 1, color: '#F25C54', fontSize: 12, lineHeight: 18 },
+  text: { flex: 1, color: COLORS.textSecondary, fontSize: 12, lineHeight: 18 },
   compactText: {
-    color: '#F25C54',
+    color: COLORS.danger,
     fontSize: 11,
     textAlign: 'center',
     opacity: 0.8,

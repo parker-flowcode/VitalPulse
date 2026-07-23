@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { View, ActivityIndicator } from 'react-native';
+import { View, Text, ActivityIndicator, Image } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
-import { Text } from 'react-native';
+import { getFocusedRouteNameFromRoute } from '@react-navigation/native';
 
 import OnboardingScreen from '../screens/OnboardingScreen';
 import HomeScreen       from '../screens/HomeScreen';
@@ -18,21 +18,24 @@ import CalibrationScreen from '../screens/CalibrationScreen';
 import TutorialScreen  from '../screens/TutorialScreen';
 import UpgradeScreen   from '../screens/UpgradeScreen';
 import useHealthStore   from '../store/healthstore';
+import { COLORS } from '../theme/designTokens';
 
 const Tab        = createBottomTabNavigator();
 const HomeStack  = createStackNavigator();
 const RootStack  = createStackNavigator();
 
+const TAB_ICONS = {
+  Inicio:     { active: '❤️', inactive: '🤍' },
+  Historial:  { active: '📋', inactive: '📋' },
+  'Análisis': { active: '📈', inactive: '📈' },
+  Ajustes:    { active: '⚙️', inactive: '⚙️' },
+};
+
 function TabIcon({ name, focused }) {
-  const icons = {
-    Inicio:   '🏠',
-    Historial:'📋',
-    Análisis: '📈',
-    Ajustes:  '⚙️',
-  };
+  const icons = TAB_ICONS[name] || { active: '●', inactive: '○' };
   return (
     <Text style={{ fontSize: 20, opacity: focused ? 1 : 0.5 }}>
-      {icons[name] || '●'}
+      {focused ? icons.active : icons.inactive}
     </Text>
   );
 }
@@ -50,18 +53,24 @@ function HomeStackNavigator() {
 function MainTabs() {
   return (
     <Tab.Navigator
-      screenOptions={({ route }) => ({
-        headerShown: false,
-        tabBarStyle: {
-          backgroundColor: '#0F1F1E',
-          borderTopColor: '#1A7F6E33',
-          paddingBottom: 6,
-          height: 60,
-        },
-        tabBarActiveTintColor:   '#2BBFA4',
-        tabBarInactiveTintColor: '#4A6A67',
-        tabBarIcon: ({ focused }) => <TabIcon name={route.name} focused={focused} />,
-      })}
+      screenOptions={({ route }) => {
+        const routeName = getFocusedRouteNameFromRoute(route) ?? '';
+        const hideTabBar = routeName === 'Measure';
+        return {
+          headerShown: false,
+          tabBarStyle: {
+            backgroundColor: COLORS.tabBarBg,
+            borderTopColor: COLORS.tabBarBorder,
+            borderTopWidth: 1,
+            paddingBottom: 6,
+            height: 60,
+            display: hideTabBar ? 'none' : 'flex',
+          },
+          tabBarActiveTintColor: COLORS.tabActive,
+          tabBarInactiveTintColor: COLORS.tabInactive,
+          tabBarIcon: ({ focused }) => <TabIcon name={route.name} focused={focused} />,
+        };
+      }}
     >
       <Tab.Screen name="Inicio"    component={HomeStackNavigator} />
       <Tab.Screen name="Historial" component={HistoryScreen} />
@@ -81,8 +90,12 @@ export default function AppNavigator() {
 
   if (loading) {
     return (
-      <View style={{ flex: 1, backgroundColor: '#0D1918', justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color="#2BBFA4" />
+      <View style={{ flex: 1, backgroundColor: COLORS.bg, justifyContent: 'center', alignItems: 'center' }}>
+        <Image
+          source={require('../../assets/icon.png')}
+          style={{ width: 64, height: 64, marginBottom: 16, resizeMode: 'contain' }}
+        />
+        <ActivityIndicator size="large" color={COLORS.primary} />
       </View>
     );
   }
@@ -107,7 +120,6 @@ export default function AppNavigator() {
         }}
       >
         {!onboardingDone ? (
-          // Primera vez: mostrar onboarding
           <RootStack.Screen
             name="Onboarding"
             component={OnboardingScreen}

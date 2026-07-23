@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, useWindowDimensions } from 'react-native';
 
 /**
  * FingerOverlay – muestra una guía visual circular que indica la posición del dedo
@@ -12,13 +12,13 @@ import { View, Text, StyleSheet, Dimensions } from 'react-native';
  * con un indicador de flash y texto de ayuda cuando la calidad es baja.
  */
 export default function FingerOverlay({ quality }) {
-  const { width } = Dimensions.get('window');
+  const { width } = useWindowDimensions();
   const circleSize = Math.min(width * 0.5, 160);
 
-  let borderColor = '#F25C54';
+  let borderColor = '#EF4444';
   let bgOpacity = '22';
-  if (quality > 0.6) { borderColor = '#2BBFA4'; bgOpacity = '33'; }
-  else if (quality > 0.3) { borderColor = '#FFA500'; bgOpacity = '33'; }
+  if (quality > 0.6) { borderColor = '#10B981'; bgOpacity = '33'; }
+  else if (quality > 0.3) { borderColor = '#F59E0B'; bgOpacity = '33'; }
 
   return (
     <View style={styles.overlayContainer} pointerEvents="none">
@@ -85,7 +85,6 @@ const styles = StyleSheet.create({
   },
   lensCircle: {
     borderWidth: 3,
-    borderStyle: 'dashed',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'rgba(0,0,0,0.35)',
@@ -104,14 +103,14 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     textAlign: 'center',
-    backgroundColor: 'rgba(242,92,84,0.8)',
+    backgroundColor: 'rgba(239,68,68,0.8)',
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 8,
     marginTop: 8,
   },
   okText: {
-    color: '#2BBFA4',
+    color: '#10B981',
     fontSize: 14,
     fontWeight: '600',
     textAlign: 'center',

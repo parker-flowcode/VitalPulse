@@ -1,12 +1,48 @@
+/**
+ * SettingsScreen.js — VitalPulse v4.0
+ *
+ * Ajustes reorganizados con jerarquía visual clara:
+ *
+ * ┌─────────────────────────────────────┐
+ * │ 1. PERFIL PERSONAL (Card)           │
+ * │    Nombre, edad, sexo, peso, etc.   │
+ * ├─────────────────────────────────────┤
+ * │ 2. CALIBRACIÓN (Card)               │
+ * │    Puntos guardados, regresión      │
+ * ├─────────────────────────────────────┤
+ * │ 3. ALERTAS BPM (Card)               │
+ * │    Límites alto/bajo                │
+ * ├─────────────────────────────────────┤
+ * │ 4. VITALPULSE PRO (Card destacado)  │
+ * │    Upgrade CTA                      │
+ * ├─────────────────────────────────────┤
+ * │ 5. EXPORTAR DATOS (Card)            │
+ * │    CSV export                       │
+ * ├─────────────────────────────────────┤
+ * │ 6. GESTIÓN DE DATOS (Card)          │
+ * │    Info privacidad local            │
+ * ├─────────────────────────────────────┤
+ * │ 7. ⚠️ ZONA DE PELIGRO (Card rojo)  │
+ * │    Borrar historial                 │
+ * │    Borrar TODOS los datos           │
+ * ├─────────────────────────────────────┤
+ * │ 8. ACERCA DE (Card)                 │
+ * │    Versión, SDK, desarrollador      │
+ * ├─────────────────────────────────────┤
+ * │ [STICKY FOOTER]                     │
+ * │   Política de Privacidad · Términos │
+ * └─────────────────────────────────────┘
+ */
 import React, { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
-  ScrollView, Alert, KeyboardAvoidingView, Platform, Switch,
+  ScrollView, Alert, KeyboardAvoidingView, Platform, Switch, Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import useHealthStore from '../store/healthstore';
-import LegalDisclaimer from '../components/LegalDisclaimer';
 import { useNavigation } from '@react-navigation/native';
+import { generateCSV, shareCSV, getExportFilename } from '../services/exportService';
+import BannerAd from '../components/BannerAd';
 
 export default function SettingsScreen() {
   const {
@@ -41,7 +77,7 @@ export default function SettingsScreen() {
       height: height ? parseFloat(height) : null,
       isActive, smoker, diabetic,
     });
-    Alert.alert('✅ Guardado', 'Perfil actualizado. Las próximas mediciones serán más precisas.');
+    Alert.alert('Guardado', 'Perfil actualizado. Las próximas mediciones serán más precisas.');
   };
 
   const saveAlerts = () => {
@@ -51,7 +87,7 @@ export default function SettingsScreen() {
       Alert.alert('Inválido', 'El BPM alto debe ser mayor que el BPM bajo.'); return;
     }
     updateSettings({ alertBPMHigh: high, alertBPMLow: low });
-    Alert.alert('✅ Guardado', 'Alertas actualizadas.');
+    Alert.alert('Guardado', 'Alertas actualizadas.');
   };
 
   const togglePreferRegression = (value) => {
@@ -80,7 +116,7 @@ export default function SettingsScreen() {
     );
   };
 
-  const profileComplete = !!(userProfile.age && userProfile.sex && userProfile.isActive !== null);
+  const profileComplete = !!(userProfile.age && userProfile.sex && userProfile.isActive !== null && userProfile.weight && userProfile.height);
 
   const handleExportCSV = async () => {
     if (history.length === 0) {
@@ -88,12 +124,13 @@ export default function SettingsScreen() {
       return;
     }
     try {
-      const { generateCSV, shareCSV, getExportFilename } = require('../services/exportService');
       const csv = generateCSV(history);
       const filename = getExportFilename();
       const success = await shareCSV(csv, filename);
       if (success) {
-        Alert.alert('✅ Exportado', `Historial compartido como ${filename}`);
+        Alert.alert('Exportado', `Historial compartido como ${filename}`);
+      } else {
+        Alert.alert('Exportación cancelada', 'No se pudo completar la exportación.');
       }
     } catch (e) {
       Alert.alert('Error', 'No se pudo exportar el historial.');
@@ -111,28 +148,41 @@ export default function SettingsScreen() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          <Text style={styles.title}>Ajustes</Text>
+          {/* ─── Logo y t├¡tulo ─────────────────────────────────────────────── */}
+          <View style={styles.logoSection}>
+            <Image source={require('../../assets/icon.png')} style={styles.logo} />
+            <Text style={styles.appTitle}>VitalPulse</Text>
+            <Text style={styles.appVersion}>v4.0.0</Text>
+          </View>
 
-          {/* Estado del perfil */}
+          {/* ─── Estado del perfil ──────────────────────────────────────── */}
           <View style={[styles.profileStatus, profileComplete ? styles.profileStatusOk : styles.profileStatusWarn]}>
-            <Text style={[styles.profileStatusText, { color: profileComplete ? '#2BBFA4' : '#FFA500' }]}>
+            <Text style={[styles.profileStatusText, { color: profileComplete ? '#10B981' : '#F59E0B' }]}>
               {profileComplete
-                ? '✅ Perfil completo — máxima precisión activa'
-                : '⚠️ Perfil incompleto — complétalo para mayor precisión'}
+                ? 'Perfil completo — máxima precisión activa'
+                : 'Perfil incompleto — complétalo para mayor precisión'}
             </Text>
           </View>
 
-          {/* Perfil personal */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Perfil personal</Text>
+          {/* ═══════════════════════════════════════════════════════════════
+              CARD 1: PERFIL PERSONAL
+              ═══════════════════════════════════════════════════════════════ */}
+          <View style={styles.card}>
+            <View style={styles.cardHeader}>
+              <Text style={styles.cardIcon}>👤</Text>
+              <Text style={styles.cardTitle}>Perfil personal</Text>
+            </View>
+            <Text style={styles.cardDesc}>
+              Tus datos demográficos mejoran la precisión de la estimación de presión arterial.
+            </Text>
 
             <Text style={styles.label}>Nombre</Text>
             <TextInput style={styles.input} value={name} onChangeText={setName}
-              placeholder="Tu nombre" placeholderTextColor="#4A6A67" maxLength={40} />
+              placeholder="Tu nombre" placeholderTextColor="#94A3B8" maxLength={40} />
 
             <Text style={styles.label}>Edad *</Text>
             <TextInput style={styles.input} value={age} onChangeText={setAge}
-              placeholder="Años" placeholderTextColor="#4A6A67" keyboardType="number-pad" maxLength={3} />
+              placeholder="Años" placeholderTextColor="#94A3B8" keyboardType="number-pad" maxLength={3} />
 
             <Text style={styles.label}>Sexo biológico *</Text>
             <View style={styles.optionRow}>
@@ -151,13 +201,13 @@ export default function SettingsScreen() {
               <View style={{ flex: 1 }}>
                 <Text style={styles.label}>Peso (kg)</Text>
                 <TextInput style={styles.input} value={weight} onChangeText={setWeight}
-                  placeholder="70" placeholderTextColor="#4A6A67" keyboardType="decimal-pad" maxLength={5} />
+                  placeholder="70" placeholderTextColor="#94A3B8" keyboardType="decimal-pad" maxLength={5} />
               </View>
               <View style={{ width: 12 }} />
               <View style={{ flex: 1 }}>
                 <Text style={styles.label}>Estatura (cm)</Text>
                 <TextInput style={styles.input} value={height} onChangeText={setHeight}
-                  placeholder="170" placeholderTextColor="#4A6A67" keyboardType="number-pad" maxLength={3} />
+                  placeholder="170" placeholderTextColor="#94A3B8" keyboardType="number-pad" maxLength={3} />
               </View>
             </View>
 
@@ -192,10 +242,15 @@ export default function SettingsScreen() {
             </TouchableOpacity>
           </View>
 
-          {/* Calibración */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Calibración de PA</Text>
-            <Text style={styles.sectionDesc}>
+          {/* ═══════════════════════════════════════════════════════════════
+              CARD 2: CALIBRACI├ôN DE PA
+              ═══════════════════════════════════════════════════════════════ */}
+          <View style={styles.card}>
+            <View style={styles.cardHeader}>
+              <Text style={styles.cardIcon}>📏</Text>
+              <Text style={styles.cardTitle}>Calibración de PA</Text>
+            </View>
+            <Text style={styles.cardDesc}>
               Puedes calibrar la estimación de presión arterial desde la pantalla de resultados
               después de cada medición, introduciendo la lectura de tu tensiómetro real.
             </Text>
@@ -206,7 +261,7 @@ export default function SettingsScreen() {
                     ✅ {calibration.points.length} punto{calibration.points.length > 1 ? 's' : ''} de calibración guardado{calibration.points.length > 1 ? 's' : ''}
                   </Text>
                   <Text style={styles.calStatusSub}>
-                    Último: {new Date(calibration.points[calibration.points.length - 1].date).toLocaleDateString('es-ES')}
+                    ├Ültimo: {new Date(calibration.points[calibration.points.length - 1].date).toLocaleDateString('es-ES')}
                   </Text>
                 </View>
                 <TouchableOpacity style={styles.dangerBtnSmall} onPress={handleClearCalibration}>
@@ -218,64 +273,72 @@ export default function SettingsScreen() {
                 Sin calibración. Usa el botón en la pantalla de resultados.
               </Text>
             )}
-          <View style={styles.switchRow}>
-            <Text style={styles.switchLabel}>Preferir calibración por regresión</Text>
-            <Switch
-              value={preferRegression}
-              onValueChange={togglePreferRegression}
-              trackColor={{ false: '#767577', true: '#2BBFA4' }}
-              thumbColor={preferRegression ? '#fff' : '#f4f3f4'}
-            />
-          </View>
+            <View style={styles.switchRow}>
+              <Text style={styles.switchLabel}>Preferir calibración por regresión</Text>
+              <Switch
+                value={preferRegression}
+                onValueChange={togglePreferRegression}
+                trackColor={{ false: '#E2E8F0', true: '#2563EB' }}
+                thumbColor={preferRegression ? '#FFFFFF' : '#94A3B8'}
+              />
+            </View>
           </View>
 
-          {/* Alertas BPM */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Alertas de BPM</Text>
+          {/* ═══════════════════════════════════════════════════════════════
+              CARD 3: ALERTAS DE BPM
+              ═══════════════════════════════════════════════════════════════ */}
+          <View style={styles.card}>
+            <View style={styles.cardHeader}>
+              <Text style={styles.cardIcon}>🔔</Text>
+              <Text style={styles.cardTitle}>Alertas de BPM</Text>
+            </View>
+            <Text style={styles.cardDesc}>
+              Recibe una notificación si tu frecuencia cardíaca supera o baja de estos límites.
+            </Text>
             <Text style={styles.label}>Alerta BPM alto (por encima de)</Text>
             <TextInput style={styles.input} value={alertHigh} onChangeText={setAlertHigh}
-              keyboardType="number-pad" maxLength={3} placeholderTextColor="#4A6A67" />
+              keyboardType="number-pad" maxLength={3} placeholderTextColor="#94A3B8" />
             <Text style={styles.label}>Alerta BPM bajo (por debajo de)</Text>
             <TextInput style={styles.input} value={alertLow} onChangeText={setAlertLow}
-              keyboardType="number-pad" maxLength={3} placeholderTextColor="#4A6A67" />
+              keyboardType="number-pad" maxLength={3} placeholderTextColor="#94A3B8" />
             <TouchableOpacity style={styles.saveBtn} onPress={saveAlerts}>
               <Text style={styles.saveBtnText}>Guardar alertas</Text>
             </TouchableOpacity>
           </View>
 
-           <LegalDisclaimer />
-           <View style={styles.linkRow}>
-             <TouchableOpacity onPress={() => navigation.navigate('PrivacyPolicy')}>
-               <Text style={styles.linkText}>Política de Privacidad</Text>
-             </TouchableOpacity>
-             <TouchableOpacity onPress={() => navigation.navigate('Terms')} style={{ marginLeft: 20 }}>
-               <Text style={styles.linkText}>Términos de Uso</Text>
-             </TouchableOpacity>
-           </View>
-
-          {/* Upgrade a Pro */}
+          {/* ═══════════════════════════════════════════════════════════════
+              CARD 4: VITALPULSE PRO (destacado)
+              ═══════════════════════════════════════════════════════════════ */}
           <TouchableOpacity
-            style={styles.upgradeBtn}
+            style={styles.proCard}
             onPress={() => navigation.navigate('Upgrade')}
+            activeOpacity={0.8}
           >
-            <Text style={styles.upgradeBtnEmoji}>💚</Text>
-            <View style={styles.upgradeBtnTextWrap}>
-              <Text style={styles.upgradeBtnTitle}>VitalPulse Pro</Text>
-              <Text style={styles.upgradeBtnSub}>
-                Mediciones ilimitadas · Sin anuncios · Calibración avanzada
-              </Text>
+            <View style={styles.proCardContent}>
+              <Text style={styles.proEmoji}>💙</Text>
+              <View style={styles.proTextWrap}>
+                <Text style={styles.proTitle}>VitalPulse Pro</Text>
+                <Text style={styles.proSub}>
+                  Mediciones ilimitadas · Sin anuncios · Calibración avanzada
+                </Text>
+              </View>
+              <Text style={styles.proArrow}>→</Text>
             </View>
-            <Text style={styles.upgradeBtnArrow}>→</Text>
           </TouchableOpacity>
 
-          {/* Exportar datos */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Exportar datos</Text>
-            <Text style={styles.sectionDesc}>
+          {/* ═══════════════════════════════════════════════════════════════
+              CARD 5: EXPORTAR DATOS
+              ═══════════════════════════════════════════════════════════════ */}
+          <View style={styles.card}>
+            <View style={styles.cardHeader}>
+              <Text style={styles.cardIcon}>📤</Text>
+              <Text style={styles.cardTitle}>Exportar datos</Text>
+            </View>
+            <Text style={styles.cardDesc}>
               Exporta tu historial completo como archivo CSV compatible con Excel, Google Sheets y otros programas de análisis.
             </Text>
             <TouchableOpacity style={styles.exportBtn} onPress={handleExportCSV}>
-              <Text style={styles.exportBtnIcon}>📤</Text>
+              <Text style={styles.exportBtnIcon}>📊</Text>
               <View style={{ flex: 1 }}>
                 <Text style={styles.exportBtnTitle}>Exportar historial como CSV</Text>
                 <Text style={styles.exportBtnSub}>{history.length} mediciones · Punto y coma</Text>
@@ -284,127 +347,295 @@ export default function SettingsScreen() {
             </TouchableOpacity>
           </View>
 
-          {/* Gestión de datos */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Gestión de datos</Text>
-            <Text style={styles.sectionDesc}>
-              Todos los datos se guardan únicamente en este dispositivo. Nada se envía a servidores.
+          {/* ═══════════════════════════════════════════════════════════════
+              CARD 6: GESTI├ôN DE DATOS
+              ═══════════════════════════════════════════════════════════════ */}
+          <View style={styles.card}>
+            <View style={styles.cardHeader}>
+              <Text style={styles.cardIcon}>🔒</Text>
+              <Text style={styles.cardTitle}>Gestión de datos</Text>
+            </View>
+            <View style={styles.privacyBadge}>
+              <Text style={styles.privacyBadgeIcon}>📱</Text>
+              <Text style={styles.privacyBadgeText}>
+                Todos los datos se guardan únicamente en este dispositivo. Nada se envía a servidores externos.
+              </Text>
+            </View>
+          </View>
+
+          {/* ═══════════════════════════════════════════════════════════════
+              CARD 7: ⚠️ ZONA DE PELIGRO
+              ═══════════════════════════════════════════════════════════════ */}
+          <View style={styles.dangerCard}>
+            <View style={styles.dangerCardHeader}>
+              <Text style={styles.dangerIcon}>⚠️</Text>
+              <Text style={styles.dangerTitle}>Zona de peligro</Text>
+            </View>
+            <Text style={styles.dangerDesc}>
+              Estas acciones son irreversibles. Los datos eliminados no se pueden recuperar.
             </Text>
-            <TouchableOpacity style={styles.dangerBtnSmall} onPress={() => {
+
+            <TouchableOpacity style={styles.dangerAction} onPress={() => {
               Alert.alert('Borrar historial', '¿Eliminar todas las mediciones?', [
                 { text: 'Cancelar', style: 'cancel' },
                 { text: 'Borrar', style: 'destructive', onPress: clearHistory },
               ]);
             }}>
-              <Text style={styles.dangerBtnSmallText}>🗑️ Borrar historial de mediciones</Text>
+              <View style={styles.dangerActionIconWrap}>
+                <Text style={styles.dangerActionIcon}>🗑️</Text>
+              </View>
+              <View style={styles.dangerActionTextWrap}>
+                <Text style={styles.dangerActionTitle}>Borrar historial de mediciones</Text>
+                <Text style={styles.dangerActionSub}>Se eliminarán todas las mediciones guardadas</Text>
+              </View>
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.dangerBtn, { marginTop: 10 }]} onPress={handleClearAll}>
-              <Text style={styles.dangerBtnText}>☢️ Borrar todos los datos y reiniciar app</Text>
+
+            <TouchableOpacity style={styles.dangerActionDestructive} onPress={handleClearAll}>
+              <View style={styles.dangerActionIconWrap}>
+                <Text style={styles.dangerActionIcon}>☢️</Text>
+              </View>
+              <View style={styles.dangerActionTextWrap}>
+                <Text style={styles.dangerActionTitleDestructive}>Borrar todos los datos</Text>
+                <Text style={styles.dangerActionSub}>Mediciones, calibración, perfil y configuración</Text>
+              </View>
             </TouchableOpacity>
           </View>
 
-          {/* Acerca de */}
-          <View style={styles.aboutCard}>
-            <Text style={styles.aboutTitle}>Acerca de VitalPulse</Text>
+          {/* ═══════════════════════════════════════════════════════════════
+              CARD 8: ACERCA DE
+              ═══════════════════════════════════════════════════════════════ */}
+          <View style={styles.card}>
+            <View style={styles.cardHeader}>
+              <Text style={styles.cardIcon}>ℹ️</Text>
+              <Text style={styles.cardTitle}>Acerca de VitalPulse</Text>
+            </View>
             <View style={styles.aboutRow}>
               <Text style={styles.aboutLabel}>Versión</Text>
               <Text style={styles.aboutValue}>4.0.0</Text>
             </View>
             <View style={styles.aboutRow}>
               <Text style={styles.aboutLabel}>SDK</Text>
-              <Text style={styles.aboutValue}>Expo 54 · React Native 0.81</Text>
+              <Text style={styles.aboutValue}>Expo 54</Text>
             </View>
             <View style={styles.aboutRow}>
               <Text style={styles.aboutLabel}>Desarrollador</Text>
-              <Text style={styles.aboutValue}>PoleyDev</Text>
+              <Text style={styles.aboutValue}>MVP Software Studios</Text>
             </View>
             <View style={styles.aboutRow}>
               <Text style={styles.aboutLabel}>Licencia</Text>
               <Text style={styles.aboutValue}>MIT</Text>
             </View>
             <Text style={styles.aboutDesc}>
-              Monitor cardiovascular personal. Los datos se almacenan exclusivamente en este dispositivo. 
+              Monitor cardiovascular personal. Los datos se almacenan exclusivamente en este dispositivo.
               Esta aplicación NO es un dispositivo médico certificado.
             </Text>
           </View>
+
+          {/* Banner inferior no intrusivo */}
+          <BannerAd />
+
+          {/* Espacio extra para que el footer sticky no tape contenido */}
+          <View style={{ height: 60 }} />
         </ScrollView>
+
+        {/* ═══════════════════════════════════════════════════════════════
+            STICKY FOOTER — Enlaces legales
+            ═══════════════════════════════════════════════════════════════ */}
+        <View style={styles.footer}>
+          <TouchableOpacity
+            style={styles.footerLink}
+            onPress={() => navigation.navigate('PrivacyPolicy')}
+          >
+            <Text style={styles.footerLinkText}>Política de Privacidad</Text>
+          </TouchableOpacity>
+          <View style={styles.footerDivider} />
+          <TouchableOpacity
+            style={styles.footerLink}
+            onPress={() => navigation.navigate('Terms')}
+          >
+            <Text style={styles.footerLinkText}>Términos de Uso</Text>
+          </TouchableOpacity>
+        </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
 
+// ─── Estilos ─────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
-  safe:   { flex: 1, backgroundColor: '#0D1918' },
-  scroll: { padding: 20, paddingBottom: 48 },
-  title:  { color: '#fff', fontSize: 26, fontWeight: '700', marginBottom: 16 },
+  safe:   { flex: 1, backgroundColor: '#FFFFFF' },
+  scroll: { padding: 20, paddingBottom: 16 },
+
+  // ─── Logo section ──────────────────────────────────────────────────────────
+  logoSection: { alignItems: 'center', marginBottom: 20, marginTop: 8 },
+  logo:        { width: 56, height: 56, marginBottom: 10, resizeMode: 'contain' },
+  appTitle:    { color: '#1E293B', fontSize: 26, fontWeight: '700' },
+  appVersion:  { color: '#94A3B8', fontSize: 14, marginTop: 2 },
+
+  // ─── Profile status banner ────────────────────────────────────────────────
   profileStatus:     { borderRadius: 12, padding: 12, marginBottom: 20, borderWidth: 1 },
-  profileStatusOk:   { backgroundColor: '#2BBFA411', borderColor: '#2BBFA433' },
-  profileStatusWarn: { backgroundColor: '#FFA50011', borderColor: '#FFA50033' },
+  profileStatusOk:   { backgroundColor: '#EFF6FF', borderColor: '#2563EB33' },
+  profileStatusWarn: { backgroundColor: '#FEF3C7', borderColor: '#F59E0B33' },
   profileStatusText: { fontSize: 13, fontWeight: '600', textAlign: 'center' },
-  section:     { backgroundColor: '#132220', borderRadius: 16, padding: 20, marginBottom: 16, borderWidth: 1, borderColor: '#1A7F6E22' },
-  sectionTitle:{ color: '#2BBFA4', fontSize: 15, fontWeight: '700', marginBottom: 12 },
-  sectionDesc: { color: '#4A6A67', fontSize: 13, lineHeight: 20, marginBottom: 12 },
-  label:       { color: '#8BBAB5', fontSize: 12, marginBottom: 6, marginTop: 12 },
-  input:       { backgroundColor: '#0D1918', borderRadius: 10, padding: 12, color: '#fff', fontSize: 16, borderWidth: 1, borderColor: '#1A7F6E44' },
+
+  // ─── Card base ────────────────────────────────────────────────────────────
+  card: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  cardHeader:  { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 8 },
+  cardIcon:    { fontSize: 20 },
+  cardTitle:   { color: '#2563EB', fontSize: 15, fontWeight: '700' },
+  cardDesc:    { color: '#64748B', fontSize: 13, lineHeight: 20, marginBottom: 12 },
+
+  // ─── Form fields ──────────────────────────────────────────────────────────
+  label:       { color: '#2563EB', fontSize: 12, fontWeight: '600', marginBottom: 6, marginTop: 12 },
+  input:       { backgroundColor: '#F1F5F9', borderRadius: 10, padding: 12, color: '#1E293B', fontSize: 16, borderWidth: 1, borderColor: '#E2E8F0' },
   rowFields:   { flexDirection: 'row', marginTop: 4 },
   optionRow:   { flexDirection: 'row', gap: 10, marginBottom: 4 },
-  optionBtn:   { flex: 1, backgroundColor: '#0D1918', borderRadius: 10, padding: 12, alignItems: 'center', borderWidth: 1, borderColor: '#1A7F6E33' },
-  optionBtnActive: { backgroundColor: '#1A7F6E', borderColor: '#2BBFA4' },
-  optionText:  { color: '#4A6A67', fontSize: 14 },
-  optionTextActive: { color: '#fff', fontWeight: '600' },
+  optionBtn:   { flex: 1, backgroundColor: '#FFFFFF', borderRadius: 10, padding: 12, alignItems: 'center', borderWidth: 1, borderColor: '#E2E8F0' },
+  optionBtnActive: { backgroundColor: '#2563EB', borderColor: '#2563EB' },
+  optionText:  { color: '#64748B', fontSize: 14 },
+  optionTextActive: { color: '#FFFFFF', fontWeight: '600' },
   checkRow:    { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, gap: 12 },
-  checkbox:    { width: 22, height: 22, borderRadius: 6, borderWidth: 2, borderColor: '#2A4A47', justifyContent: 'center', alignItems: 'center' },
-  checkboxActive: { backgroundColor: '#1A7F6E', borderColor: '#2BBFA4' },
-  checkmark:   { color: '#fff', fontSize: 13, fontWeight: '700' },
-  checkLabel:  { color: '#8BBAB5', fontSize: 14 },
-  saveBtn:     { backgroundColor: '#1A7F6E', borderRadius: 12, padding: 14, alignItems: 'center', marginTop: 16 },
-  saveBtnText: { color: '#fff', fontSize: 15, fontWeight: '600' },
-  calStatus:   { backgroundColor: '#2BBFA411', borderRadius: 8, padding: 12, marginBottom: 10 },
-  calStatusText: { color: '#2BBFA4', fontSize: 13, fontWeight: '600' },
-  calStatusSub:  { color: '#4A6A67', fontSize: 12, marginTop: 2 },
-  calEmptyText:  { color: '#4A6A67', fontSize: 13, fontStyle: 'italic' },
-  dangerBtnSmall: { backgroundColor: '#F25C5415', borderRadius: 10, padding: 12, alignItems: 'center', borderWidth: 1, borderColor: '#F25C5433' },
-  dangerBtnSmallText: { color: '#F25C54', fontSize: 14 },
-  dangerBtn:   { backgroundColor: '#F25C5422', borderRadius: 12, padding: 14, alignItems: 'center', borderWidth: 1, borderColor: '#F25C5444' },
-  dangerBtnText: { color: '#F25C54', fontSize: 15, fontWeight: '600' },
-  version:     { color: '#2A4A47', fontSize: 12, textAlign: 'center', marginTop: 8 },
-  switchRow:   { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 12, marginBottom: 12 },
-  switchLabel: { color: '#fff', fontSize: 14 },
-  linkRow: { flexDirection: 'row', marginTop: 16, justifyContent: 'center' },
-  linkText: { color: '#2BBFA4', fontSize: 14, textDecorationLine: 'underline' },
-  upgradeBtn: {
-    flexDirection: 'row', alignItems: 'center',
-    backgroundColor: '#132220', borderRadius: 16, padding: 16,
-    marginBottom: 16, borderWidth: 1, borderColor: '#2BBFA433',
-    gap: 12,
+  checkbox:    { width: 22, height: 22, borderRadius: 6, borderWidth: 2, borderColor: '#CBD5E1', justifyContent: 'center', alignItems: 'center' },
+  checkboxActive: { backgroundColor: '#2563EB', borderColor: '#2563EB' },
+  checkmark:   { color: '#FFFFFF', fontSize: 13, fontWeight: '700' },
+  checkLabel:  { color: '#1E293B', fontSize: 14 },
+  saveBtn:     { backgroundColor: '#2563EB', borderRadius: 12, padding: 14, alignItems: 'center', marginTop: 16 },
+  saveBtnText: { color: '#FFFFFF', fontSize: 15, fontWeight: '600' },
+
+  // ─── Calibration ──────────────────────────────────────────────────────────
+  calStatus:   { backgroundColor: '#EFF6FF', borderRadius: 8, padding: 12, marginBottom: 10 },
+  calStatusText: { color: '#2563EB', fontSize: 13, fontWeight: '600' },
+  calStatusSub:  { color: '#64748B', fontSize: 12, marginTop: 2 },
+  calEmptyText:  { color: '#94A3B8', fontSize: 13, fontStyle: 'italic' },
+  switchRow:   { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 12, marginBottom: 4 },
+  switchLabel: { color: '#1E293B', fontSize: 14, flex: 1, marginRight: 12 },
+
+  // ─── Pro card (destacado) ─────────────────────────────────────────────────
+  proCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 2,
+    borderColor: '#2563EB',
+    shadowColor: '#2563EB',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
   },
-  upgradeBtnEmoji: { fontSize: 24 },
-  upgradeBtnTextWrap: { flex: 1 },
-  upgradeBtnTitle: { color: '#2BBFA4', fontSize: 15, fontWeight: '700' },
-  upgradeBtnSub: { color: '#4A6A67', fontSize: 12, marginTop: 2 },
-  upgradeBtnArrow: { color: '#2BBFA4', fontSize: 18, fontWeight: '600' },
-  // Exportar
+  proCardContent: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  proEmoji:  { fontSize: 24 },
+  proTextWrap: { flex: 1 },
+  proTitle:  { color: '#2563EB', fontSize: 15, fontWeight: '700' },
+  proSub:    { color: '#64748B', fontSize: 12, marginTop: 2 },
+  proArrow:  { color: '#2563EB', fontSize: 18, fontWeight: '600' },
+
+  // ─── Export ───────────────────────────────────────────────────────────────
   exportBtn: {
     flexDirection: 'row', alignItems: 'center',
-    backgroundColor: '#0D1918', borderRadius: 12, padding: 14,
-    borderWidth: 1, borderColor: '#1A7F6E44', gap: 12,
+    backgroundColor: '#F8F9FA', borderRadius: 12, padding: 14,
+    borderWidth: 1, borderColor: '#E2E8F0', gap: 12,
   },
   exportBtnIcon: { fontSize: 20 },
-  exportBtnTitle: { color: '#fff', fontSize: 14, fontWeight: '600' },
-  exportBtnSub: { color: '#4A6A67', fontSize: 11, marginTop: 2 },
-  exportBtnArrow: { color: '#2BBFA4', fontSize: 16, fontWeight: '600' },
+  exportBtnTitle: { color: '#2563EB', fontSize: 14, fontWeight: '600' },
+  exportBtnSub: { color: '#64748B', fontSize: 11, marginTop: 2 },
+  exportBtnArrow: { color: '#2563EB', fontSize: 16, fontWeight: '600' },
 
-  // Acerca de
-  aboutCard: {
-    backgroundColor: '#132220', borderRadius: 16, padding: 20,
-    marginBottom: 16, borderWidth: 1, borderColor: '#1A7F6E22',
+  // ─── Privacy badge ────────────────────────────────────────────────────────
+  privacyBadge: {
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+    backgroundColor: '#F8F9FA', borderRadius: 10, padding: 14,
+    borderWidth: 1, borderColor: '#E2E8F0',
   },
-  aboutTitle: { color: '#2BBFA4', fontSize: 15, fontWeight: '700', marginBottom: 16 },
+  privacyBadgeIcon: { fontSize: 20 },
+  privacyBadgeText: { color: '#64748B', fontSize: 13, lineHeight: 20, flex: 1 },
+
+  // ─── ⚠️ Zona de peligro ──────────────────────────────────────────────────
+  dangerCard: {
+    backgroundColor: '#FEE2E2',
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 16,
+    borderWidth: 2,
+    borderColor: '#EF4444',
+    shadowColor: '#EF4444',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  dangerCardHeader: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 8 },
+  dangerIcon:  { fontSize: 20 },
+  dangerTitle: { color: '#EF4444', fontSize: 15, fontWeight: '700' },
+  dangerDesc:  { color: '#DC2626', fontSize: 13, lineHeight: 20, marginBottom: 16 },
+
+  dangerAction: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    backgroundColor: '#FFFFFF', borderRadius: 12, padding: 14,
+    marginBottom: 10, borderWidth: 1, borderColor: '#FECACA',
+  },
+  dangerActionDestructive: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    backgroundColor: '#FFFFFF', borderRadius: 12, padding: 16,
+    borderWidth: 2, borderColor: '#EF4444',
+  },
+  dangerActionIconWrap: { width: 32, alignItems: 'center' },
+  dangerActionIcon: { fontSize: 20 },
+  dangerActionTextWrap: { flex: 1 },
+  dangerActionTitle: { color: '#EF4444', fontSize: 14, fontWeight: '600' },
+  dangerActionTitleDestructive: { color: '#DC2626', fontSize: 15, fontWeight: '700' },
+  dangerActionSub: { color: '#B91C1C', fontSize: 12, marginTop: 2 },
+
+  // ─── Botones danger peque├▒os (para calibraci├│n) ───────────────────────────
+  dangerBtnSmall: { backgroundColor: '#FEE2E2', borderRadius: 10, padding: 12, alignItems: 'center', borderWidth: 1, borderColor: '#FECACA' },
+  dangerBtnSmallText: { color: '#EF4444', fontSize: 14, fontWeight: '600' },
+
+  // ─── Acerca de ────────────────────────────────────────────────────────────
   aboutRow: {
     flexDirection: 'row', justifyContent: 'space-between',
-    paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#1A7F6E15',
+    paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#F1F5F9',
   },
-  aboutLabel: { color: '#4A6A67', fontSize: 13 },
-  aboutValue: { color: '#8BBAB5', fontSize: 13, fontWeight: '600' },
-  aboutDesc: { color: '#4A6A67', fontSize: 12, lineHeight: 18, marginTop: 12 },
+  aboutLabel: { color: '#64748B', fontSize: 13 },
+  aboutValue: { color: '#1E293B', fontSize: 13, fontWeight: '600' },
+  aboutDesc: { color: '#64748B', fontSize: 12, lineHeight: 18, marginTop: 12 },
+
+  // ─── Sticky footer (enlaces legales) ──────────────────────────────────────
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    backgroundColor: '#FFFFFF',
+    borderTopWidth: 1,
+    borderTopColor: '#E2E8F0',
+  },
+  footerLink: {
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+  },
+  footerLinkText: {
+    color: '#2563EB',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  footerDivider: {
+    width: 1,
+    height: 16,
+    backgroundColor: '#E2E8F0',
+    marginHorizontal: 12,
+  },
 });

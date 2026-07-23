@@ -54,7 +54,7 @@ function calculateBMI(weight, height) {
 }
 
 // ─── Estimación base ─────────────────────────────────────────────────────────
-export function estimateBP(morphology, bpm, userProfile = null, sdnn = 0) {
+export function estimateBP(morphology = {}, bpm, userProfile = null, sdnn = 0) {
   const {
     ptt = 0, risingSlope = 0, augmentationIndex = 0,
     pulseWidth = 0, dicroticNotch = 0
@@ -121,8 +121,18 @@ export function estimateBP(morphology, bpm, userProfile = null, sdnn = 0) {
 // Acumula múltiples pares (estimación_modelo, lectura_real) y calcula
 // el offset personalizado como media ponderada de las diferencias.
 // Con más puntos de calibración, la precisión mejora progresivamente.
-export function estimateBPCalibrated(morphology, bpm, calibration, userProfile = null, sdnn = 0, preferRegression = true) {
+export function estimateBPCalibrated(morphology = {}, bpm, calibration, userProfile = null, sdnn = 0, preferRegression = true, signalQuality = 1) {
   const base = estimateBP(morphology, bpm, userProfile, sdnn);
+
+  // Guard: no calibrar si la calidad de señal es < 0.4
+  // La calibración con datos ruidosos introduce más error del que corrige.
+  if (signalQuality < 0.4) {
+    return {
+      ...base,
+      calibrationBlocked: true,
+      calibrationReason: `Calidad de señal demasiado baja (${(signalQuality * 100).toFixed(0)}%) para calibrar. Reintenta con mejor señal.`,
+    };
+  }
 
   if (!calibration || !calibration.points || calibration.points.length === 0) {
     return base;
@@ -255,7 +265,8 @@ export function estimateBPCalibrated(morphology, bpm, calibration, userProfile =
     };
 
     // Construir vector de características para la medición actual
-    const { ptt = 0, risingSlope = 0, augmentationIndex = 0, pulseWidth = 0, dicroticNotch = 0 } = morphology;
+    const m2 = morphology || {};
+    const { ptt = 0, risingSlope = 0, augmentationIndex = 0, pulseWidth = 0, dicroticNotch = 0 } = m2;
     const age = Math.max(15, Math.min(90, userProfile.age));
     const sex = userProfile.sex === 'male' ? 1 : 0;
     const bmi = (function calculateBMI(weight, height) {
@@ -344,7 +355,8 @@ const BP_CATEGORIES = [
   { label: 'HTA Grado 3',         color: '#C0392B', risk: 'critical' },
 ];
 export function classifyBP(systolic, diastolic) {
-  if (!systolic || !diastolic) return { label: 'Sin datos', color: '#4A6A67', risk: 'unknown' };
+  if (systolic == null || diastolic == null || systolic <= 0 || diastolic <= 0)
+    return { label: 'Sin datos', color: '#4A6A67', risk: 'unknown' };
   const catSys = getCategorySys(systolic);
   const catDia = getCategoryDia(diastolic);
   const cat = Math.max(catSys, catDia);
@@ -353,7 +365,7 @@ export function classifyBP(systolic, diastolic) {
 
 // ─── Clasificación BPM ───────────────────────────────────────────────────────
 export function classifyBPM(bpm) {
-  if (!bpm || bpm <= 0)
+  if (bpm == null || bpm <= 0)
     return { label: 'Sin datos',           color: '#4A6A67', risk: 'unknown' };
   if (bpm < 40)
     return { label: 'Bradicardia severa',  color: '#C0392B', risk: 'critical' };

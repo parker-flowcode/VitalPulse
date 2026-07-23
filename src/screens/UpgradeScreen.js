@@ -7,7 +7,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet,
-  ScrollView, Alert, Platform, ActivityIndicator,
+  ScrollView, Alert, Platform, ActivityIndicator, Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
@@ -16,12 +16,12 @@ import {
 } from '../services/subscriptions';
 
 const FEATURES = [
-  { icon: '📊', text: 'Mediciones ilimitadas' },
-  { icon: '🎯', text: 'Calibración multi-punto avanzada' },
-  { icon: '📤', text: 'Exportación de datos a CSV' },
-  { icon: '📈', text: 'Gráficas detalladas de tendencias' },
-  { icon: '🔬', text: 'SNR y métricas de calidad avanzadas' },
-  { icon: '🚫', text: 'Sin anuncios' },
+  { icon: '✅', text: 'Mediciones ilimitadas' },
+  { icon: '✅', text: 'Calibración multi-punto avanzada' },
+  { icon: '✅', text: 'Exportación de datos a CSV' },
+  { icon: '✅', text: 'Gráficas detalladas de tendencias' },
+  { icon: '✅', text: 'SNR y métricas de calidad avanzadas' },
+  { icon: '✅', text: 'Sin anuncios' },
 ];
 
 export default function UpgradeScreen({ navigation }) {
@@ -94,7 +94,7 @@ export default function UpgradeScreen({ navigation }) {
         </View>
 
         <View style={styles.heroSection}>
-          <Text style={styles.heroIcon}>💚</Text>
+          <Image source={require('../../assets/icon.png')} style={styles.heroLogo} />
           <Text style={styles.heroTitle}>VitalPulse Pro</Text>
           <Text style={styles.heroSubtitle}>
             Lleva tu monitorización cardiovascular al siguiente nivel
@@ -106,7 +106,7 @@ export default function UpgradeScreen({ navigation }) {
           <Text style={styles.currentPlanLabel}>
             {alreadyPro ? '✅ Plan actual' : '📋 Plan actual'}
           </Text>
-          <Text style={[styles.currentPlanName, { color: currentPlan.color }]}>
+          <Text style={styles.currentPlanName}>
             {currentPlan.name}
           </Text>
           {alreadyPro && daysLeft !== null && (
@@ -204,7 +204,7 @@ export default function UpgradeScreen({ navigation }) {
               disabled={purchasing}
             >
               {purchasing ? (
-                <ActivityIndicator color="#fff" size="small" />
+                <ActivityIndicator color="#FFFFFF" size="small" />
               ) : (
                 <>
                   <Text style={styles.purchaseBtnText}>
@@ -242,7 +242,7 @@ export default function UpgradeScreen({ navigation }) {
           disabled={restoring}
         >
           {restoring ? (
-            <ActivityIndicator color="#2BBFA4" size="small" />
+            <ActivityIndicator color="#2563EB" size="small" />
           ) : (
             <Text style={styles.restoreBtnText}>Restaurar compras anteriores</Text>
           )}
@@ -259,92 +259,112 @@ export default function UpgradeScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#0D1918' },
+  safe: { flex: 1, backgroundColor: '#FFFFFF' },
   scroll: { padding: 20, paddingBottom: 40 },
   header: {
     flexDirection: 'row', justifyContent: 'flex-end',
     marginBottom: 8,
   },
   closeBtn: { width: 40, height: 40, justifyContent: 'center', alignItems: 'center' },
-  closeBtnText: { color: '#4A6A67', fontSize: 22, fontWeight: '600' },
+  closeBtnText: { color: '#94A3B8', fontSize: 22, fontWeight: '600' },
 
   heroSection: { alignItems: 'center', marginBottom: 24 },
-  heroIcon: { fontSize: 64, marginBottom: 12 },
-  heroTitle: { color: '#2BBFA4', fontSize: 28, fontWeight: '700', marginBottom: 8 },
-  heroSubtitle: { color: '#4A6A67', fontSize: 15, textAlign: 'center', lineHeight: 22 },
+  heroLogo: { width: 64, height: 64, marginBottom: 12, resizeMode: 'contain' },
+  heroTitle: { color: '#2563EB', fontSize: 28, fontWeight: '700', marginBottom: 8 },
+  heroSubtitle: { color: '#64748B', fontSize: 15, textAlign: 'center', lineHeight: 22 },
 
   // Plan actual
   currentPlanCard: {
-    backgroundColor: '#132220', borderRadius: 16, padding: 20,
-    marginBottom: 20, borderWidth: 1, borderColor: '#1A7F6E33',
+    backgroundColor: '#FFFFFF', borderRadius: 16, padding: 20,
+    marginBottom: 20, borderWidth: 1, borderColor: '#E2E8F0',
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
   },
-  currentPlanLabel: { color: '#4A6A67', fontSize: 11, fontWeight: '700', letterSpacing: 1.2, textTransform: 'uppercase' },
-  currentPlanName: { fontSize: 22, fontWeight: '800', marginTop: 8 },
-  daysLeft: { color: '#8BBAB5', fontSize: 13, marginTop: 4 },
-  currentPlanDesc: { color: '#4A6A67', fontSize: 13, marginTop: 4 },
+  currentPlanLabel: { color: '#64748B', fontSize: 11, fontWeight: '700', letterSpacing: 1.2, textTransform: 'uppercase' },
+  currentPlanName: { color: '#2563EB', fontSize: 22, fontWeight: '800', marginTop: 8 },
+  daysLeft: { color: '#64748B', fontSize: 13, marginTop: 4 },
+  currentPlanDesc: { color: '#64748B', fontSize: 13, marginTop: 4 },
 
-  sectionTitle: { color: '#fff', fontSize: 17, fontWeight: '700', marginBottom: 12 },
+  sectionTitle: { color: '#1E293B', fontSize: 17, fontWeight: '700', marginBottom: 12 },
 
   featuresCard: {
-    backgroundColor: '#132220', borderRadius: 16, padding: 20,
-    marginBottom: 20, borderWidth: 1, borderColor: '#1A7F6E22',
+    backgroundColor: '#FFFFFF', borderRadius: 16, padding: 20,
+    marginBottom: 20, borderWidth: 1, borderColor: '#E2E8F0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
   },
-  featuresTitle: { color: '#fff', fontSize: 16, fontWeight: '700', marginBottom: 16 },
+  featuresTitle: { color: '#1E293B', fontSize: 16, fontWeight: '700', marginBottom: 16 },
   featureRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 12, gap: 12 },
-  featureIcon: { fontSize: 18 },
-  featureText: { color: '#8BBAB5', fontSize: 14, flex: 1 },
+  featureIcon: { color: '#10B981', fontSize: 18, fontWeight: '700' },
+  featureText: { color: '#1E293B', fontSize: 14, flex: 1 },
 
   plansContainer: { gap: 12, marginBottom: 20 },
   planCard: {
-    backgroundColor: '#132220', borderRadius: 16, padding: 20,
-    borderWidth: 2, borderColor: '#1A7F6E22',
+    backgroundColor: '#FFFFFF', borderRadius: 16, padding: 20,
+    borderWidth: 2, borderColor: '#E2E8F0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 1,
   },
-  planCardSelected: { borderColor: '#2BBFA4', backgroundColor: '#1A2F2E' },
+  planCardSelected: { borderColor: '#2563EB', backgroundColor: '#F8FAFF' },
   planHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },
-  planName: { color: '#fff', fontSize: 17, fontWeight: '700' },
+  planName: { color: '#1E293B', fontSize: 17, fontWeight: '700' },
   planBadge: {
-    backgroundColor: '#2BBFA4',
+    backgroundColor: '#2563EB',
     paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6,
   },
-  planBadgeText: { color: '#0D1918', fontSize: 10, fontWeight: '800' },
-  planPrice: { color: '#2BBFA4', fontSize: 32, fontWeight: '700' },
-  planPeriod: { color: '#4A6A67', fontSize: 13, marginTop: 2 },
-  planDesc: { color: '#8BBAB5', fontSize: 12, marginTop: 8 },
+  planBadgeText: { color: '#FFFFFF', fontSize: 10, fontWeight: '800' },
+  planPrice: { color: '#2563EB', fontSize: 32, fontWeight: '700' },
+  planPeriod: { color: '#64748B', fontSize: 13, marginTop: 2 },
+  planDesc: { color: '#64748B', fontSize: 12, marginTop: 8 },
 
   comparisonCard: {
-    backgroundColor: '#132220', borderRadius: 16, padding: 20,
-    marginBottom: 20, borderWidth: 1, borderColor: '#1A7F6E22',
+    backgroundColor: '#FFFFFF', borderRadius: 16, padding: 20,
+    marginBottom: 20, borderWidth: 1, borderColor: '#E2E8F0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 1,
   },
-  comparisonTitle: { color: '#fff', fontSize: 15, fontWeight: '700', marginBottom: 12 },
+  comparisonTitle: { color: '#1E293B', fontSize: 15, fontWeight: '700', marginBottom: 12 },
   compRow: {
     flexDirection: 'row', alignItems: 'center', paddingVertical: 8,
-    borderBottomWidth: 1, borderBottomColor: '#1A7F6E22',
+    borderBottomWidth: 1, borderBottomColor: '#F1F5F9',
   },
-  compLabel: { flex: 1, color: '#8BBAB5', fontSize: 13 },
-  compValueFree: { color: '#F25C54', fontSize: 13, fontWeight: '600', width: 40, textAlign: 'center' },
-  compValuePro: { color: '#2BBFA4', fontSize: 13, fontWeight: '700', width: 40, textAlign: 'center' },
+  compLabel: { flex: 1, color: '#64748B', fontSize: 13 },
+  compValueFree: { color: '#EF4444', fontSize: 13, fontWeight: '600', width: 40, textAlign: 'center' },
+  compValuePro: { color: '#10B981', fontSize: 13, fontWeight: '700', width: 40, textAlign: 'center' },
 
   purchaseBtn: {
-    backgroundColor: '#1A7F6E', borderRadius: 16, padding: 18,
+    backgroundColor: '#2563EB', borderRadius: 16, padding: 18,
     alignItems: 'center', marginBottom: 12, minHeight: 56,
     justifyContent: 'center',
   },
   purchaseBtnDisabled: { opacity: 0.6 },
-  purchaseBtnText: { color: '#fff', fontSize: 18, fontWeight: '700' },
-  purchaseBtnSub: { color: 'rgba(255,255,255,0.6)', fontSize: 13, marginTop: 4 },
+  purchaseBtnText: { color: '#FFFFFF', fontSize: 18, fontWeight: '700' },
+  purchaseBtnSub: { color: 'rgba(255,255,255,0.7)', fontSize: 13, marginTop: 4 },
 
   manageBtn: {
-    backgroundColor: '#132220', borderRadius: 12, padding: 14,
+    backgroundColor: '#FFFFFF', borderRadius: 12, padding: 14,
     alignItems: 'center', marginBottom: 12,
-    borderWidth: 1, borderColor: '#1A7F6E44',
+    borderWidth: 1, borderColor: '#E2E8F0',
   },
-  manageBtnText: { color: '#2BBFA4', fontSize: 15, fontWeight: '600' },
+  manageBtnText: { color: '#2563EB', fontSize: 15, fontWeight: '600' },
 
   restoreBtn: { alignItems: 'center', padding: 12, marginBottom: 16, minHeight: 44, justifyContent: 'center' },
-  restoreBtnText: { color: '#2BBFA4', fontSize: 14, textDecorationLine: 'underline' },
+  restoreBtnText: { color: '#2563EB', fontSize: 14, textDecorationLine: 'underline' },
 
   footer: {
-    color: '#2A4A47', fontSize: 11, textAlign: 'center', lineHeight: 16,
+    color: '#94A3B8', fontSize: 11, textAlign: 'center', lineHeight: 16,
   },
 });

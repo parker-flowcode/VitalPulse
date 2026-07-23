@@ -36,8 +36,8 @@ export default function PrivacyPolicyScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#0D1918' },
+  safe: { flex: 1, backgroundColor: '#FFFFFF' },
   container: { padding: 24 },
-  title: { color: '#fff', fontSize: 24, fontWeight: '700', marginBottom: 16 },
-  paragraph: { color: '#8BBAB5', fontSize: 14, lineHeight: 22, marginBottom: 12 },
+  title: { color: '#1E293B', fontSize: 24, fontWeight: '700', marginBottom: 16 },
+  paragraph: { color: '#64748B', fontSize: 14, lineHeight: 22, marginBottom: 12 },
 });

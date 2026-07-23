@@ -58,13 +58,13 @@ function generateSyntheticPPG(bpm = SYNTHETIC_BPM, fps = SYNTHETIC_FPS, duration
 }
 
 // ─── Gráfica del waveform ─────────────────────────────────────────────────────
-function TutorialWaveform({ data = [], width = CHART_WIDTH, height = CHART_HEIGHT, color = '#2BBFA4' }) {
+function TutorialWaveform({ data = [], width = CHART_WIDTH, height = CHART_HEIGHT, color = '#2563EB' }) {
   if (data.length < 2) {
     return (
       <View style={[styles.chartContainer, { width, height }]}>
         <Svg width={width} height={height}>
           <Line x1={0} y1={height / 2} x2={width} y2={height / 2}
-            stroke="#2A4A47" strokeWidth="1.5" opacity="0.3" />
+            stroke="#CBD5E1" strokeWidth="1.5" opacity="0.3" />
         </Svg>
       </View>
     );
@@ -234,7 +234,7 @@ export default function TutorialScreen({ navigation }) {
     setResult(null);
   };
 
-  const qualityColor = liveQuality > 0.6 ? '#2BBFA4' : liveQuality > 0.3 ? '#FFA500' : '#4A6A67';
+  const qualityColor = liveQuality > 0.6 ? '#10B981' : liveQuality > 0.3 ? '#F59E0B' : '#94A3B8';
 
   // ─── Pantalla de resultados simulados ───────────────────────────────────────
   if (phase === 'results' && result) {
@@ -277,12 +277,12 @@ export default function TutorialScreen({ navigation }) {
             <Text style={styles.cardLabel}>MÉTRICAS DE CALIDAD</Text>
             <View style={styles.metricsGrid}>
               {[
-                { label: 'Calidad', value: (result.quality * 100).toFixed(0) + '%', color: '#2BBFA4' },
-                { label: 'Confianza', value: (result.confidence * 100).toFixed(0) + '%', color: '#2BBFA4' },
-                { label: 'SNR', value: result.snr ? result.snr.toFixed(1) + ' dB' : 'N/A', color: '#52C878' },
-                { label: 'SDNN', value: result.sdnn ? Math.round(result.sdnn) + ' ms' : '0 ms', color: '#8BBAB5' },
-                { label: 'FFT', value: result.bpmFFT + ' BPM', color: '#8BBAB5' },
-                { label: 'Picos', value: result.bpmPeaks + ' BPM', color: '#8BBAB5' },
+                { label: 'Calidad', value: (result.quality * 100).toFixed(0) + '%', color: '#10B981' },
+                { label: 'Confianza', value: (result.confidence * 100).toFixed(0) + '%', color: '#10B981' },
+                { label: 'SNR', value: result.snr ? result.snr.toFixed(1) + ' dB' : 'N/A', color: '#10B981' },
+                { label: 'SDNN', value: result.sdnn ? Math.round(result.sdnn) + ' ms' : '0 ms', color: '#64748B' },
+                { label: 'FFT', value: result.bpmFFT + ' BPM', color: '#64748B' },
+                { label: 'Picos', value: result.bpmPeaks + ' BPM', color: '#64748B' },
               ].map((m, i) => (
                 <View key={i} style={styles.metricItem}>
                   <Text style={[styles.metricValue, { color: m.color }]}>{m.value}</Text>
@@ -356,7 +356,7 @@ export default function TutorialScreen({ navigation }) {
 
   // ─── Estado simulating ───────────────────────────────────────────────────────
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={styles.simSafe}>
       <View style={styles.simContainer}>
         {/* Header */}
         <View style={styles.simHeader}>
@@ -407,90 +407,106 @@ export default function TutorialScreen({ navigation }) {
 
 // ─── Estilos ────────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#0D1918' },
+  safe: { flex: 1, backgroundColor: '#FFFFFF' },
   scroll: { padding: 20, paddingBottom: 40 },
   // Hero
   heroSection: { alignItems: 'center', marginBottom: 28, marginTop: 20 },
   heroIcon: { fontSize: 64, marginBottom: 16 },
-  heroTitle: { color: '#fff', fontSize: 28, fontWeight: '700', marginBottom: 8 },
-  heroSubtitle: { color: '#4A6A67', fontSize: 15, textAlign: 'center', lineHeight: 22 },
+  heroTitle: { color: '#1E293B', fontSize: 28, fontWeight: '700', marginBottom: 8 },
+  heroSubtitle: { color: '#64748B', fontSize: 15, textAlign: 'center', lineHeight: 22 },
   // Info cards
   infoCard: {
-    backgroundColor: '#132220', borderRadius: 16, padding: 20,
-    marginBottom: 16, borderWidth: 1, borderColor: '#1A7F6E22',
+    backgroundColor: '#FFFFFF', borderRadius: 16, padding: 20,
+    marginBottom: 16, borderWidth: 1, borderColor: '#E2E8F0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
   },
-  infoTitle: { color: '#2BBFA4', fontSize: 15, fontWeight: '700', marginBottom: 12 },
-  infoItem: { color: '#8BBAB5', fontSize: 14, lineHeight: 24 },
-  infoText: { color: '#8BBAB5', fontSize: 14, lineHeight: 22 },
+  infoTitle: { color: '#2563EB', fontSize: 15, fontWeight: '700', marginBottom: 12 },
+  infoItem: { color: '#1E293B', fontSize: 14, lineHeight: 24 },
+  infoText: { color: '#64748B', fontSize: 14, lineHeight: 22 },
   // Buttons
   startBtn: {
-    backgroundColor: '#1A7F6E', borderRadius: 16, padding: 18,
+    backgroundColor: '#2563EB', borderRadius: 16, padding: 18,
     alignItems: 'center', marginBottom: 12,
   },
-  startBtnText: { color: '#fff', fontSize: 18, fontWeight: '700' },
+  startBtnText: { color: '#FFFFFF', fontSize: 18, fontWeight: '700' },
   realBtn: {
     backgroundColor: 'transparent', borderRadius: 16, padding: 16,
-    alignItems: 'center', marginBottom: 16, borderWidth: 1, borderColor: '#1A7F6E66',
+    alignItems: 'center', marginBottom: 16, borderWidth: 1, borderColor: '#2563EB',
   },
-  realBtnText: { color: '#2BBFA4', fontSize: 15, fontWeight: '600' },
+  realBtnText: { color: '#2563EB', fontSize: 15, fontWeight: '600' },
   // Simulation
+  simSafe: { flex: 1, backgroundColor: '#0F172A' },
   simContainer: { flex: 1, padding: 20 },
   simHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
-  simTitle: { color: '#FFA500', fontSize: 18, fontWeight: '700' },
+  simTitle: { color: '#F59E0B', fontSize: 18, fontWeight: '700' },
   closeBtn: { width: 40, height: 40, justifyContent: 'center', alignItems: 'center' },
-  closeBtnText: { color: '#4A6A67', fontSize: 22, fontWeight: '600' },
+  closeBtnText: { color: '#64748B', fontSize: 22, fontWeight: '600' },
   // Heart animation
   heartContainer: { alignItems: 'center', marginBottom: 20 },
   heartIcon: { fontSize: 64, marginBottom: 8 },
-  heartBPM: { color: '#2BBFA4', fontSize: 56, fontWeight: '700', fontVariant: ['tabular-nums'] },
-  heartLabel: { color: '#4A6A67', fontSize: 13, marginTop: 2 },
+  heartBPM: { color: '#FFFFFF', fontSize: 56, fontWeight: '700', fontVariant: ['tabular-nums'] },
+  heartLabel: { color: '#94A3B8', fontSize: 13, marginTop: 2 },
   // Progress
   timerRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 20 },
-  progressBar: { flex: 1, height: 6, backgroundColor: '#132220', borderRadius: 3, overflow: 'hidden' },
-  progressFill: { height: '100%', backgroundColor: '#2BBFA4', borderRadius: 3 },
-  timerText: { color: '#2BBFA4', fontSize: 20, fontWeight: '700', width: 36, textAlign: 'right' },
+  progressBar: { flex: 1, height: 6, backgroundColor: '#1E293B', borderRadius: 3, overflow: 'hidden' },
+  progressFill: { height: '100%', backgroundColor: '#3B82F6', borderRadius: 3 },
+  timerText: { color: '#FFFFFF', fontSize: 20, fontWeight: '700', width: 36, textAlign: 'right' },
   // Waveform
   waveformCard: {
-    backgroundColor: '#0F1F1E', borderRadius: 16, padding: 16,
-    marginBottom: 16, borderWidth: 1, borderColor: '#1A7F6E33',
+    backgroundColor: '#1E293B', borderRadius: 16, padding: 16,
+    marginBottom: 16, borderWidth: 1, borderColor: '#334155',
   },
-  waveformLabel: { color: '#4A6A67', fontSize: 10, fontWeight: '700', letterSpacing: 1.5, marginBottom: 8 },
+  waveformLabel: { color: '#94A3B8', fontSize: 10, fontWeight: '700', letterSpacing: 1.5, marginBottom: 8 },
   chartContainer: { backgroundColor: 'transparent', overflow: 'hidden' },
   // Quality
   qualityRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
   qualityDot: { width: 8, height: 8, borderRadius: 4 },
   qualityText: { fontSize: 13, fontWeight: '600' },
-  framesText: { color: '#2A4A47', fontSize: 11, textAlign: 'center' },
+  framesText: { color: '#64748B', fontSize: 11, textAlign: 'center' },
   // Results
   header: { marginBottom: 24 },
-  title: { color: '#fff', fontSize: 26, fontWeight: '700' },
-  subtitle: { color: '#FFA500', fontSize: 13, marginTop: 4 },
+  title: { color: '#1E293B', fontSize: 26, fontWeight: '700' },
+  subtitle: { color: '#F59E0B', fontSize: 13, marginTop: 4 },
   resultCard: {
-    backgroundColor: '#132220', borderRadius: 20, padding: 24,
+    backgroundColor: '#FFFFFF', borderRadius: 20, padding: 24,
     marginBottom: 16, borderWidth: 1, alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
   },
-  cardLabel: { color: '#4A6A67', fontSize: 11, fontWeight: '700', letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 16 },
+  cardLabel: { color: '#64748B', fontSize: 11, fontWeight: '700', letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 16 },
   bigValue: { fontSize: 72, fontWeight: '800', fontVariant: ['tabular-nums'], lineHeight: 76 },
-  bigUnit: { color: '#4A6A67', fontSize: 13, marginTop: 6, marginBottom: 12 },
+  bigUnit: { color: '#64748B', fontSize: 13, marginTop: 6, marginBottom: 12 },
   badge: { borderRadius: 20, paddingHorizontal: 16, paddingVertical: 6, marginBottom: 10 },
   badgeText: { fontSize: 14, fontWeight: '700' },
   metricsCard: {
-    backgroundColor: '#132220', borderRadius: 16, padding: 20,
-    marginBottom: 16, borderWidth: 1, borderColor: '#1A7F6E22',
+    backgroundColor: '#FFFFFF', borderRadius: 16, padding: 20,
+    marginBottom: 16, borderWidth: 1, borderColor: '#E2E8F0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
   },
   metricsGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
   metricItem: { width: '31%', alignItems: 'center', marginBottom: 12 },
   metricValue: { fontSize: 20, fontWeight: '700' },
-  metricLabel: { color: '#4A6A67', fontSize: 11, marginTop: 4 },
+  metricLabel: { color: '#94A3B8', fontSize: 11, marginTop: 4 },
   actionsRow: { flexDirection: 'row', gap: 12, marginTop: 8 },
   primaryBtn: {
-    flex: 1, backgroundColor: '#1A7F6E', borderRadius: 14,
+    flex: 1, backgroundColor: '#2563EB', borderRadius: 14,
     padding: 16, alignItems: 'center',
   },
-  primaryBtnText: { color: '#fff', fontSize: 15, fontWeight: '700' },
+  primaryBtnText: { color: '#FFFFFF', fontSize: 15, fontWeight: '700' },
   secondaryBtn: {
     flex: 1, backgroundColor: 'transparent', borderRadius: 14,
-    padding: 16, alignItems: 'center', borderWidth: 1, borderColor: '#1A7F6E66',
+    padding: 16, alignItems: 'center', borderWidth: 1, borderColor: '#2563EB',
   },
-  secondaryBtnText: { color: '#2BBFA4', fontSize: 14, fontWeight: '600' },
+  secondaryBtnText: { color: '#2563EB', fontSize: 14, fontWeight: '600' },
 });

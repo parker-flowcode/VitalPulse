@@ -3,9 +3,10 @@
  *
  * Servicio de exportación de datos: CSV, texto plano y Share API.
  */
-import { Share, Platform } from 'react-native';
+import { Share, Platform, Alert } from 'react-native';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
+import { classifyBPM, classifyBP } from '../utils/bpEstimator';
 
 // ─── Generar CSV del historial completo ─────────────────────────────────────
 export function generateCSV(history) {
@@ -82,17 +83,11 @@ export function generateSummary(measurement) {
     lines.push(`📶 Calidad de señal: ${Math.round(measurement.quality * 100)}%`);
   }
 
-  // Clasificación
-  try {
-    const { classifyBPM, classifyBP } = require('../utils/bpEstimator');
-    const bpmClass = classifyBPM(measurement.bpm);
-    lines.push(`🏷️ Clasificación FC: ${bpmClass.label}`);
-    if (measurement.bp) {
-      const bpClass = classifyBP(measurement.bp.systolic, measurement.bp.diastolic);
-      lines.push(`🏷️ Clasificación PA: ${bpClass.label}`);
-    }
-  } catch {
-    // Ignorar si falla la importación dinámica
+  const bpmClass = classifyBPM(measurement.bpm);
+  lines.push(`🏷️ Clasificación FC: ${bpmClass.label}`);
+  if (measurement.bp) {
+    const bpClass = classifyBP(measurement.bp.systolic, measurement.bp.diastolic);
+    lines.push(`🏷️ Clasificación PA: ${bpClass.label}`);
   }
 
   lines.push(``);

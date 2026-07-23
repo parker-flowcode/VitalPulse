@@ -1,74 +1,69 @@
 /**
  * BannerAd.js — VitalPulse
  *
- * Componente placeholder para banner de AdMob.
- * Cuando ADS_CONFIG.enabled = false, muestra un placeholder sutil.
- * Cuando se activa, renderiza el banner real de react-native-google-mobile-ads.
+ * Banner de anuncio inferior no intrusivo.
+ * Usa el banner real de react-native-google-mobile-ads.
+ *
+ * Diseño: compacto, fondo blanco minimalista.
  */
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { shouldShowBanner } from '../services/ads';
+import { View, Text, StyleSheet, Platform } from 'react-native';
+import { BannerAd as AdMobBanner, BannerAdSize, TestIds } from 'react-native-google-mobile-ads';
+import { shouldShowBanner, getBannerUnitId } from '../services/ads';
+import { COLORS } from '../theme/designTokens';
+
+// ID de prueba de Google (visible en dispositivos de test)
+const TEST_BANNER_ID = Platform.OS === 'ios'
+  ? TestIds.BANNER
+  : 'ca-app-pub-3940256099942544/6300978111';
 
 export default function BannerAd({ compact = false }) {
-  if (!shouldShowBanner()) {
-    // Placeholder: solo visible en desarrollo como indicación de posición
-    if (__DEV__) {
-      return (
-        <View style={[styles.placeholder, compact && styles.placeholderCompact]}>
-          <Text style={styles.placeholderText}>
-            {compact ? '' : '📢 Espacio para anuncio'}
-          </Text>
-        </View>
-      );
-    }
-    return null;
+  if (!shouldShowBanner()) return null;
+
+  const adUnitId = __DEV__ ? TEST_BANNER_ID : getBannerUnitId();
+
+  if (__DEV__ && compact) {
+    return (
+      <View style={styles.compactContainer}>
+        <Text style={styles.compactText}>📢</Text>
+      </View>
+    );
   }
 
-  // Aquí se renderizaría el banner real de AdMob
-  // import { BannerAd, BannerAdSize } from 'react-native-google-mobile-ads';
-  // return (
-  //   <BannerAd
-  //     size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
-  //     unitId={ADS_CONFIG.admob.banner}
-  //   />
-  // );
-
   return (
-    <View style={styles.realBanner}>
-      <Text style={styles.realBannerText}>📢 Anuncio</Text>
+    <View style={styles.container}>
+      <AdMobBanner
+        size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
+        unitId={adUnitId}
+        requestOptions={{
+          requestNonPersonalizedAdsOnly: false,
+        }}
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  placeholder: {
-    backgroundColor: '#132220',
-    borderRadius: 8,
-    padding: 12,
+  container: {
+    alignItems: 'center',
+    backgroundColor: COLORS.bg,
+    borderRadius: 10,
     marginVertical: 8,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  compactContainer: {
+    backgroundColor: COLORS.bgCard,
+    borderRadius: 8,
+    marginVertical: 4,
+    paddingVertical: 6,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#1A7F6E22',
-    borderStyle: 'dashed',
+    borderColor: COLORS.border,
   },
-  placeholderCompact: {
-    padding: 6,
-    marginVertical: 4,
-  },
-  placeholderText: {
-    color: '#2A4A47',
+  compactText: {
     fontSize: 11,
-    fontWeight: '500',
-  },
-  realBanner: {
-    backgroundColor: '#132220',
-    borderRadius: 8,
-    padding: 16,
-    marginVertical: 8,
-    alignItems: 'center',
-  },
-  realBannerText: {
-    color: '#4A6A67',
-    fontSize: 12,
+    color: COLORS.textMuted,
   },
 });

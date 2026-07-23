@@ -1,23 +1,51 @@
-import React, { useState } from 'react';
+/**
+ * ResultsScreen.js — VitalPulse v5.0
+ *
+ * Pantalla de resultados con diseño minimalista premium blanco.
+ * Jerarquía UX: Alertas -> FC -> PA -> Calidad -> HRV -> Acciones.
+ */
+import React, { useEffect } from 'react';
 import {
-  View, Text, TouchableOpacity, StyleSheet,
-  ScrollView, TextInput, Alert, KeyboardAvoidingView, Platform,
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
+  StatusBar,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { classifyBPM, classifyBP, analyzeHRV } from '../utils/bpEstimator';
+import { classifyBPM, classifyBP } from '../utils/bpEstimator';
+import {
+  translateSignalQuality,
+  translateConfidence,
+  translateHRV,
+  translateStability,
+  translateSaturated,
+  validateMeasurement,
+} from '../utils/uxTranslations';
 import LegalDisclaimer from '../components/LegalDisclaimer';
 import { shareMeasurementSummary } from '../services/exportService';
-import useHealthStore from '../store/healthstore';
+import { showInterstitialAd } from '../services/ads';
+import { COLORS, SHADOWS, RADIUS } from '../theme/designTokens';
 
 export default function ResultsScreen({ navigation, route }) {
-  const { addCalibrationPoint } = useHealthStore();
-  // La pantalla ya recibe la medición completa; la calibración guiada se maneja en una pantalla separada.
+  // Mostrar anuncio intersticial después de cada medición
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      showInterstitialAd();
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, []);
 
   if (!route?.params?.measurement) {
     return (
       <SafeAreaView style={styles.safe}>
+        <StatusBar barStyle="dark-content" backgroundColor={COLORS.bgCard} />
         <View style={styles.center}>
-          <Text style={styles.errorText}>Error: no hay datos de medición.</Text>
+          <Text style={styles.errorIcon}>⚠️</Text>
+          <Text style={styles.errorText}>No hay datos de medición disponibles.</Text>
           <TouchableOpacity
             style={styles.primaryBtn}
             onPress={() => navigation.navigate('HomeMain')}
@@ -30,43 +58,29 @@ export default function ResultsScreen({ navigation, route }) {
   }
 
   const { measurement } = route.params;
-  const { bpm, bpmFFT, bpmPeaks, bp, quality, confidence, rrIntervals, sdnn, snr, saturated, stability } = measurement;
+  const { bpm, bp, quality, confidence, rrIntervals, sdnn, saturated, stability } = measurement;
 
+  // Traducciones UX
+  const qualityUX = translateSignalQuality(quality);
+  const confidenceUX = translateConfidence(confidence);
+  const hrvUX = translateHRV(sdnn, rrIntervals?.length);
+  const stabilityUX = translateStability(stability);
+  const saturatedAlert = translateSaturated(saturated);
+
+  // Validaciones
+  const issues = validateMeasurement(measurement);
+  const hasCriticalIssue = issues.some(i => i.type === 'error');
+  const hasWarning = issues.some(i => i.type === 'warning');
+  const showAdvancedHRV =
+    !hasCriticalIssue && (rrIntervals?.length || 0) >= 10 && (quality || 0) >= 0.3;
+
+  // Clasificaciones
   const bpmClass = classifyBPM(bpm);
-  const bpClass  = bp ? classifyBP(bp.systolic, bp.diastolic) : null;
-  const hrv      = analyzeHRV(rrIntervals, sdnn);
-
-  const qualityPercent    = Math.round((quality    || 0) * 100);
-  const confidencePercent = Math.round((confidence || 0) * 100);
-
-  const handleSaveCalibration = async () => {
-    const sys = parseInt(realSystolic, 10);
-    const dia = parseInt(realDiastolic, 10);
-
-    if (isNaN(sys) || isNaN(dia) || sys < 80 || sys > 200 || dia < 50 || dia > 130) {
-      Alert.alert('Valores inválidos', 'Introduce valores válidos de tu tensiómetro.\nSistólica: 80–200 · Diastólica: 50–130');
-      return;
-    }
-
-    await addCalibrationPoint({
-      realSystolic: sys,
-      realDiastolic: dia,
-      morphology:   measurement.bp?.morphology || measurement.morphology,
-      bpm:          measurement.bpm,
-      sdnn:         measurement.sdnn || 0,
-    });
-
-    Alert.alert(
-      '✅ Calibración guardada',
-      'Las próximas mediciones usarán este punto de referencia para mayor precisión.'
-    );
-    setShowCalibration(false);
-    setRealSystolic('');
-    setRealDiastolic('');
-  };
+  const bpClass = bp ? classifyBP(bp.systolic, bp.diastolic) : null;
 
   return (
     <SafeAreaView style={styles.safe}>
+      <StatusBar barStyle="dark-content" backgroundColor={COLORS.bgCard} />
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -76,182 +90,289 @@ export default function ResultsScreen({ navigation, route }) {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          {/* Disclaimer médico destacado */}
-          <View style={styles.medicalDisclaimer}>
-            <Text style={styles.medicalDisclaimerIcon}>⚕️</Text>
-            <View style={styles.medicalDisclaimerTextWrap}>
-              <Text style={styles.medicalDisclaimerTitle}>
-                AVISO IMPORTANTE
-              </Text>
-              <Text style={styles.medicalDisclaimerBody}>
-                Esta aplicación NO es un dispositivo médico certificado por la FDA ni la EMA.
-                Los valores mostrados son estimaciones orientativas. Consulte siempre a su
-                médico para diagnóstico o tratamiento.
-              </Text>
-            </View>
-          </View>
-
-          {/* Header */}
-          <View style={styles.header}>
-            <Text style={styles.title}>Resultados</Text>
-            <Text style={styles.date}>
-              {new Date().toLocaleString('es-ES', {
-                weekday: 'long', day: '2-digit',
-                month: 'long', hour: '2-digit', minute: '2-digit',
-              })}
-            </Text>
-          </View>
-
-          {/* BPM */}
-          <View style={[styles.resultCard, { borderColor: bpmClass.color + '44' }]}>
-            <Text style={styles.cardLabel}>FRECUENCIA CARDÍACA</Text>
-            <Text style={[styles.bigValue, { color: bpmClass.color }]}>{bpm}</Text>
-            <Text style={styles.bigUnit}>pulsaciones por minuto</Text>
-            <View style={[styles.badge, { backgroundColor: bpmClass.color + '22' }]}>
-              <Text style={[styles.badgeText, { color: bpmClass.color }]}>{bpmClass.label}</Text>
-            </View>
-            <Text style={styles.rangeText}>Normal en reposo: 60–100 BPM</Text>
-            {/* Detalle de los dos métodos de cálculo */}
-            {bpmFFT > 0 && bpmPeaks > 0 && (
-              <View style={styles.methodDetail}>
-                <Text style={styles.methodText}>FFT: {bpmFFT} BPM</Text>
-                <Text style={styles.methodDivider}>·</Text>
-                <Text style={styles.methodText}>Picos: {bpmPeaks} BPM</Text>
-                <Text style={styles.methodDivider}>·</Text>
-                <Text style={[styles.methodText, { color: Math.abs(bpmFFT - bpmPeaks) <= 5 ? '#2BBFA4' : '#FFA500' }]}>
-                  {Math.abs(bpmFFT - bpmPeaks) <= 5 ? 'Consenso alto' : 'Consenso bajo'}
-                </Text>
+          {/* ─── Nivel 0: Alertas y validaciones ───────────────────────────── */}
+          {issues.map((issue, i) => {
+            const alertStyle =
+              issue.type === 'error'
+                ? styles.alertError
+                : issue.type === 'warning'
+                  ? styles.alertWarning
+                  : styles.alertInfo;
+            const alertBorderStyle =
+              issue.type === 'error'
+                ? styles.alertBorderError
+                : issue.type === 'warning'
+                  ? styles.alertBorderWarning
+                  : styles.alertBorderInfo;
+            return (
+              <View key={i} style={[styles.alertCard, alertStyle, alertBorderStyle]}>
+                <View style={styles.alertRow}>
+                  <Text style={styles.alertIcon}>{issue.icon}</Text>
+                  <View style={styles.alertTextWrap}>
+                    <Text style={styles.alertTitle}>{issue.title}</Text>
+                    <Text style={styles.alertMessage}>{issue.message}</Text>
+                  </View>
+                </View>
               </View>
-            )}
+            );
+          })}
+
+          {/* ─── Nivel 1: Resultado principal — FC ────────────────────────── */}
+          <View style={styles.resultCard}>
+            <Text style={styles.cardLabel}>Frecuencia cardíaca</Text>
+            <Text style={[styles.bpmValue, { color: bpmClass.color }]}>
+              {bpm || '—'}
+            </Text>
+            <Text style={styles.cardUnit}>pulsaciones por minuto</Text>
+            <View
+              style={[
+                styles.badgePill,
+                { backgroundColor: bpmClass.color + '18' },
+              ]}
+            >
+              <Text style={[styles.badgePillText, { color: bpmClass.color }]}>
+                {bpmClass.label}
+              </Text>
+            </View>
+            <Text style={styles.rangeText}>Rango normal en reposo: 60–100 BPM</Text>
           </View>
 
-          {/* PA */}
+          {/* ─── Nivel 1: Resultado principal — PA ────────────────────────── */}
           {bp && bpClass && (
-            <View style={[styles.resultCard, { borderColor: bpClass.color + '44' }]}>
-              <Text style={styles.cardLabel}>PRESIÓN ARTERIAL ESTIMADA</Text>
+            <View style={styles.resultCard}>
+              <Text style={styles.cardLabel}>Presión arterial estimada</Text>
               {!bp.isCalibrated && (
                 <View style={styles.calibrationWarning}>
                   <Text style={styles.calibrationWarningText}>
-                    ⚡ Sin calibración — precisión orientativa
+                    ⚡ Sin calibración — valores orientativos
                   </Text>
                 </View>
               )}
               {bp.isCalibrated && (
                 <View style={styles.calibrationOk}>
                   <Text style={styles.calibrationOkText}>
-                    ✅ Calibrado con {bp.calibrationPoints} punto{bp.calibrationPoints > 1 ? 's' : ''}
+                    ✅ Calibrado con {bp.calibrationPoints ?? 0} punto
+                    {(bp.calibrationPoints ?? 0) > 1 ? 's' : ''}
                   </Text>
                 </View>
               )}
-              {bp.isCalibrated && (
-                <Text style={styles.calibrationMethodText}>
-                  Método: {bp.calibrationMethod === 'regression' ? 'Regresión' : 'Offset'}
-                </Text>
-              )}
-              <Text style={[styles.bigValue, { color: bpClass.color, fontSize: 48 }]}>
+              <Text style={[styles.bpValue, { color: bpClass.color }]}>
                 {bp.systolic}/{bp.diastolic}
               </Text>
-              <Text style={styles.bigUnit}>mmHg (sistólica/diastólica)</Text>
-              <View style={[styles.badge, { backgroundColor: bpClass.color + '22' }]}>
-                <Text style={[styles.badgeText, { color: bpClass.color }]}>{bpClass.label}</Text>
+              <Text style={styles.cardUnit}>mmHg (sistólica / diastólica)</Text>
+              <View
+                style={[
+                  styles.badgePill,
+                  { backgroundColor: bpClass.color + '18' },
+                ]}
+              >
+                <Text style={[styles.badgePillText, { color: bpClass.color }]}>
+                  {bpClass.label}
+                </Text>
               </View>
-              <Text style={styles.rangeText}>Óptima: {'<'}120/80 mmHg</Text>
+              <Text style={styles.rangeText}>Óptima: menor a 120/80 mmHg</Text>
             </View>
           )}
 
-          {/* HRV */}
-          {sdnn > 0 && (
-            <View style={styles.resultCard}>
-              <Text style={styles.cardLabel}>VARIABILIDAD CARDÍACA (HRV)</Text>
-              <View style={styles.hrvRow}>
-                <View style={styles.hrvItem}>
-                  <Text style={[styles.hrvValue, { color: hrv.color }]}>
-                    {Math.round(sdnn)} ms
-                  </Text>
-                  <Text style={styles.hrvLabel}>SDNN</Text>
-                </View>
-                <View style={styles.hrvDivider} />
-                <View style={styles.hrvItem}>
-                  <Text style={[styles.hrvValue, { color: hrv.color }]}>
-                    {rrIntervals?.length || 0}
-                  </Text>
-                  <Text style={styles.hrvLabel}>Latidos</Text>
-                </View>
-                <View style={styles.hrvDivider} />
-                <View style={styles.hrvItem}>
-                  <Text style={[styles.hrvValue, { color: hrv.color, fontSize: 14 }]}>
-                    {hrv.label}
-                  </Text>
-                  <Text style={styles.hrvLabel}>Estado</Text>
-                </View>
-              </View>
-              <Text style={styles.rangeText}>
-                HRV normal: 50–100 ms · Mayor HRV = mejor salud cardiovascular
-              </Text>
-            </View>
-          )}
-
-          {/* Calidad de medición */}
+          {/* ─── Nivel 2: Calidad de la medición — Grid 3x2 ──────────────── */}
           <View style={styles.qualityCard}>
-            <Text style={styles.cardLabel}>CALIDAD DE MEDICIÓN</Text>
-        <View style={styles.qualityRow}>
-          {[
-            { v: qualityPercent + '%',    l: 'Señal' },
-            { v: confidencePercent + '%', l: 'Confianza' },
-            { v: measurement.signalLength || 0, l: 'Frames' },
-            { v: snr ? snr.toFixed(1) + ' dB' : 'N/A', l: 'SNR' },
-            { v: (stability * 100).toFixed(0) + '%', l: 'Estabilidad' },
-            { v: saturated ? 'Sí' : 'No', l: 'Saturada' },
-          ].map((item, i) => (
-            <View key={i} style={styles.qualityItem}>
-              <Text style={styles.qualityValue}>{item.v}</Text>
-              <Text style={styles.qualityItemLabel}>{item.l}</Text>
+            <Text style={styles.cardLabel}>Calidad de la medición</Text>
+
+            <View style={styles.qualityGrid}>
+              {/* Señal */}
+              <View style={styles.qualityCell}>
+                <Text style={styles.qualityCellIcon}>
+                  {qualityUX.icon || '📶'}
+                </Text>
+                <Text
+                  style={[styles.qualityCellValue, { color: qualityUX.color }]}
+                  numberOfLines={1}
+                >
+                  {qualityUX.label}
+                </Text>
+                <Text style={styles.qualityCellLabel}>Señal</Text>
+              </View>
+
+              {/* Confianza */}
+              <View style={styles.qualityCell}>
+                <Text style={styles.qualityCellIcon}>🎯</Text>
+                <Text
+                  style={[styles.qualityCellValue, { color: confidenceUX.color }]}
+                  numberOfLines={1}
+                >
+                  {confidenceUX.label}
+                </Text>
+                <Text style={styles.qualityCellLabel}>Confianza</Text>
+              </View>
+
+              {/* Estabilidad */}
+              <View style={styles.qualityCell}>
+                <Text style={styles.qualityCellIcon}>⚖️</Text>
+                <Text
+                  style={[styles.qualityCellValue, { color: stabilityUX.color }]}
+                  numberOfLines={1}
+                >
+                  {stabilityUX.label}
+                </Text>
+                <Text style={styles.qualityCellLabel}>Estabilidad</Text>
+              </View>
+
+              {/* Frames */}
+              <View style={styles.qualityCell}>
+                <Text style={styles.qualityCellIcon}>📊</Text>
+                <Text style={styles.qualityCellValue}>
+                  {measurement.signalLength || 0}
+                </Text>
+                <Text style={styles.qualityCellLabel}>Frames</Text>
+              </View>
+
+              {/* Latidos */}
+              <View style={styles.qualityCell}>
+                <Text style={styles.qualityCellIcon}>❤️</Text>
+                <Text style={styles.qualityCellValue}>
+                  {rrIntervals?.length || 0}
+                </Text>
+                <Text style={styles.qualityCellLabel}>Latidos</Text>
+              </View>
+
+              {/* Sensor */}
+              <View style={styles.qualityCell}>
+                <Text style={styles.qualityCellIcon}>
+                  {saturatedAlert ? '💡' : '✅'}
+                </Text>
+                <Text
+                  style={[
+                    styles.qualityCellValue,
+                    {
+                      color: saturatedAlert
+                        ? saturatedAlert.color
+                        : COLORS.success,
+                      fontSize: 13,
+                    },
+                  ]}
+                  numberOfLines={1}
+                >
+                  {saturatedAlert ? 'Saturada' : 'Normal'}
+                </Text>
+                <Text style={styles.qualityCellLabel}>Sensor</Text>
+              </View>
             </View>
-          ))}
-        </View>
-            {qualityPercent < 50 && (
-              <Text style={styles.qualityWarn}>
-                ⚠️ Calidad baja. Cubre mejor la cámara y mantén el dedo quieto.
+
+            {hasWarning && !hasCriticalIssue && (
+              <Text style={styles.qualityHint}>
+                💡 Los resultados son aproximados. Para mejor precisión, recoloca
+                el dedo y vuelve a medir.
               </Text>
             )}
           </View>
 
-          {/* Compartir */}
+          {/* ─── Nivel 3: HRV avanzado ────────────────────────────────────── */}
+          {showAdvancedHRV ? (
+            <View style={styles.hrvCard}>
+              <Text style={styles.cardLabel}>Variabilidad cardíaca (HRV)</Text>
+              <View style={styles.hrvHeader}>
+                <Text style={styles.hrvIcon}>{hrvUX.icon}</Text>
+                <Text style={[styles.hrvTitle, { color: hrvUX.color }]}>
+                  {hrvUX.label}
+                </Text>
+              </View>
+              <Text style={styles.hrvDescription}>{hrvUX.description}</Text>
+              {hrvUX.showValues && (
+                <View style={styles.hrvMetricsRow}>
+                  <View style={styles.hrvMetricBlock}>
+                    <Text
+                      style={[
+                        styles.hrvMetricBlockValue,
+                        { color: hrvUX.color },
+                      ]}
+                    >
+                      {hrvUX.sdnnMs ?? '—'}
+                    </Text>
+                    <Text style={styles.hrvMetricBlockUnit}>ms</Text>
+                    <Text style={styles.hrvMetricBlockLabel}>SDNN</Text>
+                  </View>
+                  <View style={styles.hrvMetricDivider} />
+                  <View style={styles.hrvMetricBlock}>
+                    <Text
+                      style={[
+                        styles.hrvMetricBlockValue,
+                        { color: hrvUX.color },
+                      ]}
+                    >
+                      {hrvUX.latidos ?? '—'}
+                    </Text>
+                    <Text style={styles.hrvMetricBlockUnit}>latidos</Text>
+                    <Text style={styles.hrvMetricBlockLabel}>Registrados</Text>
+                  </View>
+                  <View style={styles.hrvMetricDivider} />
+                  <View style={styles.hrvMetricBlock}>
+                    <Text
+                      style={[
+                        styles.hrvMetricBlockValue,
+                        { color: hrvUX.color, fontSize: 20 },
+                      ]}
+                    >
+                      {hrvUX.score ?? '—'}
+                      <Text style={styles.hrvMetricBlockScoreMax}>/4</Text>
+                    </Text>
+                    <Text style={styles.hrvMetricBlockLabel}>Puntuación</Text>
+                  </View>
+                </View>
+              )}
+              <Text style={styles.rangeText}>
+                HRV normal: 50–100 ms · Mayor HRV = mejor salud cardiovascular
+              </Text>
+            </View>
+          ) : (
+            <View style={styles.hrvCard}>
+              <Text style={styles.cardLabel}>Variabilidad cardíaca (HRV)</Text>
+              <View style={styles.hrvEmptyState}>
+                <Text style={styles.hrvEmptyIcon}>⏱️</Text>
+                <Text style={styles.hrvEmptyTitle}>Datos insuficientes</Text>
+                <Text style={styles.hrvEmptyText}>
+                  {hasCriticalIssue
+                    ? 'La medición fue demasiado corta. Mantén el dedo quieto sobre la cámara durante 60 segundos completos para obtener datos de HRV.'
+                    : 'Se necesitan más latidos para analizar la variabilidad cardíaca. Continúa midiendo regularmente.'}
+                </Text>
+              </View>
+            </View>
+          )}
+
+          {/* ─── Acciones ─────────────────────────────────────────────────── */}
           <TouchableOpacity
             style={styles.shareBtn}
             onPress={() => shareMeasurementSummary(measurement)}
           >
-            <Text style={styles.shareBtnText}>
-              📤 Compartir resultado
-            </Text>
+            <Text style={styles.shareBtnIcon}>📤</Text>
+            <Text style={styles.shareBtnText}>Compartir resultado</Text>
           </TouchableOpacity>
 
-          {/* Calibración */}
-          {/* Botón para iniciar la calibración guiada en pantalla separada */}
           <TouchableOpacity
             style={styles.calibrateBtn}
             onPress={() => navigation.navigate('Calibration', { measurement })}
           >
+            <Text style={styles.calibrateBtnIcon}>📏</Text>
             <Text style={styles.calibrateBtnText}>
-              📏 Tengo un tensiómetro — calibrar para mayor precisión
+              Tengo un tensiómetro — calibrar para mayor precisión
             </Text>
           </TouchableOpacity>
 
+          {/* Disclaimer legal */}
           <LegalDisclaimer />
 
-          {/* Acciones */}
+          {/* Navegación principal */}
           <View style={styles.actionsRow}>
             <TouchableOpacity
-              style={styles.secondaryBtn}
+              style={styles.primaryBtn}
               onPress={() => navigation.navigate('Measure')}
             >
-              <Text style={styles.secondaryBtnText}>Nueva medición</Text>
+              <Text style={styles.primaryBtnText}>Nueva medición</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={styles.primaryBtn}
+              style={styles.secondaryBtn}
               onPress={() => navigation.navigate('HomeMain')}
             >
-              <Text style={styles.primaryBtnText}>Inicio</Text>
+              <Text style={styles.secondaryBtnText}>Inicio</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -261,130 +382,394 @@ export default function ResultsScreen({ navigation, route }) {
 }
 
 const styles = StyleSheet.create({
-  safe:    { flex: 1, backgroundColor: '#0D1918' },
-  scroll:  { padding: 20, paddingBottom: 40 },
-  center:  { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 },
-  errorText: { color: '#F25C54', fontSize: 16, marginBottom: 24, textAlign: 'center' },
-  header:  { marginBottom: 24 },
-  title:   { color: '#fff', fontSize: 26, fontWeight: '700' },
-  date:    { color: '#4A6A67', fontSize: 13, marginTop: 4, textTransform: 'capitalize' },
-
-  resultCard: {
-    backgroundColor: '#132220', borderRadius: 20,
-    padding: 24, marginBottom: 16,
-    borderWidth: 1, alignItems: 'center',
-    borderColor: '#1A7F6E22',
+  // ─── Contenedores principales ──────────────────────────────────────────
+  safe: {
+    flex: 1,
+    backgroundColor: COLORS.bgCard,
   },
-  cardLabel: {
-    color: '#4A6A67', fontSize: 11, fontWeight: '700',
-    letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 16,
+  scroll: {
+    padding: 20,
+    paddingBottom: 40,
   },
-  bigValue: {
-    fontSize: 72, fontWeight: '800',
-    fontVariant: ['tabular-nums'], lineHeight: 76,
+  center: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
   },
-  bigUnit:  { color: '#4A6A67', fontSize: 13, marginTop: 6, marginBottom: 12 },
-  badge:    { borderRadius: 20, paddingHorizontal: 20, paddingVertical: 8, marginBottom: 10, borderWidth: 1 },
-  badgeText:{ fontSize: 15, fontWeight: '800', letterSpacing: 0.3 },
-  rangeText:{ color: '#3A5A57', fontSize: 12, textAlign: 'center' },
 
-  methodDetail: { flexDirection: 'row', gap: 8, marginTop: 10, alignItems: 'center' },
-  methodText:   { color: '#4A6A67', fontSize: 12 },
-  methodDivider:{ color: '#2A4A47', fontSize: 12 },
-
-  calibrationWarning: { backgroundColor: '#FFA50022', borderRadius: 8, padding: 8, marginBottom: 12, width: '100%' },
-  calibrationWarningText: { color: '#FFA500', fontSize: 12, textAlign: 'center' },
-  calibrationOk:  { backgroundColor: '#2BBFA422', borderRadius: 8, padding: 8, marginBottom: 12, width: '100%' },
-  calibrationOkText: { color: '#2BBFA4', fontSize: 12, textAlign: 'center' },
-
-  // Calibration method label (Regresión / Offset)
-  calibrationMethodText: { color: '#fff', fontSize: 14, marginTop: 4, textAlign: 'center' },
-
-  // HRV
-  hrvRow:    { flexDirection: 'row', alignItems: 'center', marginTop: 8, marginBottom: 12, width: '100%' },
-  hrvItem:   { flex: 1, alignItems: 'center' },
-  hrvValue:  { fontSize: 22, fontWeight: '700', color: '#2BBFA4' },
-  hrvLabel:  { color: '#4A6A67', fontSize: 12, marginTop: 4 },
-  hrvDivider:{ width: 1, height: 40, backgroundColor: '#1A7F6E33' },
-
-  // Calidad
-  qualityCard: {
-    backgroundColor: '#132220', borderRadius: 16,
-    padding: 20, marginBottom: 16,
-    borderWidth: 1, borderColor: '#1A7F6E22',
-  },
-  qualityRow:      { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', marginTop: 8 },
-  qualityItem:     { width: '31%', alignItems: 'center', marginBottom: 12 },
-  qualityValue:    { color: '#2BBFA4', fontSize: 24, fontWeight: '700' },
-  qualityItemLabel:{ color: '#4A6A67', fontSize: 12, marginTop: 4 },
-  // qualityDivider is retained for compatibility but not used in the new grid layout
-  qualityDivider:  { width: 1, height: 40, backgroundColor: '#1A7F6E33' },
-  qualityWarn:     { color: '#FFA500', fontSize: 12, marginTop: 12, textAlign: 'center' },
-
-  // Calibración
-  calibrateBtn: {
-    backgroundColor: '#1A7F6E22', borderRadius: 12, padding: 14,
-    marginBottom: 16, borderWidth: 1, borderColor: '#1A7F6E66', alignItems: 'center',
-  },
-  calibrateBtnText: { color: '#2BBFA4', fontSize: 14, fontWeight: '600' },
-  calibrationForm: {
-    backgroundColor: '#132220', borderRadius: 16,
-    padding: 20, marginBottom: 16,
-    borderWidth: 1, borderColor: '#1A7F6E44',
-  },
-  calibrationFormTitle:    { color: '#fff', fontSize: 16, fontWeight: '700', marginBottom: 6 },
-  calibrationFormSubtitle: { color: '#4A6A67', fontSize: 13, marginBottom: 16, lineHeight: 20 },
-  bpInputRow:   { flexDirection: 'row', alignItems: 'flex-end', gap: 8, marginBottom: 16 },
-  bpInputGroup: { flex: 1 },
-  inputLabel:   { color: '#8BBAB5', fontSize: 12, marginBottom: 6 },
-  calInput:     { backgroundColor: '#0D1918', borderRadius: 10, padding: 12, color: '#fff', fontSize: 18, textAlign: 'center', borderWidth: 1, borderColor: '#1A7F6E44' },
-  slash:        { color: '#4A6A67', fontSize: 28, fontWeight: '300', marginBottom: 12 },
-  calBtnRow:    { flexDirection: 'row', gap: 12 },
-  calCancelBtn: { flex: 1, backgroundColor: 'transparent', borderRadius: 12, padding: 14, alignItems: 'center', borderWidth: 1, borderColor: '#2A4A47' },
-  calCancelBtnText: { color: '#4A6A67', fontSize: 15 },
-  calSaveBtn:   { flex: 1, backgroundColor: '#1A7F6E', borderRadius: 12, padding: 14, alignItems: 'center' },
-  calSaveBtnText: { color: '#fff', fontSize: 15, fontWeight: '700' },
-
-  // Disclaimer médico
-  medicalDisclaimer: {
-    flexDirection: 'row',
-    backgroundColor: 'rgba(242, 92, 84, 0.12)',
-    borderRadius: 12,
-    padding: 14,
+  // ─── Estado vacío / error ──────────────────────────────────────────────
+  errorIcon: {
+    fontSize: 40,
     marginBottom: 16,
-    borderLeftWidth: 4,
-    borderLeftColor: '#F25C54',
-    alignItems: 'flex-start',
-    gap: 10,
   },
-  medicalDisclaimerIcon: { fontSize: 20, marginTop: 1 },
-  medicalDisclaimerTextWrap: { flex: 1 },
-  medicalDisclaimerTitle: {
-    color: '#F25C54',
-    fontSize: 12,
-    fontWeight: '800',
-    letterSpacing: 1,
+  errorText: {
+    fontSize: 16,
+    color: COLORS.textSecondary,
+    marginBottom: 24,
+    textAlign: 'center',
+    lineHeight: 24,
+  },
+
+  // ─── Alertas / Issues ──────────────────────────────────────────────────
+  alertCard: {
+    borderRadius: RADIUS.md,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    marginBottom: 12,
+    borderLeftWidth: 4,
+  },
+  alertError: {
+    backgroundColor: COLORS.dangerLight,
+  },
+  alertWarning: {
+    backgroundColor: COLORS.warningLight,
+  },
+  alertInfo: {
+    backgroundColor: COLORS.primarySubtle,
+  },
+  alertBorderError: {
+    borderLeftColor: COLORS.danger,
+  },
+  alertBorderWarning: {
+    borderLeftColor: COLORS.warning,
+  },
+  alertBorderInfo: {
+    borderLeftColor: COLORS.info,
+  },
+  alertRow: {
+    flexDirection: 'row',
+    gap: 10,
+    alignItems: 'flex-start',
+  },
+  alertIcon: {
+    fontSize: 18,
+    marginTop: 1,
+  },
+  alertTextWrap: {
+    flex: 1,
+  },
+  alertTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: COLORS.textPrimary,
     marginBottom: 4,
   },
-  medicalDisclaimerBody: {
-    color: '#F25C54',
-    fontSize: 12,
-    lineHeight: 18,
-    opacity: 0.85,
+  alertMessage: {
+    fontSize: 13,
+    lineHeight: 20,
+    color: COLORS.textSecondary,
   },
 
-  // Compartir
-  shareBtn: {
-    backgroundColor: '#132220', borderRadius: 12, padding: 14,
-    marginBottom: 12, borderWidth: 1, borderColor: '#1A7F6E66',
+  // ─── Tarjetas de resultado ─────────────────────────────────────────────
+  resultCard: {
+    backgroundColor: COLORS.bg,
+    borderRadius: RADIUS.xl,
+    paddingVertical: 28,
+    paddingHorizontal: 24,
+    marginBottom: 16,
+    alignItems: 'center',
+    ...SHADOWS.card,
+  },
+  cardLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: COLORS.textMuted,
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+    marginBottom: 16,
+  },
+  cardUnit: {
+    fontSize: 13,
+    color: COLORS.textSecondary,
+    marginTop: 4,
+    marginBottom: 16,
+  },
+  rangeText: {
+    fontSize: 12,
+    color: COLORS.textMuted,
+    textAlign: 'center',
+    marginTop: 4,
+    lineHeight: 18,
+  },
+
+  // ─── BPM — valor grande ────────────────────────────────────────────────
+  bpmValue: {
+    fontSize: 72,
+    fontWeight: '800',
+    fontVariant: ['tabular-nums'],
+    lineHeight: 80,
+  },
+
+  // ─── PA — valor grande ─────────────────────────────────────────────────
+  bpValue: {
+    fontSize: 48,
+    fontWeight: '800',
+    fontVariant: ['tabular-nums'],
+    lineHeight: 54,
+  },
+
+  // ─── Badge tipo pill ───────────────────────────────────────────────────
+  badgePill: {
+    borderRadius: RADIUS.full,
+    paddingHorizontal: 20,
+    paddingVertical: 6,
+    marginBottom: 10,
+  },
+  badgePillText: {
+    fontSize: 14,
+    fontWeight: '700',
+    letterSpacing: 0.3,
+  },
+
+  // ─── Calibración ───────────────────────────────────────────────────────
+  calibrationWarning: {
+    backgroundColor: COLORS.warningLight,
+    borderRadius: RADIUS.sm,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    marginBottom: 16,
+    width: '100%',
+  },
+  calibrationWarningText: {
+    color: COLORS.warning,
+    fontSize: 12,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  calibrationOk: {
+    backgroundColor: COLORS.successLight,
+    borderRadius: RADIUS.sm,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    marginBottom: 16,
+    width: '100%',
+  },
+  calibrationOkText: {
+    color: COLORS.success,
+    fontSize: 12,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+
+  // ─── Calidad de la medición ────────────────────────────────────────────
+  qualityCard: {
+    backgroundColor: COLORS.bg,
+    borderRadius: RADIUS.lg,
+    paddingVertical: 20,
+    paddingHorizontal: 20,
+    marginBottom: 16,
+    ...SHADOWS.card,
+  },
+  qualityGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    marginTop: 4,
+  },
+  qualityCell: {
+    width: '31%',
+    alignItems: 'center',
+    paddingVertical: 16,
+    marginBottom: 8,
+    backgroundColor: COLORS.bgSecondary,
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  qualityCellIcon: {
+    fontSize: 22,
+    marginBottom: 6,
+  },
+  qualityCellValue: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: COLORS.textPrimary,
+    textAlign: 'center',
+  },
+  qualityCellLabel: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: COLORS.textMuted,
+    marginTop: 4,
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+  },
+  qualityHint: {
+    color: COLORS.warning,
+    fontSize: 12,
+    textAlign: 'center',
+    marginTop: 14,
+    lineHeight: 18,
+  },
+
+  // ─── HRV ───────────────────────────────────────────────────────────────
+  hrvCard: {
+    backgroundColor: COLORS.bg,
+    borderRadius: RADIUS.lg,
+    paddingVertical: 20,
+    paddingHorizontal: 20,
+    marginBottom: 16,
+    ...SHADOWS.card,
+  },
+  hrvHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 10,
+  },
+  hrvIcon: {
+    fontSize: 24,
+  },
+  hrvTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  hrvDescription: {
+    fontSize: 13,
+    lineHeight: 20,
+    color: COLORS.textSecondary,
+    marginBottom: 16,
+  },
+  hrvMetricsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+    backgroundColor: COLORS.bgSecondary,
+    borderRadius: RADIUS.md,
+    paddingVertical: 14,
+    paddingHorizontal: 8,
+  },
+  hrvMetricBlock: {
+    flex: 1,
     alignItems: 'center',
   },
-  shareBtnText: { color: '#8BBAB5', fontSize: 14, fontWeight: '600' },
+  hrvMetricBlockValue: {
+    fontSize: 24,
+    fontWeight: '700',
+    fontVariant: ['tabular-nums'],
+  },
+  hrvMetricBlockScoreMax: {
+    fontSize: 14,
+    fontWeight: '400',
+    color: COLORS.textMuted,
+  },
+  hrvMetricBlockUnit: {
+    fontSize: 11,
+    color: COLORS.textMuted,
+    marginTop: 1,
+    fontWeight: '500',
+    textTransform: 'lowercase',
+  },
+  hrvMetricBlockLabel: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: COLORS.textMuted,
+    marginTop: 4,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  hrvMetricDivider: {
+    width: 1,
+    height: 36,
+    backgroundColor: COLORS.border,
+  },
+  hrvEmptyState: {
+    alignItems: 'center',
+    paddingVertical: 20,
+  },
+  hrvEmptyIcon: {
+    fontSize: 36,
+    marginBottom: 12,
+  },
+  hrvEmptyTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: COLORS.textSecondary,
+    marginBottom: 8,
+  },
+  hrvEmptyText: {
+    fontSize: 13,
+    color: COLORS.textMuted,
+    textAlign: 'center',
+    lineHeight: 20,
+    paddingHorizontal: 8,
+  },
 
-  // Acciones
-  actionsRow:     { flexDirection: 'row', gap: 12, marginTop: 8 },
-  secondaryBtn:   { flex: 1, backgroundColor: 'transparent', borderRadius: 14, padding: 16, alignItems: 'center', borderWidth: 1, borderColor: '#1A7F6E66' },
-  secondaryBtnText: { color: '#2BBFA4', fontSize: 15, fontWeight: '600' },
-  primaryBtn:     { flex: 1, backgroundColor: '#1A7F6E', borderRadius: 14, padding: 16, alignItems: 'center' },
-  primaryBtnText: { color: '#fff', fontSize: 15, fontWeight: '700' },
+  // ─── Botones de acción ─────────────────────────────────────────────────
+  shareBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLORS.primarySubtle,
+    borderRadius: RADIUS.md,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    marginBottom: 12,
+    gap: 8,
+  },
+  shareBtnIcon: {
+    fontSize: 16,
+  },
+  shareBtnText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: COLORS.primary,
+  },
+  calibrateBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLORS.bg,
+    borderRadius: RADIUS.md,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: COLORS.primary,
+    gap: 8,
+  },
+  calibrateBtnIcon: {
+    fontSize: 16,
+  },
+  calibrateBtnText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.primary,
+    textAlign: 'center',
+  },
+
+  // ─── Navegación ────────────────────────────────────────────────────────
+  actionsRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 4,
+  },
+  primaryBtn: {
+    flex: 1,
+    backgroundColor: COLORS.primary,
+    borderRadius: RADIUS.md,
+    paddingVertical: 16,
+    alignItems: 'center',
+  },
+  primaryBtnText: {
+    color: COLORS.textOnPrimary,
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  secondaryBtn: {
+    flex: 1,
+    backgroundColor: COLORS.bg,
+    borderRadius: RADIUS.md,
+    paddingVertical: 16,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.primary,
+  },
+  secondaryBtnText: {
+    color: COLORS.primary,
+    fontSize: 15,
+    fontWeight: '600',
+  },
 });
