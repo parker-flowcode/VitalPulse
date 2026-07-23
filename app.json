@@ -16,10 +16,10 @@
       "**/*"
     ],
     "description": "Monitor cardiovascular personal. Mide tu pulso y estima tu presión arterial usando la cámara de tu móvil.",
-    "githubUrl": "https://github.com/PoleyDev/VitalPulse",
+    "githubUrl": "https://github.com/parker-flowcode/VitalPulse",
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.vitalpulse.app",
+      "bundleIdentifier": "com.vpstudios.vitalpulse",
       "buildNumber": "1",
       "infoPlist": {
         "NSCameraUsageDescription": "VitalPulse necesita la cámara para medir tu pulso mediante fotopletismografía (PPG).",
@@ -32,7 +32,7 @@
         "foregroundImage": "./assets/icon.png",
         "backgroundColor": "#1C2B2A"
       },
-      "package": "com.vitalpulse.app",
+      "package": "com.vpstudios.vitalpulse",
       "versionCode": 4,
       "permissions": [
         "android.permission.CAMERA"
@@ -47,8 +47,20 @@
           "enableMicrophonePermission": false
         }
       ],
-      "expo-file-system",
-      "expo-sharing"
+      [
+        "react-native-google-mobile-ads",
+        {
+          "androidAppId": "ca-app-pub-1345413513424965~8898482663"
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "kotlinVersion": "2.2.20"
+          }
+        }
+      ]
     ],
     "extra": {
       "eas": {
