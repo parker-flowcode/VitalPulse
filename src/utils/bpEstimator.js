@@ -347,16 +347,16 @@ function getCategoryDia(dia) {
   return 5;
 }
 const BP_CATEGORIES = [
-  { label: 'Óptima',              color: '#2BBFA4', risk: 'low' },
-  { label: 'Normal',              color: '#52C878', risk: 'low' },
-  { label: 'Normal-Alta',         color: '#FFA500', risk: 'moderate' },
-  { label: 'HTA Grado 1',         color: '#FF6B35', risk: 'high' },
-  { label: 'HTA Grado 2',         color: '#F25C54', risk: 'very_high' },
-  { label: 'HTA Grado 3',         color: '#C0392B', risk: 'critical' },
+  { label: 'Óptima',              color: '#10B981', risk: 'low' },
+  { label: 'Normal',              color: '#2563EB', risk: 'low' },
+  { label: 'Normal-Alta',         color: '#F59E0B', risk: 'moderate' },
+  { label: 'HTA Grado 1',         color: '#F97316', risk: 'high' },
+  { label: 'HTA Grado 2',         color: '#EF4444', risk: 'very_high' },
+  { label: 'HTA Grado 3',         color: '#DC2626', risk: 'critical' },
 ];
 export function classifyBP(systolic, diastolic) {
   if (systolic == null || diastolic == null || systolic <= 0 || diastolic <= 0)
-    return { label: 'Sin datos', color: '#4A6A67', risk: 'unknown' };
+    return { label: 'Sin datos', color: '#94A3B8', risk: 'unknown' };
   const catSys = getCategorySys(systolic);
   const catDia = getCategoryDia(diastolic);
   const cat = Math.max(catSys, catDia);
@@ -366,29 +366,29 @@ export function classifyBP(systolic, diastolic) {
 // ─── Clasificación BPM ───────────────────────────────────────────────────────
 export function classifyBPM(bpm) {
   if (bpm == null || bpm <= 0)
-    return { label: 'Sin datos',           color: '#4A6A67', risk: 'unknown' };
+    return { label: 'Sin datos',           color: '#94A3B8', risk: 'unknown' };
   if (bpm < 40)
-    return { label: 'Bradicardia severa',  color: '#C0392B', risk: 'critical' };
+    return { label: 'Bradicardia severa',  color: '#DC2626', risk: 'critical' };
   if (bpm < 60)
-    return { label: 'Bradicardia',         color: '#FFA500', risk: 'moderate' };
+    return { label: 'Bradicardia',         color: '#F59E0B', risk: 'moderate' };
   if (bpm <= 100)
-    return { label: 'Normal',              color: '#2BBFA4', risk: 'low' };
+    return { label: 'Normal',              color: '#10B981', risk: 'low' };
   if (bpm <= 120)
-    return { label: 'Taquicardia leve',    color: '#FFA500', risk: 'moderate' };
+    return { label: 'Taquicardia leve',    color: '#F59E0B', risk: 'moderate' };
   if (bpm <= 150)
-    return { label: 'Taquicardia',         color: '#F25C54', risk: 'high' };
-  return { label: 'Taquicardia severa',    color: '#C0392B', risk: 'critical' };
+    return { label: 'Taquicardia',         color: '#EF4444', risk: 'high' };
+  return { label: 'Taquicardia severa',    color: '#DC2626', risk: 'critical' };
 }
 
 // ─── Análisis HRV (Heart Rate Variability) ──────────────────────────────────
 // La HRV es un indicador de salud cardiovascular autónoma.
 export function analyzeHRV(rrIntervals, sdnn) {
   if (!rrIntervals || rrIntervals.length < 5) {
-    return { label: 'Datos insuficientes', score: 0, color: '#4A6A67' };
+    return { label: 'Datos insuficientes', score: 0, color: '#94A3B8' };
   }
   // SDNN < 20ms = muy baja; 20-50ms = baja; 50-100ms = normal; >100ms = alta
-  if (sdnn < 20) return { label: 'HRV muy baja',  score: 1, color: '#F25C54' };
-  if (sdnn < 50) return { label: 'HRV baja',       score: 2, color: '#FFA500' };
-  if (sdnn < 100) return { label: 'HRV normal',    score: 3, color: '#2BBFA4' };
-  return              { label: 'HRV excelente',    score: 4, color: '#1A7F6E' };
+  if (sdnn < 20) return { label: 'HRV muy baja',  score: 1, color: '#EF4444' };
+  if (sdnn < 50) return { label: 'HRV baja',       score: 2, color: '#F59E0B' };
+  if (sdnn < 100) return { label: 'HRV normal',    score: 3, color: '#10B981' };
+  return              { label: 'HRV excelente',    score: 4, color: '#059669' };
 }

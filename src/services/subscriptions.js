@@ -26,7 +26,7 @@ export const PLANS = {
     hasAds: true,
     hasAdvancedCalibration: false,
     hasExport: false,
-    color: '#4A6A67',
+    color: '#94A3B8',
   },
   monthly: {
     id: 'pro_monthly',
@@ -37,7 +37,7 @@ export const PLANS = {
     hasAds: false,
     hasAdvancedCalibration: true,
     hasExport: true,
-    color: '#2BBFA4',
+    color: '#2563EB',
   },
   lifetime: {
     id: 'pro_lifetime',
@@ -48,7 +48,7 @@ export const PLANS = {
     hasAds: false,
     hasAdvancedCalibration: true,
     hasExport: true,
-    color: '#F2B705',
+    color: '#F59E0B',
   },
 };
 

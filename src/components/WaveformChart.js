@@ -16,8 +16,8 @@ import Svg, { Polyline, Line, Defs, ClipPath, Rect } from 'react-native-svg';
 const PADDING_RATIO = 0.10;       // 10% de padding vertical
 const PIXELS_PER_POINT = 3;       // 1 punto cada 3px (windowing)
 const STROKE_WIDTH = 2;
-const LINE_COLOR = '#2BBFA4';
-const EMPTY_LINE_COLOR = '#2A4A47';
+const LINE_COLOR = '#3B82F6';
+const EMPTY_LINE_COLOR = '#CBD5E1';
 
 // ─── Calcular cuántos puntos mostrar según el ancho ──────────────────────────
 function calcWindowSize(width) {
@@ -130,7 +130,7 @@ const WaveformChart = React.memo(function WaveformChart({
 // ─── Estilos ─────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#0F1F1E', // Mismo fondo que la card padre
+    backgroundColor: 'transparent',
     overflow: 'hidden',
     borderRadius: 8,
   },

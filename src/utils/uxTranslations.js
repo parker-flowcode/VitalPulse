@@ -1,34 +1,36 @@
 /**
- * uxTranslations.js — VitalPulse
+ * uxTranslations.js — VitalPulse v5.0
  *
  * Traduce métricas técnicas (SNR dB, SDNN ms, etc.) a mensajes UX
  * amigables, siguiendo una jerarquía: resultado principal → calidad → HRV.
+ *
+ * Actualizado con la paleta de diseño v5 (blanco minimalista).
  */
 
 // ─── Calidad de señal desde SNR ─────────────────────────────────────────────
 export function translateSNR(snr) {
-  if (snr == null || snr <= 0) return { label: 'Sin datos',    color: '#4A6A67', icon: '📡', order: 0 };
-  if (snr >= 15)             return { label: 'Excelente',      color: '#2BBFA4', icon: '🟢', order: 4 };
-  if (snr >= 10)             return { label: 'Buena',          color: '#52C878', icon: '🟡', order: 3 };
-  if (snr >= 5)              return { label: 'Aceptable',      color: '#FFA500', icon: '🟠', order: 2 };
-  return                        { label: 'Pobre — recoloca el dedo', color: '#F25C54', icon: '🔴', order: 1 };
+  if (snr == null || snr <= 0) return { label: 'Sin datos',    color: '#94A3B8', icon: '📡', order: 0 };
+  if (snr >= 15)             return { label: 'Excelente',      color: '#10B981', icon: '🟢', order: 4 };
+  if (snr >= 10)             return { label: 'Buena',          color: '#2563EB', icon: '🟡', order: 3 };
+  if (snr >= 5)              return { label: 'Aceptable',      color: '#F59E0B', icon: '🟠', order: 2 };
+  return                        { label: 'Pobre — recoloca el dedo', color: '#EF4444', icon: '🔴', order: 1 };
 }
 
 // ─── Calidad de señal compuesta (desde quality 0-1) ─────────────────────────
 export function translateSignalQuality(quality) {
-  if (quality == null || quality <= 0)   return { label: 'Esperando señal...',   color: '#4A6A67', icon: '⏳' };
-  if (quality >= 0.8)                     return { label: 'Excelente',            color: '#2BBFA4', icon: '🟢' };
-  if (quality >= 0.6)                     return { label: 'Buena',                color: '#52C878', icon: '🟡' };
-  if (quality >= 0.3)                     return { label: 'Regular',              color: '#FFA500', icon: '🟠' };
-  return                                    { label: 'Débil — ajusta el dedo',   color: '#F25C54', icon: '🔴' };
+  if (quality == null || quality <= 0)   return { label: 'Esperando señal...',   color: '#94A3B8', icon: '⏳' };
+  if (quality >= 0.8)                     return { label: 'Excelente',            color: '#10B981', icon: '🟢' };
+  if (quality >= 0.6)                     return { label: 'Buena',                color: '#2563EB', icon: '🟡' };
+  if (quality >= 0.3)                     return { label: 'Regular',              color: '#F59E0B', icon: '🟠' };
+  return                                    { label: 'Débil — ajusta el dedo',   color: '#EF4444', icon: '🔴' };
 }
 
 // ─── Confianza en la medición ───────────────────────────────────────────────
 export function translateConfidence(confidence) {
-  if (confidence == null || confidence <= 0) return { label: 'Sin evaluar',     color: '#4A6A67' };
-  if (confidence >= 0.8)                      return { label: 'Alta',            color: '#2BBFA4' };
-  if (confidence >= 0.5)                      return { label: 'Media',           color: '#FFA500' };
-  return                                        { label: 'Baja',               color: '#F25C54' };
+  if (confidence == null || confidence <= 0) return { label: 'Sin evaluar',     color: '#94A3B8' };
+  if (confidence >= 0.8)                      return { label: 'Alta',            color: '#10B981' };
+  if (confidence >= 0.5)                      return { label: 'Media',           color: '#F59E0B' };
+  return                                        { label: 'Baja',               color: '#EF4444' };
 }
 
 // ─── HRV (SDNN) traducido ───────────────────────────────────────────────────
@@ -38,33 +40,33 @@ export function translateHRV(sdnn, rrCount) {
     return {
       label: 'Medición incompleta',
       description: 'Solo se detectaron ' + (rrCount || 0) + ' latidos. Mantén el dedo 60 segundos completos.',
-      color: '#FFA500',
+      color: '#F59E0B',
       icon: '⚠️',
       score: 0,
       showValues: false,
     };
   }
   if (sdnn == null) {
-    return { label: 'Sin datos', description: '', color: '#4A6A67', icon: '📡', score: 0, showValues: false };
+    return { label: 'Sin datos', description: '', color: '#94A3B8', icon: '📡', score: 0, showValues: false };
   }
 
   let label, description, score, color, icon;
   if (sdnn >= 100) {
     label = 'Excelente variabilidad';
     description = 'Tu sistema nervioso autónomo responde bien. Asociado a mejor salud cardiovascular.';
-    score = 4; color = '#2BBFA4'; icon = '🌟';
+    score = 4; color = '#059669'; icon = '🌟';
   } else if (sdnn >= 50) {
     label = 'Variabilidad normal';
     description = 'Dentro del rango esperado para adultos sanos.';
-    score = 3; color = '#52C878'; icon = '✅';
+    score = 3; color = '#10B981'; icon = '✅';
   } else if (sdnn >= 20) {
     label = 'Variabilidad baja';
     description = 'Puede indicar estrés, fatiga o necesidad de recuperación. Considera descansar.';
-    score = 2; color = '#FFA500'; icon = '⚠️';
+    score = 2; color = '#F59E0B'; icon = '⚠️';
   } else {
     label = 'Variabilidad muy baja';
     description = 'Valores bajos sostenidos pueden requerir evaluación médica. Consulta a tu doctor.';
-    score = 1; color = '#F25C54'; icon = '🔴';
+    score = 1; color = '#EF4444'; icon = '🔴';
   }
 
   return { label, description, color, icon, score, showValues: true, sdnnMs: Math.round(sdnn), latidos: rrCount };
@@ -72,10 +74,10 @@ export function translateHRV(sdnn, rrCount) {
 
 // ─── Estabilidad ────────────────────────────────────────────────────────────
 export function translateStability(stability) {
-  if (stability == null) return { label: '—', color: '#4A6A67' };
-  if (stability >= 0.8)  return { label: 'Estable',    color: '#2BBFA4' };
-  if (stability >= 0.5)  return { label: 'Moderada',   color: '#FFA500' };
-  return                    { label: 'Inestable',    color: '#F25C54' };
+  if (stability == null) return { label: '—', color: '#94A3B8' };
+  if (stability >= 0.8)  return { label: 'Estable',    color: '#10B981' };
+  if (stability >= 0.5)  return { label: 'Moderada',   color: '#F59E0B' };
+  return                    { label: 'Inestable',    color: '#EF4444' };
 }
 
 // ─── Estado de saturación ───────────────────────────────────────────────────
@@ -84,7 +86,7 @@ export function translateSaturated(saturated) {
   return {
     label: 'Señal saturada',
     description: 'La cámara recibió demasiada o muy poca luz. Ajusta la presión del dedo.',
-    color: '#F25C54',
+    color: '#EF4444',
     icon: '💡',
   };
 }
