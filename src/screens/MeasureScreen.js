@@ -20,7 +20,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet,
-  Alert, Vibration, Dimensions, AppState,
+  Alert, Vibration, StatusBar, AppState, useWindowDimensions,
 } from 'react-native';
 import {
   Camera,
@@ -32,7 +32,7 @@ import {
 import { Worklets, useSharedValue } from 'react-native-worklets-core';
 import { useResizePlugin } from 'vision-camera-resize-plugin';
 import { Accelerometer } from 'expo-sensors';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import WaveformChart from '../components/WaveformChart';
 import CircularProgress from '../components/CircularProgress';
 import useHealthStore from '../store/healthstore';
@@ -40,11 +40,15 @@ import { processPPGSignal, detrend, resetKalman, detectRawSaturation, detectFing
 import { estimateBPCalibrated } from '../utils/bpEstimator';
 import { COLORS, SPACING, RADIUS, SHADOWS } from '../theme/designTokens';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const MEASURE_DURATION = 60;
 const MOTION_THRESHOLD = 0.12;
 
 export default function MeasureScreen({ navigation }) {
+  const insets = useSafeAreaInsets();
+  const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = useWindowDimensions();
+  const fontScale = Math.max(0.85, Math.min(1.15, SCREEN_WIDTH / 390));
+  const timerSize = Math.min(150, SCREEN_HEIGHT * 0.18);
+
   const device = useCameraDevice('back');
   const format = useCameraFormat(device, [
     { fps: 30 },
@@ -113,16 +117,16 @@ export default function MeasureScreen({ navigation }) {
 
     if (newCount % 15 === 0) setFrameCount(newCount);
 
-    // BUG#16: Actualizar gráfico solo cada ~12 frames nuevos (no toda la señal)
-    if (newCount - lastChartUpdateRef.current >= 12 && newCount > 10) {
+    // Actualizar gráfico cada ~4 frames nuevos (más rápido, menos latencia visual)
+    if (newCount - lastChartUpdateRef.current >= 4 && newCount > 5) {
       lastChartUpdateRef.current = newCount;
       const raw = localValuesRef.current.slice(-100);
       const detrended = detrend(raw);
       setDisplayValues(detrended);
     }
 
-    // BUG#16: BPM + finger detection solo cada ~100 frames nuevos
-    if (newCount - lastBPMCheckRef.current >= 100 && newCount > 60) {
+    // BPM + finger detection cada ~30 frames nuevos (empezar antes)
+    if (newCount - lastBPMCheckRef.current >= 30 && newCount > 30) {
       lastBPMCheckRef.current = newCount;
       const elapsed = MEASURE_DURATION - timeLeft;
       const currentFps = elapsed > 0 ? Math.round(newCount / elapsed) : 19;
@@ -153,7 +157,7 @@ export default function MeasureScreen({ navigation }) {
         }
       }
 
-      // BUG#16: Auto-cancelación solo cada ~1s de frames nuevos
+      // Auto-cancelación cada ~1s de frames nuevos
       if (newCount >= currentFps * 15 && newCount - lastAutoCancelRef.current >= currentFps) {
         lastAutoCancelRef.current = newCount;
         const recent = localValuesRef.current.slice(-currentFps * 5);
@@ -301,7 +305,7 @@ export default function MeasureScreen({ navigation }) {
     isFinalizedRef.current = false;
     isCapturingRef.current = false;
     isCapturingSV.value    = false;
-    // BUG#16: Resetear contadores de procesamiento
+    // Resetear contadores de procesamiento
     lastChartUpdateRef.current = 0;
     lastBPMCheckRef.current = 0;
     lastAutoCancelRef.current = 0;
@@ -323,7 +327,7 @@ export default function MeasureScreen({ navigation }) {
         isCapturingSV.value    = true;
         startAccelerometer();
         Vibration.vibrate(200);
-      }, 500);
+      }, 200);
 
       let elapsed = 0;
       timerRef.current = setInterval(() => {
@@ -337,7 +341,7 @@ export default function MeasureScreen({ navigation }) {
           finalizeMeasurement();
         }
       }, 1000);
-    }, 3000);
+    }, 1500);
   };
 
   // ─── Finalizar ────────────────────────────────────────────────────────────
@@ -457,13 +461,45 @@ export default function MeasureScreen({ navigation }) {
       ? 'Señal regular'
       : 'Señal débil';
 
+  // ─── Estilos dinámicos responsivos ────────────────────────────────────────
+  const bottomAreaStyle = {
+    padding: 20,
+    paddingBottom: insets.bottom + 16,
+    marginBottom: 60,
+  };
+
+  const startBtnStyle = {
+    backgroundColor: COLORS.primary,
+    borderRadius: 28,
+    paddingVertical: 20,
+    alignItems: 'center',
+    marginBottom: 16,
+    ...SHADOWS.elevated,
+  };
+
+  const stopBtnStyle = {
+    backgroundColor: 'transparent',
+    borderRadius: 28,
+    paddingVertical: 20,
+    alignItems: 'center',
+    marginBottom: 16,
+    borderWidth: 1.5,
+    borderColor: COLORS.danger + '99',
+  };
+
+  const waveformWidth = SCREEN_WIDTH - 32;
+  const waveformHeight = Math.min(90, SCREEN_HEIGHT * 0.12);
+
   // ─── Permisos ─────────────────────────────────────────────────────────────
   if (!hasPermission) {
     return (
       <SafeAreaView style={styles.safe}>
+        <StatusBar barStyle="dark-content" backgroundColor={COLORS.bg} />
         <View style={styles.center}>
           <Text style={styles.permIcon}>📷</Text>
-          <Text style={styles.permTitle}>Cámara requerida</Text>
+          <Text style={[styles.permTitle, { fontSize: Math.round(20 * fontScale) }]}>
+            Cámara requerida
+          </Text>
           <Text style={styles.permText}>
             VitalPulse necesita la cámara trasera para medir tu pulso.
           </Text>
@@ -478,6 +514,7 @@ export default function MeasureScreen({ navigation }) {
   if (!device) {
     return (
       <View style={[styles.center, { backgroundColor: COLORS.bg }]}>
+        <StatusBar barStyle="dark-content" backgroundColor={COLORS.bg} />
         <Text style={[styles.permText, { color: COLORS.textSecondary }]}>
           Cámara trasera no disponible.
         </Text>
@@ -488,9 +525,12 @@ export default function MeasureScreen({ navigation }) {
   if (phase === 'processing') {
     return (
       <SafeAreaView style={[styles.safe, { backgroundColor: COLORS.bg }]}>
+        <StatusBar barStyle="dark-content" backgroundColor={COLORS.bg} />
         <View style={styles.center}>
           <Text style={styles.processingIcon}>🫀</Text>
-          <Text style={styles.processingTitle}>Analizando señal...</Text>
+          <Text style={[styles.processingTitle, { fontSize: Math.round(22 * fontScale) }]}>
+            Analizando señal...
+          </Text>
           <Text style={styles.processingSubtitle}>
             Procesando {frameCount} frames con FFT
           </Text>
@@ -502,6 +542,10 @@ export default function MeasureScreen({ navigation }) {
   // ─── Renderizado principal ───────────────────────────────────────────────
   return (
     <View style={[styles.container, { backgroundColor: containerBg }]}>
+      <StatusBar
+        barStyle={isDark ? 'light-content' : 'dark-content'}
+        backgroundColor={containerBg}
+      />
       <Camera
         style={styles.hiddenCamera}
         device={device}
@@ -523,7 +567,7 @@ export default function MeasureScreen({ navigation }) {
         {/* ── Cabecera ── */}
         <View style={styles.header}>
           <View style={{ width: 40 }} />
-          <Text style={[styles.headerTitle, { color: headerTextColor }]}>
+          <Text style={[styles.headerTitle, { color: headerTextColor, fontSize: Math.round(17 * fontScale) }]}>
             Midiendo pulso
           </Text>
           <TouchableOpacity
@@ -537,19 +581,19 @@ export default function MeasureScreen({ navigation }) {
 
         {/* ── Timer ── */}
         <View style={styles.timerContainer}>
-          <View style={styles.circularTimerWrapper}>
+          <View style={[styles.circularTimerWrapper, { width: timerSize, height: timerSize, borderRadius: timerSize / 2 }]}>
             <CircularProgress
-              size={150}
+              size={timerSize}
               strokeWidth={6}
               progress={1 - timeLeft / MEASURE_DURATION}
               color={qualityColor}
               bgColor={circularTrackColor}
             />
             <View style={styles.circularTimerInner}>
-              <Text style={[styles.timer, { color: timerTextColor }]}>
+              <Text style={[styles.timer, { color: timerTextColor, fontSize: Math.round(42 * fontScale), lineHeight: Math.round(44 * fontScale) }]}>
                 {timeLeft}
               </Text>
-              <Text style={[styles.timerLabel, { color: timerLabelColor }]}>
+              <Text style={[styles.timerLabel, { color: timerLabelColor, fontSize: Math.round(12 * fontScale) }]}>
                 segundos
               </Text>
             </View>
@@ -559,7 +603,9 @@ export default function MeasureScreen({ navigation }) {
         {/* ── Fase: Idle ── */}
         {phase === 'idle' && (
           <View style={styles.instructionsCard}>
-            <Text style={styles.instructionsTitle}>Cómo medir correctamente</Text>
+            <Text style={[styles.instructionsTitle, { fontSize: Math.round(17 * fontScale) }]}>
+              Cómo medir correctamente
+            </Text>
 
             <View style={styles.stepRow}>
               <Text style={styles.stepIcon}>👆</Text>
@@ -599,7 +645,9 @@ export default function MeasureScreen({ navigation }) {
         {phase === 'preparing' && (
           <View style={styles.prepCard}>
             <Text style={styles.prepIcon}>👆</Text>
-            <Text style={styles.prepText}>Coloca el dedo ahora...</Text>
+            <Text style={[styles.prepText, { fontSize: Math.round(22 * fontScale) }]}>
+              Coloca el dedo ahora...
+            </Text>
             <Text style={styles.prepSub}>
               Cubre completamente la cámara trasera y el flash
             </Text>
@@ -611,16 +659,16 @@ export default function MeasureScreen({ navigation }) {
           <View style={styles.measuringContainer}>
             {/* Waveform */}
             <View style={styles.waveformContainer}>
-              <WaveformChart data={displayValues} width={SCREEN_WIDTH - 48} height={90} />
+              <WaveformChart data={displayValues} width={waveformWidth} height={waveformHeight} />
             </View>
 
             {/* BPM en vivo */}
             <View style={styles.liveBPMContainer}>
-              <Text style={styles.liveBPM}>
+              <Text style={[styles.liveBPM, { fontSize: Math.round(56 * fontScale) }]}>
                 {liveBPM > 0 ? liveBPM : '---'}
               </Text>
-              <Text style={styles.liveBPMLabel}>
-                {liveBPM > 0 ? 'BPM detectado' : 'Esperando señal...'}
+              <Text style={[styles.liveBPMLabel, { fontSize: Math.round(12 * fontScale) }]}>
+                {liveBPM > 0 ? 'BPM detectado' : 'Detectando...'}
               </Text>
             </View>
 
@@ -696,21 +744,23 @@ export default function MeasureScreen({ navigation }) {
         )}
 
         {/* ── Área inferior ── */}
-        <View style={styles.bottomArea}>
+        <View style={[styles.bottomArea, bottomAreaStyle]}>
           {phase === 'idle' && (
             <TouchableOpacity
-              style={[styles.startBtn, !cameraReady && styles.startBtnDisabled]}
+              style={[startBtnStyle, !cameraReady && styles.startBtnDisabled]}
               onPress={startMeasurement}
               disabled={!cameraReady}
             >
-              <Text style={styles.startBtnText}>
+              <Text style={[styles.startBtnText, { fontSize: Math.round(18 * fontScale) }]}>
                 {cameraReady ? 'Iniciar medición' : '⏳ Iniciando cámara...'}
               </Text>
             </TouchableOpacity>
           )}
           {(phase === 'measuring' || phase === 'preparing') && (
-            <TouchableOpacity style={styles.stopBtn} onPress={() => stopMeasurement(true)}>
-              <Text style={styles.stopBtnText}>Cancelar</Text>
+            <TouchableOpacity style={stopBtnStyle} onPress={() => stopMeasurement(true)}>
+              <Text style={[styles.stopBtnText, { fontSize: Math.round(16 * fontScale) }]}>
+                Cancelar
+              </Text>
             </TouchableOpacity>
           )}
           <Text style={styles.legalNote}>
@@ -759,7 +809,6 @@ const styles = StyleSheet.create({
   },
   permTitle: {
     color: COLORS.textPrimary,
-    fontSize: 20,
     fontWeight: '700',
     marginBottom: 12,
   },
@@ -778,7 +827,6 @@ const styles = StyleSheet.create({
   },
   processingTitle: {
     color: COLORS.textPrimary,
-    fontSize: 22,
     fontWeight: '700',
     marginBottom: 10,
   },
@@ -799,7 +847,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   headerTitle: {
-    fontSize: 17,
     fontWeight: '600',
     textAlign: 'center',
   },
@@ -823,9 +870,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   circularTimerWrapper: {
-    width: 150,
-    height: 150,
-    borderRadius: 75,
     aspectRatio: 1,
     alignItems: 'center',
     justifyContent: 'center',
@@ -838,15 +882,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   timer: {
-    fontSize: 42,
     fontWeight: '700',
     fontVariant: ['tabular-nums'],
-    lineHeight: 44,
   },
   timerLabel: {
-    fontSize: 12,
     marginTop: 2,
-    lineHeight: 14,
   },
 
   // Instrucciones (idle)
@@ -862,7 +902,6 @@ const styles = StyleSheet.create({
   },
   instructionsTitle: {
     color: COLORS.primary,
-    fontSize: 17,
     fontWeight: '700',
     marginBottom: 16,
     textAlign: 'center',
@@ -909,7 +948,6 @@ const styles = StyleSheet.create({
   },
   prepText: {
     color: COLORS.warning,
-    fontSize: 22,
     fontWeight: '700',
   },
   prepSub: {
@@ -940,13 +978,11 @@ const styles = StyleSheet.create({
   },
   liveBPM: {
     color: COLORS.primaryLight,
-    fontSize: 56,
     fontWeight: '700',
     fontVariant: ['tabular-nums'],
   },
   liveBPMLabel: {
     color: COLORS.darkMuted,
-    fontSize: 12,
     marginTop: 2,
   },
 
@@ -1047,41 +1083,21 @@ const styles = StyleSheet.create({
 
   // Área inferior
   bottomArea: {
-    padding: 20,
-    paddingBottom: 12,
+    // padding, paddingBottom, marginBottom se establecen dinámicamente
   },
 
-  // Botón de inicio
-  startBtn: {
-    backgroundColor: COLORS.primary,
-    borderRadius: 28,
-    paddingVertical: 18,
-    alignItems: 'center',
-    marginBottom: 12,
-    ...SHADOWS.elevated,
-  },
+  // Botón de inicio (estilo base — padding y margin se aplican dinámicamente)
   startBtnDisabled: {
     opacity: 0.6,
   },
   startBtnText: {
     color: COLORS.textOnPrimary,
-    fontSize: 18,
     fontWeight: '700',
   },
 
-  // Botón cancelar
-  stopBtn: {
-    backgroundColor: 'transparent',
-    borderRadius: 28,
-    paddingVertical: 18,
-    alignItems: 'center',
-    marginBottom: 12,
-    borderWidth: 1.5,
-    borderColor: COLORS.danger + '99',
-  },
+  // Botón cancelar (estilo base)
   stopBtnText: {
     color: COLORS.danger,
-    fontSize: 16,
     fontWeight: '600',
   },
 
