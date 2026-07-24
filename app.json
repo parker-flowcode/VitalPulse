@@ -33,12 +33,13 @@
         "backgroundColor": "#2563EB"
       },
       "package": "com.vpstudios.vitalpulse",
-      "versionCode": 4,
+      "versionCode": 5,
       "permissions": [
         "android.permission.CAMERA"
       ]
     },
     "plugins": [
+      "./plugins/withAndroid16KBPageSize",
       "expo-dev-client",
       [
         "react-native-vision-camera",
@@ -57,7 +58,10 @@
         "expo-build-properties",
         {
           "android": {
-            "kotlinVersion": "2.2.20"
+            "kotlinVersion": "2.2.20",
+            "enableMinifyInReleaseBuilds": true,
+            "enableShrinkResourcesInReleaseBuilds": true,
+            "extraProguardRules": "-keep class com.facebook.react.** { *; }\n-keep class com.facebook.hermes.** { *; }\n-keep class com.facebook.jni.** { *; }\n-keep class com.swmansion.reanimated.** { *; }\n-keep class com.mrousavy.camera.** { *; }\n-keep class com.mrousavy.worklets.** { *; }\n-keep class com.reactnativeworklets.** { *; }\n-keep class com.visioncameraresizeplugin.** { *; }\n-keep class com.google.android.gms.ads.** { *; }\n-keep class com.reactnativegooglemobileads.** { *; }\n-keep class expo.modules.** { *; }\n-keep class com.swmansion.gesturehandler.** { *; }\n-keep class com.th3rdwave.safeareacontext.** { *; }\n-keep class com.swmansion.rnscreens.** { *; }\n-keep class com.horcrux.svg.** { *; }\n-keep class com.reactnativecommunity.asyncstorage.** { *; }\n-keep class kotlin.** { *; }\n-keepattributes Signature, *Annotation*, EnclosingMethod, InnerClasses\n-keep class * extends com.facebook.react.bridge.JavaScriptModule { *; }\n-keep class * extends com.facebook.react.bridge.NativeModule { *; }\n-keepclassmembers class * { @com.facebook.react.uimanager.annotations.ReactProp <methods>; }\n-keepclassmembers class * { @com.facebook.react.uimanager.annotations.ReactPropGroup <methods>; }\n-keepclassmembers class * extends com.facebook.react.uimanager.ViewManager { <init>(...); }"
           }
         }
       ]
