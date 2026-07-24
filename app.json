@@ -2,7 +2,7 @@
   "expo": {
     "name": "VitalPulse",
     "slug": "vitalpulse",
-    "version": "4.0.0",
+    "version": "5.0.0",
     "sdkVersion": "54.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -33,7 +33,7 @@
         "backgroundColor": "#2563EB"
       },
       "package": "com.vpstudios.vitalpulse",
-      "versionCode": 5,
+      "versionCode": 6,
       "permissions": [
         "android.permission.CAMERA"
       ]

@@ -1,6 +1,6 @@
 {
   "name": "vitalpulse",
-  "version": "4.0.0",
+  "version": "5.0.0",
   "main": "node_modules/expo/AppEntry.js",
   "description": "Monitor cardiovascular personal. Mide tu pulso y estima tu presión arterial usando la cámara de tu móvil.",
   "author": "MVP Software Studios",
