@@ -1,10 +1,12 @@
 /**
  * AnalyticsScreen.js — VitalPulse v5.0
  *
- * Pantalla de análisis con gráficos de tendencias, distribución de PA,
- * cuadrícula de resumen y soporte de tema dinámico.
+ * Pantalla de analisis premium con graficas de tendencias basadas en fechas,
+ * cuadricula de resumen profesional, distribucion de PA y temas dinamicos.
+ * Todos los graficos usan la paleta sky blue (#38BDF8).
+ * VictoryAxis tickFormat utiliza fechas, NO numeros de indice.
  */
-import React, { useMemo } from 'react';
+import React, { useMemo, useCallback } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, Dimensions,
 } from 'react-native';
@@ -24,29 +26,161 @@ import { SPACING, RADIUS, SHADOWS } from '../theme/designTokens';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CHART_WIDTH = SCREEN_WIDTH - 64;
-const CHART_HEIGHT = 200;
+const CHART_HEIGHT = 210;
+const SKY_BLUE = '#38BDF8';
+const SKY_BLUE_LIGHT = '#7DD3FC';
+const SKY_BLUE_DARK = '#0EA5E9';
+const HRV_GREEN = '#10B981';
+const HRV_GREEN_LIGHT = '#34D399';
 
+// ─── Axis style factory ─────────────────────────────────────────────────
+function createAxisStyle(colors) {
+  return {
+    axis: { stroke: colors.border, strokeWidth: 1 },
+    axisLabel: { padding: 30 },
+    tickLabels: {
+      fill: colors.textMuted,
+      fontSize: 10,
+      fontFamily: 'System',
+      padding: 4,
+    },
+    grid: {
+      stroke: colors.chartGrid || colors.borderLight,
+      strokeWidth: 1,
+    },
+  };
+}
+
+function createDependentAxisStyle(axisStyle) {
+  return {
+    ...axisStyle,
+    tickLabels: { ...axisStyle.tickLabels, fontSize: 9, padding: 4 },
+    grid: {
+      stroke: axisStyle.grid.stroke,
+      strokeWidth: 1,
+    },
+  };
+}
+
+// ─── Ticks — show every Nth data point to avoid crowding ────────────────
+function buildDateTickValues(data, maxTicks = 5) {
+  if (!data || data.length === 0) return [];
+  if (data.length <= maxTicks) return data.map((d) => d.x);
+  const step = Math.max(1, Math.floor((data.length - 1) / (maxTicks - 1)));
+  const values = [];
+  for (let i = 0; i < data.length; i += step) {
+    values.push(data[i].x);
+  }
+  // Always include the last point
+  if (values.length > 0 && values[values.length - 1] !== data[data.length - 1].x) {
+    values.push(data[data.length - 1].x);
+  }
+  return values;
+}
+
+function formatDate(timestamp) {
+  if (!timestamp) return '';
+  try {
+    const d = timestamp instanceof Date ? timestamp : new Date(timestamp);
+    return d.toLocaleDateString('es-ES', {
+      day: '2-digit',
+      month: '2-digit',
+    });
+  } catch {
+    return '';
+  }
+}
+
+// ─── Metric Card ────────────────────────────────────────────────────────
 function MetricCard({ label, value, unit, color, icon, c }) {
   return (
-    <View style={[styles.metricCard, SHADOWS.card, { backgroundColor: c.bg, borderColor: c.border }]}>
-      <View style={styles.metricTop}>
-        <Text style={styles.metricIcon}>{icon}</Text>
-        <Text style={[styles.metricValue, { color: color || c.textPrimary }]}>
-          {value}
+    <View
+      style={[
+        styles.metricCard,
+        SHADOWS.card,
+        {
+          backgroundColor: c.bg,
+          borderColor: c.borderLight,
+        },
+      ]}
+    >
+      {/* Sky blue top accent */}
+      <View style={[styles.metricAccent, { backgroundColor: color || c.primary }]} />
+
+      <View style={styles.metricBody}>
+        <View style={styles.metricHeader}>
+          <View
+            style={[
+              styles.metricIconWrap,
+              { backgroundColor: color ? color + '18' : c.primarySubtle },
+            ]}
+          >
+            <Text style={[styles.metricIcon, { color: color || c.primary }]}>
+              {icon || '📊'}
+            </Text>
+          </View>
+        </View>
+        <View style={styles.metricData}>
+          <Text
+            style={[styles.metricValue, { color: color || c.textPrimary }]}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+          >
+            {value}
+          </Text>
+          {unit && (
+            <Text style={[styles.metricUnit, { color: c.textMuted }]}>
+              {unit}
+            </Text>
+          )}
+        </View>
+        <Text style={[styles.metricLabel, { color: c.textSecondary }]}>
+          {label}
         </Text>
-        {unit && <Text style={[styles.metricUnit, { color: c.textMuted }]}>{unit}</Text>}
       </View>
-      <Text style={[styles.metricLabel, { color: c.textSecondary }]}>{label}</Text>
     </View>
   );
 }
 
+// ─── Chart Card wrapper ────────────────────────────────────────────────
+function ChartCard({ title, subtitle, colors, children }) {
+  return (
+    <View
+      style={[
+        styles.chartCard,
+        SHADOWS.card,
+        { backgroundColor: colors.bg, borderColor: colors.borderLight },
+      ]}
+    >
+      <View
+        style={[
+          styles.chartCardAccent,
+          { backgroundColor: colors.primary },
+        ]}
+      />
+      <View style={styles.chartCardBody}>
+        <Text style={[styles.chartTitle, { color: colors.textPrimary }]}>
+          {title}
+        </Text>
+        {subtitle && (
+          <Text style={[styles.chartSub, { color: colors.textMuted }]}>
+            {subtitle}
+          </Text>
+        )}
+        {children}
+      </View>
+    </View>
+  );
+}
+
+// ─── Main screen ───────────────────────────────────────────────────────
 export default function AnalyticsScreen() {
   const { colors } = useTheme();
   const { history } = useHealthStore();
 
+  // Sort measurements chronologically (oldest first for trend charts)
   const chronological = useMemo(
-    () => [...history].reverse().slice(-30),
+    () => [...history].reverse().slice(-40),
     [history]
   );
 
@@ -60,41 +194,35 @@ export default function AnalyticsScreen() {
     [chronological]
   );
 
+  // ─── Axis styles (memoized) ──────────────────────────────────────────
+  const axisStyle = useMemo(() => createAxisStyle(colors), [colors]);
+  const depAxisStyle = useMemo(
+    () => createDependentAxisStyle(axisStyle),
+    [axisStyle]
+  );
+
+  // ─── Date tick formatter ─────────────────────────────────────────────
+  const dateTickFormat = useCallback((x) => formatDate(x), []);
+
   // ─── BPM Chart Data ──────────────────────────────────────────────────
   const bpmChartData = useMemo(
-    () =>
-      chronological
+    () => {
+      const raw = chronological
         .filter((h) => h.bpm && h.bpm > 0)
-        .map((item, i) => ({
-          x: i + 1,
+        .map((item) => ({
+          x: new Date(item.timestamp).getTime(),
           y: item.bpm,
-          timestamp: item.timestamp,
-        })),
+          ts: item.timestamp,
+        }));
+      // Return oldest-first for timeline
+      return raw.reverse();
+    },
     [chronological]
   );
 
-  const bpmTickLookup = useMemo(() => {
-    const map = {};
-    bpmChartData.forEach((d) => {
-      map[d.x] = d.timestamp;
-    });
-    return map;
-  }, [bpmChartData]);
-
-  const bpmTickFormat = useMemo(
-    () => (x) => {
-      const ts = bpmTickLookup[x];
-      if (!ts) return '';
-      try {
-        return new Date(ts).toLocaleDateString('es-ES', {
-          day: '2-digit',
-          month: '2-digit',
-        });
-      } catch {
-        return '';
-      }
-    },
-    [bpmTickLookup]
+  const bpmTickValues = useMemo(
+    () => buildDateTickValues(bpmChartData, 5),
+    [bpmChartData]
   );
 
   // ─── BP Chart Data ───────────────────────────────────────────────────
@@ -102,82 +230,50 @@ export default function AnalyticsScreen() {
     const valid = chronological.filter(
       (h) => h.bp?.systolic && h.bp?.diastolic
     );
-    return {
-      sys: valid.map((item, i) => ({
-        x: i + 1,
+    // Oldest first for proper timeline
+    const raw = {
+      sys: valid.map((item) => ({
+        x: new Date(item.timestamp).getTime(),
         y: item.bp.systolic,
-        timestamp: item.timestamp,
+        ts: item.timestamp,
       })),
-      dia: valid.map((item, i) => ({
-        x: i + 1,
+      dia: valid.map((item) => ({
+        x: new Date(item.timestamp).getTime(),
         y: item.bp.diastolic,
-        timestamp: item.timestamp,
+        ts: item.timestamp,
       })),
     };
+    raw.sys.reverse();
+    raw.dia.reverse();
+    return raw;
   }, [chronological]);
 
-  const bpTickLookup = useMemo(() => {
-    const map = {};
-    bpChartData.sys.forEach((d) => {
-      map[d.x] = d.timestamp;
-    });
-    return map;
-  }, [bpChartData]);
-
-  const bpTickFormat = useMemo(
-    () => (x) => {
-      const ts = bpTickLookup[x];
-      if (!ts) return '';
-      try {
-        return new Date(ts).toLocaleDateString('es-ES', {
-          day: '2-digit',
-          month: '2-digit',
-        });
-      } catch {
-        return '';
-      }
-    },
-    [bpTickLookup]
+  const bpTickValues = useMemo(
+    () => buildDateTickValues(bpChartData.sys, 5),
+    [bpChartData.sys]
   );
 
   // ─── HRV Chart Data ──────────────────────────────────────────────────
   const hrvChartData = useMemo(
-    () =>
-      chronological
+    () => {
+      const raw = chronological
         .filter((h) => h.sdnn && h.sdnn > 0)
-        .map((item, i) => ({
-          x: i + 1,
+        .map((item) => ({
+          x: new Date(item.timestamp).getTime(),
           y: Math.round(item.sdnn * 10) / 10,
-          timestamp: item.timestamp,
-        })),
+          ts: item.timestamp,
+        }));
+      return raw.reverse();
+    },
     [chronological]
   );
 
-  const hrvTickLookup = useMemo(() => {
-    const map = {};
-    hrvChartData.forEach((d) => {
-      map[d.x] = d.timestamp;
-    });
-    return map;
-  }, [hrvChartData]);
-
-  const hrvTickFormat = useMemo(
-    () => (x) => {
-      const ts = hrvTickLookup[x];
-      if (!ts) return '';
-      try {
-        return new Date(ts).toLocaleDateString('es-ES', {
-          day: '2-digit',
-          month: '2-digit',
-        });
-      } catch {
-        return '';
-      }
-    },
-    [hrvTickLookup]
+  const hrvTickValues = useMemo(
+    () => buildDateTickValues(hrvChartData, 5),
+    [hrvChartData]
   );
 
-  // ─── Summary Strip ───────────────────────────────────────────────────
+  // ─── Summary Metrics ─────────────────────────────────────────────────
   const summaryMetrics = useMemo(() => {
     const bpms = history.map((h) => h.bpm || 0).filter((b) => b > 0);
     const avgBpm =
@@ -188,7 +284,7 @@ export default function AnalyticsScreen() {
     const lastBpItem = [...history].reverse().find((h) => h.bp?.systolic);
     const lastBpStr = lastBpItem
       ? lastBpItem.bp.systolic + '/' + lastBpItem.bp.diastolic
-      : '--';
+      : '--/--';
 
     const sdnnVals = history
       .map((h) => h.sdnn || 0)
@@ -196,25 +292,37 @@ export default function AnalyticsScreen() {
     const avgSdnn =
       sdnnVals.length > 0
         ? Math.round(
-            sdnnVals.reduce((a, b) => a + b, 0) / sdnnVals.length * 10
+            (sdnnVals.reduce((a, b) => a + b, 0) / sdnnVals.length) * 10
           ) / 10
         : 0;
 
-    return { avgBpm, lastBpStr, avgSdnn, total: history.length };
+    // Latest BPM classification
+    const lastBpmItem = [...history].reverse().find((h) => h.bpm && h.bpm > 0);
+    const lastBpm = lastBpmItem ? lastBpmItem.bpm : 0;
+    const lastBpmClass = classifyBPM(lastBpm);
+
+    return { avgBpm, lastBpStr, avgSdnn, total: history.length, lastBpm, lastBpmClass };
   }, [history]);
 
   // ─── BP Distribution ─────────────────────────────────────────────────
   const bpDistribution = useMemo(() => {
+    const categoryOrder = [
+      'Optima',
+      'Normal',
+      'Normal-Alta',
+      'HTA Grado 1',
+      'HTA Grado 2',
+      'HTA Grado 3',
+    ];
     const categoryColors = {
-      'Optima': colors.success,
-      'Normal': colors.primary,
-      'Normal-Alta': colors.warning,
-      'HTA Grado 1': colors.danger,
-      'HTA Grado 2': colors.danger,
-      'HTA Grado 3': colors.danger,
+      'Optima':       '#10B981',
+      'Normal':       '#38BDF8',
+      'Normal-Alta':  '#F59E0B',
+      'HTA Grado 1':  '#F97316',
+      'HTA Grado 2':  '#EF4444',
+      'HTA Grado 3':  '#DC2626',
     };
     const counts = {};
-    const activeLabels = [];
 
     history
       .filter((h) => h.bp?.systolic && h.bp?.diastolic)
@@ -225,52 +333,41 @@ export default function AnalyticsScreen() {
         counts[label]++;
       });
 
-    Object.entries(categoryColors).forEach(([label, color]) => {
-      if (counts[label] && counts[label] > 0) {
-        activeLabels.push({ label, count: counts[label], color });
-      }
-    });
+    const items = categoryOrder
+      .filter((label) => counts[label] && counts[label] > 0)
+      .map((label) => ({
+        label,
+        count: counts[label],
+        color: categoryColors[label] || colors.textMuted,
+      }));
 
-    const maxCount = Math.max(...activeLabels.map((l) => l.count), 1);
-    return { items: activeLabels, max: maxCount };
-  }, [history, colors]);
+    const maxCount = Math.max(...items.map((l) => l.count), 1);
+    return { items, max: maxCount };
+  }, [history]);
 
-  // ─── Axis base style ─────────────────────────────────────────────────
-  const axisStyle = useMemo(() => ({
-    axis: { stroke: colors.border, strokeWidth: 1 },
-    axisLabel: { padding: 30 },
-    tickLabels: {
-      fill: colors.textMuted,
-      fontSize: 10,
-      fontFamily: 'System',
-    },
-    grid: {
-      stroke: colors.chartGrid,
-      strokeWidth: 1,
-    },
-  }), [colors]);
-
-  const dependentAxisStyle = useMemo(() => ({
-    ...axisStyle,
-    tickLabels: { ...axisStyle.tickLabels, fontSize: 9 },
-    grid: {
-      stroke: colors.chartGrid,
-      strokeWidth: 1,
-    },
-  }), [axisStyle]);
-
-  // ─── Render ─────────────────────────────────────────────────────────
+  // ─── Empty state ────────────────────────────────────────────────────
   if (history.length === 0) {
     return (
       <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]}>
-        <View style={[styles.header]}>
-          <Text style={[styles.title, { color: colors.textPrimary }]}>Análisis</Text>
+        <View style={styles.header}>
+          <Text style={[styles.title, { color: colors.textPrimary }]}>
+            Analisis
+          </Text>
         </View>
         <View style={styles.empty}>
-          <Text style={styles.emptyIcon}>📊</Text>
-          <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>Sin datos disponibles</Text>
+          <View
+            style={[
+              styles.emptyIconWrap,
+              { backgroundColor: colors.primarySubtle },
+            ]}
+          >
+            <Text style={styles.emptyIcon}>📊</Text>
+          </View>
+          <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>
+            Sin datos disponibles
+          </Text>
           <Text style={[styles.emptySub, { color: colors.textSecondary }]}>
-            Realiza al menos una medición para ver tus gráficas y estadísticas
+            Realiza al menos una medicion para ver tus graficas y estadisticas.
           </Text>
         </View>
       </SafeAreaView>
@@ -281,31 +378,49 @@ export default function AnalyticsScreen() {
   const showBpChart = bpChartData.sys.length > 1;
   const showHrvChart = hrvChartData.length > 1;
 
+  // ─── Theme-based sky blue palette ───────────────────────────────────
+  const bpmLineColor = colors.chartBPM || SKY_BLUE;
+  const sysLineColor = colors.chartSystolic || SKY_BLUE;
+  const diaLineColor = colors.chartDiastolic || SKY_BLUE_LIGHT;
+  const hrvLineColor = colors.chartHRV || HRV_GREEN;
+
+  // ─── Render ─────────────────────────────────────────────────────────
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]}>
+    <SafeAreaView
+      style={[styles.safe, { backgroundColor: colors.bg }]}
+      edges={['top', 'bottom']}
+    >
       <ScrollView
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
       >
-        <View style={[styles.header]}>
-          <Text style={[styles.title, { color: colors.textPrimary }]}>Análisis</Text>
+        {/* ── Header ───────────────────────────────────────────────── */}
+        <View style={styles.header}>
+          <View>
+            <Text style={[styles.title, { color: colors.textPrimary }]}>
+              Analisis
+            </Text>
+            <Text style={[styles.headerMeta, { color: colors.textMuted }]}>
+              {history.length} {history.length === 1 ? 'medicion' : 'mediciones'} registradas
+            </Text>
+          </View>
         </View>
 
-        {/* ── Summary Strip (2x2 Grid) ──────────────────────────────── */}
+        {/* ── Summary Grid (2x2) ────────────────────────────────────── */}
         <View style={styles.summaryGrid}>
           <MetricCard
             label="Promedio BPM"
             value={summaryMetrics.avgBpm}
             unit="BPM"
-            color={colors.chartBPM}
-            icon="💓"
+            color={bpmLineColor}
+            icon="❤️"
             c={colors}
           />
           <MetricCard
-            label="Última PA"
+            label="Ultima PA"
             value={summaryMetrics.lastBpStr}
             unit="mmHg"
-            color={colors.chartSystolic}
+            color={sysLineColor}
             icon="🩸"
             c={colors}
           />
@@ -317,7 +432,7 @@ export default function AnalyticsScreen() {
                 : '--'
             }
             unit="ms"
-            color={colors.chartHRV}
+            color={hrvLineColor}
             icon="📊"
             c={colors}
           />
@@ -330,197 +445,385 @@ export default function AnalyticsScreen() {
           />
         </View>
 
-        {/* ── BPM Trend Chart ───────────────────────────────────────── */}
+        {/* ── BPM Trend Chart ──────────────────────────────────────── */}
         {showBpmChart && (
-          <View style={[styles.chartCard, SHADOWS.card, { backgroundColor: colors.bg, borderColor: colors.border }]}>
-            <Text style={[styles.chartTitle, { color: colors.textPrimary }]}>Frecuencia Cardíaca</Text>
-            <Text style={[styles.chartSub, { color: colors.textMuted }]}>
-              Últimas {bpmChartData.length} mediciones
-            </Text>
+          <ChartCard
+            title="Frecuencia Cardiaca"
+            subtitle={
+              'Tendencia de las ultimas ' +
+              bpmChartData.length +
+              ' mediciones'
+            }
+            colors={colors}
+          >
             <VictoryChart
               width={CHART_WIDTH}
               height={CHART_HEIGHT}
-              padding={{ top: 10, bottom: 36, left: 44, right: 12 }}
+              padding={{ top: 10, bottom: 38, left: 44, right: 14 }}
+              scale={{ x: 'time' }}
             >
               <VictoryAxis
                 style={axisStyle}
-                tickFormat={bpmTickFormat}
+                tickFormat={dateTickFormat}
+                tickValues={bpmTickValues}
                 fixLabelOverlap
               />
               <VictoryAxis
                 dependentAxis
-                style={dependentAxisStyle}
+                style={depAxisStyle}
                 tickFormat={(t) => Math.round(t)}
               />
               <VictoryLine
                 data={bpmChartData}
                 style={{
                   data: {
-                    stroke: colors.chartBPM,
-                    strokeWidth: 2,
+                    stroke: bpmLineColor,
+                    strokeWidth: 2.5,
                   },
                 }}
                 interpolation="monotoneX"
               />
               <VictoryScatter
                 data={bpmChartData}
-                size={3}
+                size={3.5}
                 style={{
                   data: {
-                    fill: colors.chartBPM,
+                    fill: bpmLineColor,
                   },
                 }}
               />
             </VictoryChart>
-          </View>
+          </ChartCard>
         )}
 
-        {/* ── BP Trend Chart ────────────────────────────────────────── */}
+        {/* ── BP Trend Chart ───────────────────────────────────────── */}
         {showBpChart && (
-          <View style={[styles.chartCard, SHADOWS.card, { backgroundColor: colors.bg, borderColor: colors.border }]}>
-            <Text style={[styles.chartTitle, { color: colors.textPrimary }]}>Presión Arterial</Text>
-            <Text style={[styles.chartSub, { color: colors.textMuted }]}>
-              Sistólica (azul) · Diastólica (celeste)
-            </Text>
+          <ChartCard
+            title="Presion Arterial"
+            subtitle="Sistolica (azul) / Diastolica (celeste)"
+            colors={colors}
+          >
             <VictoryChart
               width={CHART_WIDTH}
               height={CHART_HEIGHT}
-              padding={{ top: 10, bottom: 36, left: 44, right: 12 }}
+              padding={{ top: 10, bottom: 38, left: 44, right: 14 }}
+              scale={{ x: 'time' }}
             >
               <VictoryAxis
                 style={axisStyle}
-                tickFormat={bpTickFormat}
+                tickFormat={dateTickFormat}
+                tickValues={bpTickValues}
                 fixLabelOverlap
               />
               <VictoryAxis
                 dependentAxis
-                style={dependentAxisStyle}
+                style={depAxisStyle}
                 tickFormat={(t) => Math.round(t)}
               />
+              {/* Systolic — sky blue */}
               <VictoryLine
                 data={bpChartData.sys}
                 style={{
                   data: {
-                    stroke: colors.chartSystolic,
-                    strokeWidth: 2,
+                    stroke: sysLineColor,
+                    strokeWidth: 2.5,
                   },
                 }}
                 interpolation="monotoneX"
               />
+              <VictoryScatter
+                data={bpChartData.sys}
+                size={3}
+                style={{
+                  data: {
+                    fill: sysLineColor,
+                  },
+                }}
+              />
+              {/* Diastolic — lighter blue */}
               <VictoryLine
                 data={bpChartData.dia}
                 style={{
                   data: {
-                    stroke: colors.chartDiastolic,
-                    strokeWidth: 2,
-                  },
-                }}
-                interpolation="monotoneX"
-              />
-            </VictoryChart>
-            <View style={styles.legendRow}>
-              <View style={styles.legendItem}>
-                <View
-                  style={[
-                    styles.legendDot,
-                    { backgroundColor: colors.chartSystolic },
-                  ]}
-                />
-                <Text style={[styles.legendText, { color: colors.textSecondary }]}>Sistólica</Text>
-              </View>
-              <View style={styles.legendItem}>
-                <View
-                  style={[
-                    styles.legendDot,
-                    { backgroundColor: colors.chartDiastolic },
-                  ]}
-                />
-                <Text style={[styles.legendText, { color: colors.textSecondary }]}>Diastólica</Text>
-              </View>
-            </View>
-          </View>
-        )}
-
-        {/* ── HRV Trend Chart ───────────────────────────────────────── */}
-        {showHrvChart && hasHrvData && (
-          <View style={[styles.chartCard, SHADOWS.card, { backgroundColor: colors.bg, borderColor: colors.border }]}>
-            <Text style={[styles.chartTitle, { color: colors.textPrimary }]}>
-              Variabilidad Cardíaca (SDNN)
-            </Text>
-            <Text style={[styles.chartSub, { color: colors.textMuted }]}>
-              Últimas {hrvChartData.length} mediciones
-            </Text>
-            <VictoryChart
-              width={CHART_WIDTH}
-              height={CHART_HEIGHT}
-              padding={{ top: 10, bottom: 36, left: 44, right: 12 }}
-            >
-              <VictoryAxis
-                style={axisStyle}
-                tickFormat={hrvTickFormat}
-                fixLabelOverlap
-              />
-              <VictoryAxis
-                dependentAxis
-                style={dependentAxisStyle}
-                tickFormat={(t) => Math.round(t)}
-              />
-              <VictoryLine
-                data={hrvChartData}
-                style={{
-                  data: {
-                    stroke: colors.chartHRV,
+                    stroke: diaLineColor,
                     strokeWidth: 2,
                   },
                 }}
                 interpolation="monotoneX"
               />
               <VictoryScatter
-                data={hrvChartData}
-                size={3}
+                data={bpChartData.dia}
+                size={2.5}
                 style={{
                   data: {
-                    fill: colors.chartHRV,
+                    fill: diaLineColor,
                   },
                 }}
               />
             </VictoryChart>
-          </View>
+
+            {/* Legend */}
+            <View style={styles.legendRow}>
+              <View style={styles.legendItem}>
+                <View
+                  style={[styles.legendDot, { backgroundColor: sysLineColor }]}
+                />
+                <Text
+                  style={[styles.legendText, { color: colors.textSecondary }]}
+                >
+                  Sistolica
+                </Text>
+              </View>
+              <View style={styles.legendItem}>
+                <View
+                  style={[styles.legendDot, { backgroundColor: diaLineColor }]}
+                />
+                <Text
+                  style={[styles.legendText, { color: colors.textSecondary }]}
+                >
+                  Diastolica
+                </Text>
+              </View>
+            </View>
+          </ChartCard>
         )}
 
-        {/* ── BP Distribution ───────────────────────────────────────── */}
+        {/* ── HRV Trend Chart ──────────────────────────────────────── */}
+        {showHrvChart && hasHrvData && (
+          <ChartCard
+            title="Variabilidad Cardiaca (SDNN)"
+            subtitle={
+              'Tendencia de las ultimas ' +
+              hrvChartData.length +
+              ' mediciones'
+            }
+            colors={colors}
+          >
+            <VictoryChart
+              width={CHART_WIDTH}
+              height={CHART_HEIGHT}
+              padding={{ top: 10, bottom: 38, left: 44, right: 14 }}
+              scale={{ x: 'time' }}
+            >
+              <VictoryAxis
+                style={axisStyle}
+                tickFormat={dateTickFormat}
+                tickValues={hrvTickValues}
+                fixLabelOverlap
+              />
+              <VictoryAxis
+                dependentAxis
+                style={depAxisStyle}
+                tickFormat={(t) => Math.round(t)}
+              />
+              <VictoryLine
+                data={hrvChartData}
+                style={{
+                  data: {
+                    stroke: hrvLineColor,
+                    strokeWidth: 2.5,
+                  },
+                }}
+                interpolation="monotoneX"
+              />
+              <VictoryScatter
+                data={hrvChartData}
+                size={3.5}
+                style={{
+                  data: {
+                    fill: hrvLineColor,
+                  },
+                }}
+              />
+            </VictoryChart>
+          </ChartCard>
+        )}
+
+        {/* ── BP Classification Distribution ────────────────────────── */}
         {bpDistribution.items.length > 0 && (
-          <View style={[styles.chartCard, SHADOWS.card, { backgroundColor: colors.bg, borderColor: colors.border }]}>
-            <Text style={[styles.chartTitle, { color: colors.textPrimary }]}>Distribución de PA</Text>
-            <Text style={[styles.chartSub, { color: colors.textMuted }]}>
-              Clasificación de mediciones de presión arterial
-            </Text>
+          <ChartCard
+            title="Distribucion de PA"
+            subtitle="Clasificacion de mediciones de presion arterial"
+            colors={colors}
+          >
             <View style={styles.distContainer}>
               {bpDistribution.items.map((item) => {
                 const pct = (item.count / bpDistribution.max) * 100;
                 return (
                   <View key={item.label} style={styles.distRow}>
-                    <Text style={[styles.distLabel, { color: colors.textSecondary }]}>{item.label}</Text>
-                    <View style={[styles.distBarTrack, { backgroundColor: colors.bgCard }]}>
+                    <Text
+                      style={[
+                        styles.distLabel,
+                        { color: colors.textSecondary },
+                      ]}
+                      numberOfLines={1}
+                    >
+                      {item.label}
+                    </Text>
+                    <View style={styles.distBarRow}>
                       <View
                         style={[
-                          styles.distBarFill,
-                          {
-                            width: Math.max(pct, 4) + '%',
-                            backgroundColor: item.color,
-                          },
+                          styles.distBarTrack,
+                          { backgroundColor: colors.bgCard },
                         ]}
-                      />
+                      >
+                        <View
+                          style={[
+                            styles.distBarFill,
+                            {
+                              width: Math.max(pct, 3) + '%',
+                              backgroundColor: item.color,
+                            },
+                          ]}
+                        />
+                      </View>
+                      <Text
+                        style={[
+                          styles.distCount,
+                          { color: colors.textPrimary },
+                        ]}
+                      >
+                        {item.count}
+                      </Text>
                     </View>
-                    <Text style={[styles.distCount, { color: colors.textPrimary }]}>{item.count}</Text>
                   </View>
                 );
               })}
             </View>
-          </View>
+
+            {/* Summary row */}
+            <View
+              style={[
+                styles.distSummary,
+                { borderTopColor: colors.border },
+              ]}
+            >
+              <Text
+                style={[styles.distSummaryText, { color: colors.textMuted }]}
+              >
+                Basado en{' '}
+                {bpDistribution.items.reduce(
+                  (sum, i) => sum + i.count,
+                  0
+                )}{' '}
+                mediciones con PA
+              </Text>
+            </View>
+          </ChartCard>
         )}
 
-        {/* ── Footer ────────────────────────────────────────────────── */}
+        {/* ── Current status card ───────────────────────────────────── */}
+        <ChartCard
+          title="Estado Actual"
+          subtitle="Ultima clasificacion registrada"
+          colors={colors}
+        >
+          <View style={styles.statusGrid}>
+            {/* BPM status */}
+            <View style={styles.statusItem}>
+              <Text
+                style={[
+                  styles.statusValue,
+                  {
+                    color:
+                      summaryMetrics.lastBpmClass?.color || colors.textPrimary,
+                  },
+                ]}
+              >
+                {summaryMetrics.lastBpm} BPM
+              </Text>
+              {summaryMetrics.lastBpmClass && (
+                <View
+                  style={[
+                    styles.statusBadge,
+                    {
+                      backgroundColor: summaryMetrics.lastBpmClass.color
+                        ? summaryMetrics.lastBpmClass.color + '18'
+                        : colors.bgCard,
+                    },
+                  ]}
+                >
+                  <View
+                    style={[
+                      styles.statusDot,
+                      {
+                        backgroundColor:
+                          summaryMetrics.lastBpmClass.color || colors.textMuted,
+                      },
+                    ]}
+                  />
+                  <Text
+                    style={[
+                      styles.statusLabel,
+                      {
+                        color:
+                          summaryMetrics.lastBpmClass.color ||
+                          colors.textSecondary,
+                      },
+                    ]}
+                  >
+                    {summaryMetrics.lastBpmClass.label}
+                  </Text>
+                </View>
+              )}
+            </View>
+
+            {/* BP status */}
+            {summaryMetrics.lastBpStr !== '--/--' && (
+              <View style={styles.statusItem}>
+                <Text
+                  style={[
+                    styles.statusValue,
+                    { color: colors.textPrimary },
+                  ]}
+                >
+                  {summaryMetrics.lastBpStr} mmHg
+                </Text>
+                {(() => {
+                  const lastBpItem = [...history]
+                    .reverse()
+                    .find((h) => h.bp?.systolic);
+                  if (lastBpItem) {
+                    const cls = classifyBP(
+                      lastBpItem.bp.systolic,
+                      lastBpItem.bp.diastolic
+                    );
+                    return (
+                      <View
+                        style={[
+                          styles.statusBadge,
+                          {
+                            backgroundColor: cls.color
+                              ? cls.color + '18'
+                              : colors.bgCard,
+                          },
+                        ]}
+                      >
+                        <View
+                          style={[
+                            styles.statusDot,
+                            { backgroundColor: cls.color || colors.textMuted },
+                          ]}
+                        />
+                        <Text
+                          style={[
+                            styles.statusLabel,
+                            { color: cls.color || colors.textSecondary },
+                          ]}
+                        >
+                          {cls.label}
+                        </Text>
+                      </View>
+                    );
+                  }
+                  return null;
+                })()}
+              </View>
+            )}
+          </View>
+        </ChartCard>
+
+        {/* ── Footer ───────────────────────────────────────────────── */}
         <View style={styles.footerSection}>
           <LegalDisclaimer />
           <BannerAd compact />
@@ -530,46 +833,61 @@ export default function AnalyticsScreen() {
   );
 }
 
-// ─── Static layout styles (no color references) ───────────────────────────────
+// ─── Static layout styles (no color references) ───────────────────────────
 const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-  },
+  safe: { flex: 1 },
+
+  /* ── Header ──────────────────────────────────────────────────────────── */
   header: {
     paddingHorizontal: 20,
     paddingTop: 12,
-    paddingBottom: 4,
+    paddingBottom: 6,
   },
   title: {
-    fontSize: 26,
+    fontSize: 28,
     fontWeight: '700',
-    letterSpacing: -0.3,
-    marginBottom: 8,
+    letterSpacing: -0.5,
+    marginBottom: 2,
+  },
+  headerMeta: {
+    fontSize: 13,
+    fontWeight: '400',
   },
   scroll: {
     paddingBottom: 40,
   },
+
+  /* ── Empty state ─────────────────────────────────────────────────────── */
   empty: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 40,
-    paddingBottom: 60,
+    paddingBottom: 80,
   },
-  emptyIcon: {
-    fontSize: 48,
-    marginBottom: 16,
+  emptyIconWrap: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
   },
+  emptyIcon: { fontSize: 32 },
   emptyTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '700',
     marginBottom: 8,
+    textAlign: 'center',
   },
   emptySub: {
     fontSize: 14,
     textAlign: 'center',
     lineHeight: 20,
+    paddingHorizontal: 20,
   },
+
+  /* ── Summary Grid ────────────────────────────────────────────────────── */
   summaryGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -580,21 +898,40 @@ const styles = StyleSheet.create({
   metricCard: {
     width: (SCREEN_WIDTH - 50) / 2,
     borderRadius: RADIUS.md,
-    padding: 14,
     borderWidth: 1,
+    overflow: 'hidden',
   },
-  metricTop: {
+  metricAccent: {
+    height: 3,
+  },
+  metricBody: {
+    padding: 14,
+  },
+  metricHeader: {
     flexDirection: 'row',
-    alignItems: 'baseline',
-    marginBottom: 4,
-    gap: 6,
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  metricIconWrap: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   metricIcon: {
-    fontSize: 16,
+    fontSize: 15,
+  },
+  metricData: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 5,
+    marginBottom: 2,
   },
   metricValue: {
-    fontSize: 22,
-    fontWeight: '700',
+    fontSize: 26,
+    fontWeight: '800',
+    letterSpacing: -0.5,
   },
   metricUnit: {
     fontSize: 12,
@@ -603,29 +940,41 @@ const styles = StyleSheet.create({
   metricLabel: {
     fontSize: 12,
     fontWeight: '500',
-    marginTop: 2,
+    marginTop: 1,
   },
+
+  /* ── Chart Card ──────────────────────────────────────────────────────── */
   chartCard: {
     borderRadius: RADIUS.lg,
-    padding: 16,
+    borderWidth: 1,
     marginHorizontal: 20,
     marginBottom: 16,
-    borderWidth: 1,
+    overflow: 'hidden',
+  },
+  chartCardAccent: {
+    height: 3,
+  },
+  chartCardBody: {
+    padding: 16,
   },
   chartTitle: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '700',
     marginBottom: 2,
   },
   chartSub: {
     fontSize: 12,
-    marginBottom: 8,
+    fontWeight: '400',
+    marginBottom: 10,
   },
+
+  /* ── Legend ──────────────────────────────────────────────────────────── */
   legendRow: {
     flexDirection: 'row',
     justifyContent: 'center',
-    gap: 20,
+    gap: 24,
     marginTop: 8,
+    paddingTop: 8,
   },
   legendItem: {
     flexDirection: 'row',
@@ -641,36 +990,85 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '500',
   },
+
+  /* ── Distribution ────────────────────────────────────────────────────── */
   distContainer: {
-    marginTop: 8,
+    marginTop: 6,
   },
   distRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 10,
   },
   distLabel: {
-    width: 96,
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '600',
+    marginBottom: 4,
+  },
+  distBarRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   distBarTrack: {
     flex: 1,
-    height: 20,
-    borderRadius: 10,
+    height: 24,
+    borderRadius: 12,
     overflow: 'hidden',
-    marginHorizontal: 8,
   },
   distBarFill: {
-    height: 20,
-    borderRadius: 10,
+    height: 24,
+    borderRadius: 12,
   },
   distCount: {
-    width: 28,
-    fontSize: 13,
+    width: 30,
+    fontSize: 14,
     fontWeight: '700',
     textAlign: 'right',
   },
+  distSummary: {
+    borderTopWidth: 1,
+    marginTop: 10,
+    paddingTop: 10,
+    alignItems: 'center',
+  },
+  distSummaryText: {
+    fontSize: 11,
+    fontWeight: '500',
+  },
+
+  /* ── Status Card ─────────────────────────────────────────────────────── */
+  statusGrid: {
+    flexDirection: 'row',
+    gap: 16,
+    marginTop: 4,
+  },
+  statusItem: {
+    flex: 1,
+  },
+  statusValue: {
+    fontSize: 20,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  statusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: RADIUS.sm,
+  },
+  statusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginRight: 6,
+  },
+  statusLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+
+  /* ── Footer ──────────────────────────────────────────────────────────── */
   footerSection: {
     paddingHorizontal: 20,
     marginTop: 4,

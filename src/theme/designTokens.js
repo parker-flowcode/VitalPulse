@@ -1,8 +1,8 @@
 /**
  * designTokens.js — VitalPulse v5.0
  *
- * Sistema de diseño dual: light + dark.
- * Compatible con ThemeContext para cambio dinámico de tema.
+ * Sistema de diseno dual: light + dark.
+ * Compatible con ThemeContext para cambio dinamico de tema.
  */
 
 // ─── Paleta Claro ────────────────────────────────────────────────────────────
@@ -12,11 +12,11 @@ export const lightColors = {
   bgSecondary:      '#F0F4F8',
   bgElevated:       '#FFFFFF',
 
-  primary:          '#2563EB',
-  primaryLight:     '#3B82F6',
-  primaryDark:      '#1D4ED8',
-  primarySubtle:    '#EFF6FF',
-  primaryMuted:     '#BFDBFE',
+  primary:          '#38BDF8',
+  primaryLight:     '#7DD3FC',
+  primaryDark:      '#0EA5E9',
+  primarySubtle:    '#F0F9FF',
+  primaryMuted:     '#BAE6FD',
 
   secondary:        '#0EA5E9',
   secondaryLight:   '#38BDF8',
@@ -41,15 +41,15 @@ export const lightColors = {
   borderLight:      '#F1F5F9',
   divider:          '#F1F5F9',
 
-  chartBPM:         '#2563EB',
-  chartSystolic:    '#2563EB',
+  chartBPM:         '#38BDF8',
+  chartSystolic:    '#38BDF8',
   chartDiastolic:   '#0EA5E9',
   chartHRV:         '#10B981',
   chartGrid:        '#F1F5F9',
 
   tabBarBg:         '#FFFFFF',
   tabBarBorder:     '#E2E8F0',
-  tabActive:        '#2563EB',
+  tabActive:        '#38BDF8',
   tabInactive:      '#94A3B8',
 };
 
@@ -60,11 +60,11 @@ export const darkColors = {
   bgSecondary:      '#334155',
   bgElevated:       '#1E293B',
 
-  primary:          '#3B82F6',
-  primaryLight:     '#60A5FA',
-  primaryDark:      '#2563EB',
-  primarySubtle:    '#1E3A5F',
-  primaryMuted:     '#1E40AF',
+  primary:          '#38BDF8',
+  primaryLight:     '#7DD3FC',
+  primaryDark:      '#0EA5E9',
+  primarySubtle:    '#0C4A6E',
+  primaryMuted:     '#0369A1',
 
   secondary:        '#38BDF8',
   secondaryLight:   '#7DD3FC',
@@ -89,15 +89,15 @@ export const darkColors = {
   borderLight:      '#1E293B',
   divider:          '#334155',
 
-  chartBPM:         '#3B82F6',
-  chartSystolic:    '#3B82F6',
-  chartDiastolic:   '#38BDF8',
+  chartBPM:         '#38BDF8',
+  chartSystolic:    '#38BDF8',
+  chartDiastolic:   '#7DD3FC',
   chartHRV:         '#34D399',
   chartGrid:        '#334155',
 
   tabBarBg:         '#1E293B',
   tabBarBorder:     '#334155',
-  tabActive:        '#3B82F6',
+  tabActive:        '#38BDF8',
   tabInactive:      '#64748B',
 };
 
@@ -114,7 +114,7 @@ export const SHADOWS = {
   none:    { shadowColor: 'transparent', shadowOffset: { w:0, h:0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0 },
 };
 
-// ─── Tipografía (usa COLORS dinámicamente) ───────────────────────────────────
+// ─── Tipografia (usa COLORS dinamicamente) ───────────────────────────────────
 export const TYPOGRAPHY = {
   h1:     { fontSize: 28, fontWeight: '700', letterSpacing: -0.5 },
   h2:     { fontSize: 22, fontWeight: '700', letterSpacing: -0.3 },
