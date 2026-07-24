@@ -1,4 +1,10 @@
-import React, { useState, useRef } from 'react';
+/**
+ * OnboardingScreen.js — VitalPulse v5.0
+ *
+ * Tutorial de bienvenida con formulario de perfil personal.
+ * Soporta tema dinámico mediante ThemeContext.
+ */
+import React, { useState, useRef, useMemo } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet,
   ScrollView, TextInput, Dimensions,
@@ -6,7 +12,9 @@ import {
   Alert, Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTheme } from '../theme/ThemeContext';
 import useHealthStore from '../store/healthstore';
+import { SPACING, RADIUS } from '../theme/designTokens';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -35,6 +43,8 @@ const TUTORIAL_SLIDES = [
 ];
 
 export default function OnboardingScreen({ navigation }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { updateUserProfile, setOnboardingDone, setTermsAccepted } = useHealthStore();
 
   const [step, setStep]       = useState(0); // 0-3: tutorial, 4: datos usuario
@@ -90,7 +100,7 @@ export default function OnboardingScreen({ navigation }) {
   // ─── Tutorial slides ────────────────────────────────────────────────────
   if (isTutorial) {
     return (
-      <SafeAreaView style={styles.safe}>
+      <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]}>
         <FlatList
           ref={flatListRef}
           data={TUTORIAL_SLIDES}
@@ -100,13 +110,13 @@ export default function OnboardingScreen({ navigation }) {
           scrollEnabled={false}
           showsHorizontalScrollIndicator={false}
           renderItem={({ item, index }) => (
-            <View style={styles.slide}>
+            <View style={[styles.slide, { backgroundColor: colors.bg }]}>
               {index === 0 && (
                 <Image source={require('../../assets/icon.png')} style={styles.slideLogo} />
               )}
               <Text style={styles.slideIcon}>{item.icon}</Text>
-              <Text style={styles.slideTitle}>{item.title}</Text>
-              <Text style={styles.slideBody}>{item.body}</Text>
+              <Text style={[styles.slideTitle, { color: colors.textPrimary }]}>{item.title}</Text>
+              <Text style={[styles.slideBody, { color: colors.textSecondary }]}>{item.body}</Text>
             </View>
           )}
         />
@@ -122,14 +132,17 @@ export default function OnboardingScreen({ navigation }) {
         </View>
 
         <View style={styles.tutorialFooter}>
-          <TouchableOpacity style={styles.primaryBtn} onPress={goNext}>
-            <Text style={styles.primaryBtnText}>
+          <TouchableOpacity
+            style={[styles.primaryBtn, { backgroundColor: colors.primary }]}
+            onPress={goNext}
+          >
+            <Text style={[styles.primaryBtnText, { color: colors.textOnPrimary }]}>
               {step < TUTORIAL_SLIDES.length - 1 ? 'Siguiente →' : 'Personalizar mi perfil'}
             </Text>
           </TouchableOpacity>
           {step < TUTORIAL_SLIDES.length - 1 && (
             <TouchableOpacity onPress={() => setStep(TUTORIAL_SLIDES.length)}>
-              <Text style={styles.skipText}>Saltar tutorial</Text>
+              <Text style={[styles.skipText, { color: colors.textMuted }]}>Saltar tutorial</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -139,7 +152,7 @@ export default function OnboardingScreen({ navigation }) {
 
   // ─── Formulario de perfil ────────────────────────────────────────────────
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -149,45 +162,45 @@ export default function OnboardingScreen({ navigation }) {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          <Text style={styles.formTitle}>Tu perfil personal</Text>
-          <Text style={styles.formSubtitle}>
+          <Text style={[styles.formTitle, { color: colors.textPrimary }]}>Tu perfil personal</Text>
+          <Text style={[styles.formSubtitle, { color: colors.textSecondary }]}>
             Estos datos mejoran significativamente la precisión de las estimaciones.
             Puedes cambiarlos en cualquier momento desde Ajustes.
           </Text>
 
           {/* Nombre */}
           <View style={styles.fieldGroup}>
-            <Text style={styles.fieldLabel}>Nombre (opcional)</Text>
+            <Text style={[styles.fieldLabel, { color: colors.primary }]}>Nombre (opcional)</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { backgroundColor: colors.bgSecondary, color: colors.textPrimary, borderColor: colors.border }]}
               value={name}
               onChangeText={setName}
               placeholder="¿Cómo te llamas?"
-              placeholderTextColor="#94A3B8"
+              placeholderTextColor={colors.textMuted}
               maxLength={40}
             />
           </View>
 
           {/* Edad */}
           <View style={styles.fieldGroup}>
-            <Text style={styles.fieldLabel}>Edad *</Text>
+            <Text style={[styles.fieldLabel, { color: colors.primary }]}>Edad *</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { backgroundColor: colors.bgSecondary, color: colors.textPrimary, borderColor: colors.border }]}
               value={age}
               onChangeText={setAge}
               placeholder="Años"
-              placeholderTextColor="#94A3B8"
+              placeholderTextColor={colors.textMuted}
               keyboardType="number-pad"
               maxLength={3}
             />
-            <Text style={styles.fieldHint}>
+            <Text style={[styles.fieldHint, { color: colors.textSecondary }]}>
               La edad es el factor más importante para estimar la PA
             </Text>
           </View>
 
           {/* Sexo */}
           <View style={styles.fieldGroup}>
-            <Text style={styles.fieldLabel}>Sexo biológico *</Text>
+            <Text style={[styles.fieldLabel, { color: colors.primary }]}>Sexo biológico *</Text>
             <View style={styles.optionRow}>
               <TouchableOpacity
                 style={[styles.optionBtn, sex === 'male' && styles.optionBtnActive]}
@@ -210,29 +223,29 @@ export default function OnboardingScreen({ navigation }) {
 
           {/* Peso y talla */}
           <View style={styles.fieldGroup}>
-            <Text style={styles.fieldLabel}>Peso y estatura</Text>
+            <Text style={[styles.fieldLabel, { color: colors.primary }]}>Peso y estatura</Text>
             <View style={styles.rowInputs}>
               <View style={{ flex: 1 }}>
-                <Text style={styles.inputLabel}>Peso (kg)</Text>
+                <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Peso (kg)</Text>
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, { backgroundColor: colors.bgSecondary, color: colors.textPrimary, borderColor: colors.border }]}
                   value={weight}
                   onChangeText={setWeight}
                   placeholder="70"
-                  placeholderTextColor="#94A3B8"
+                  placeholderTextColor={colors.textMuted}
                   keyboardType="decimal-pad"
                   maxLength={5}
                 />
               </View>
               <View style={{ width: 12 }} />
               <View style={{ flex: 1 }}>
-                <Text style={styles.inputLabel}>Estatura (cm)</Text>
+                <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Estatura (cm)</Text>
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, { backgroundColor: colors.bgSecondary, color: colors.textPrimary, borderColor: colors.border }]}
                   value={height}
                   onChangeText={setHeight}
                   placeholder="170"
-                  placeholderTextColor="#94A3B8"
+                  placeholderTextColor={colors.textMuted}
                   keyboardType="number-pad"
                   maxLength={3}
                 />
@@ -242,8 +255,8 @@ export default function OnboardingScreen({ navigation }) {
 
           {/* Actividad física */}
           <View style={styles.fieldGroup}>
-            <Text style={styles.fieldLabel}>Actividad física *</Text>
-            <Text style={styles.fieldHint}>
+            <Text style={[styles.fieldLabel, { color: colors.primary }]}>Actividad física *</Text>
+            <Text style={[styles.fieldHint, { color: colors.textSecondary }]}>
               Las personas activas tienen la PA más baja en reposo
             </Text>
             <View style={styles.optionRow}>
@@ -268,27 +281,27 @@ export default function OnboardingScreen({ navigation }) {
 
           {/* Factores de riesgo */}
           <View style={styles.fieldGroup}>
-            <Text style={styles.fieldLabel}>Factores de salud (opcional)</Text>
-            <Text style={styles.fieldHint}>Ayudan a interpretar mejor los resultados</Text>
+            <Text style={[styles.fieldLabel, { color: colors.primary }]}>Factores de salud (opcional)</Text>
+            <Text style={[styles.fieldHint, { color: colors.textSecondary }]}>Ayudan a interpretar mejor los resultados</Text>
 
             <TouchableOpacity
               style={styles.checkRow}
               onPress={() => setSmoker(!smoker)}
             >
-              <View style={[styles.checkbox, smoker && styles.checkboxActive]}>
+              <View style={[styles.checkbox, { borderColor: colors.border }, smoker && { backgroundColor: colors.primary, borderColor: colors.primary }]}>
                 {smoker && <Text style={styles.checkmark}>✓</Text>}
               </View>
-              <Text style={styles.checkLabel}>Fumador/a</Text>
+              <Text style={[styles.checkLabel, { color: colors.textPrimary }]}>Fumador/a</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={styles.checkRow}
               onPress={() => setDiabetic(!diabetic)}
             >
-              <View style={[styles.checkbox, diabetic && styles.checkboxActive]}>
+              <View style={[styles.checkbox, { borderColor: colors.border }, diabetic && { backgroundColor: colors.primary, borderColor: colors.primary }]}>
                 {diabetic && <Text style={styles.checkmark}>✓</Text>}
               </View>
-              <Text style={styles.checkLabel}>Diabetes</Text>
+              <Text style={[styles.checkLabel, { color: colors.textPrimary }]}>Diabetes</Text>
             </TouchableOpacity>
           </View>
 
@@ -298,30 +311,30 @@ export default function OnboardingScreen({ navigation }) {
               style={styles.checkRow}
               onPress={() => setTermsAcceptedState(!termsAccepted)}
             >
-              <View style={[styles.checkbox, termsAccepted && styles.checkboxActive]}>
+              <View style={[styles.checkbox, { borderColor: colors.border }, termsAccepted && { backgroundColor: colors.primary, borderColor: colors.primary }]}>
                 {termsAccepted && <Text style={styles.checkmark}>✓</Text>}
               </View>
-              <Text style={styles.checkLabel}>Acepto los Términos de Uso y la Política de Privacidad</Text>
+              <Text style={[styles.checkLabel, { color: colors.textPrimary }]}>Acepto los Términos de Uso y la Política de Privacidad</Text>
             </TouchableOpacity>
             <View style={styles.termsLinks}>
               <TouchableOpacity onPress={() => setShowTermsSubmenu(!showTermsSubmenu)}>
-                <Text style={styles.linkText}>📄 Ver documentos legales</Text>
+                <Text style={[styles.linkText, { color: colors.primary }]}>📄 Ver documentos legales</Text>
               </TouchableOpacity>
               {showTermsSubmenu && (
-                <View style={styles.termsSubmenu}>
+                <View style={[styles.termsSubmenu, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
                   <TouchableOpacity
                     style={styles.termsSubmenuItem}
                     onPress={() => navigation.navigate('Terms')}
                   >
-                    <Text style={styles.termsSubmenuText}>📜 Términos de Uso</Text>
+                    <Text style={[styles.termsSubmenuText, { color: colors.primary }]}>📜 Términos de Uso</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={styles.termsSubmenuItem}
                     onPress={() => navigation.navigate('PrivacyPolicy')}
                   >
-                    <Text style={styles.termsSubmenuText}>🔒 Política de Privacidad</Text>
+                    <Text style={[styles.termsSubmenuText, { color: colors.primary }]}>🔒 Política de Privacidad</Text>
                   </TouchableOpacity>
-                  <Text style={styles.termsSubmenuHint}>
+                  <Text style={[styles.termsSubmenuHint, { color: colors.textMuted }]}>
                     Pulsa el botón "Volver" de la pantalla de términos para regresar aquí.
                   </Text>
                 </View>
@@ -330,19 +343,22 @@ export default function OnboardingScreen({ navigation }) {
           </View>
 
           {/* Botón finalizar */}
-          <TouchableOpacity style={styles.finishBtn} onPress={handleFinish}>
-            <Text style={styles.finishBtnText}>
+          <TouchableOpacity
+            style={[styles.finishBtn, { backgroundColor: colors.primary }]}
+            onPress={handleFinish}
+          >
+            <Text style={[styles.finishBtnText, { color: colors.textOnPrimary }]}>
               {age && sex && isActive !== null ? '✅ Empezar a usar VitalPulse' : 'Continuar sin perfil completo'}
             </Text>
           </TouchableOpacity>
 
           {age && sex && isActive !== null && (
-            <Text style={styles.profileComplete}>
+            <Text style={[styles.profileComplete, { color: colors.primary }]}>
               ✨ Perfil completo — máxima precisión activada
             </Text>
           )}
 
-          <Text style={styles.privacyNote}>
+          <Text style={[styles.privacyNote, { color: colors.textMuted }]}>
             🔒 Todos los datos se guardan únicamente en tu dispositivo.
             Nunca se envían a ningún servidor.
           </Text>
@@ -352,50 +368,50 @@ export default function OnboardingScreen({ navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
-  safe:         { flex: 1, backgroundColor: '#FFFFFF' },
+// ─── Styles factory ────────────────────────────────────────────────────────────
+const createStyles = (colors) => StyleSheet.create({
+  safe:         { flex: 1, backgroundColor: colors.bg },
   // Tutorial
   slide:        { width: SCREEN_WIDTH, paddingHorizontal: 32, paddingTop: 80, alignItems: 'center' },
   slideLogo:    { width: 64, height: 64, marginBottom: 16, resizeMode: 'contain' },
   slideIcon:    { fontSize: 80, marginBottom: 28 },
-  slideTitle:   { color: '#1E293B', fontSize: 26, fontWeight: '700', textAlign: 'center', marginBottom: 20 },
-  slideBody:    { color: '#64748B', fontSize: 16, textAlign: 'center', lineHeight: 26 },
+  slideTitle:   { color: colors.textPrimary, fontSize: 26, fontWeight: '700', textAlign: 'center', marginBottom: 20 },
+  slideBody:    { color: colors.textSecondary, fontSize: 16, textAlign: 'center', lineHeight: 26 },
   dotsContainer:{ flexDirection: 'row', justifyContent: 'center', gap: 8, marginVertical: 32 },
-  dot:          { width: 8, height: 8, borderRadius: 4, backgroundColor: '#E2E8F0' },
-  dotActive:    { backgroundColor: '#2563EB', width: 24 },
+  dot:          { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.border },
+  dotActive:    { backgroundColor: colors.primary, width: 24 },
   tutorialFooter: { paddingHorizontal: 24, paddingBottom: 24, gap: 12 },
-  primaryBtn:   { backgroundColor: '#2563EB', borderRadius: 16, padding: 18, alignItems: 'center' },
-  primaryBtnText: { color: '#FFFFFF', fontSize: 17, fontWeight: '700' },
-  skipText:     { color: '#94A3B8', fontSize: 14, textAlign: 'center', paddingVertical: 8 },
+  primaryBtn:   { backgroundColor: colors.primary, borderRadius: 16, padding: 18, alignItems: 'center' },
+  primaryBtnText: { color: colors.textOnPrimary, fontSize: 17, fontWeight: '700' },
+  skipText:     { color: colors.textMuted, fontSize: 14, textAlign: 'center', paddingVertical: 8 },
   // Formulario
   formScroll:   { padding: 24, paddingBottom: 48 },
-  formTitle:    { color: '#1E293B', fontSize: 26, fontWeight: '700', marginBottom: 8 },
-  formSubtitle: { color: '#64748B', fontSize: 14, lineHeight: 22, marginBottom: 28 },
+  formTitle:    { color: colors.textPrimary, fontSize: 26, fontWeight: '700', marginBottom: 8 },
+  formSubtitle: { color: colors.textSecondary, fontSize: 14, lineHeight: 22, marginBottom: 28 },
   fieldGroup:   { marginBottom: 24 },
-  fieldLabel:   { color: '#2563EB', fontSize: 13, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 },
-  fieldHint:    { color: '#64748B', fontSize: 12, marginBottom: 10, lineHeight: 18 },
-  inputLabel:   { color: '#64748B', fontSize: 12, marginBottom: 6 },
-  input:        { backgroundColor: '#F1F5F9', borderRadius: 12, padding: 14, color: '#1E293B', fontSize: 16, borderWidth: 1, borderColor: '#E2E8F0' },
+  fieldLabel:   { color: colors.primary, fontSize: 13, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 },
+  fieldHint:    { color: colors.textSecondary, fontSize: 12, marginBottom: 10, lineHeight: 18 },
+  inputLabel:   { color: colors.textSecondary, fontSize: 12, marginBottom: 6 },
+  input:        { backgroundColor: colors.bgSecondary, borderRadius: 12, padding: 14, color: colors.textPrimary, fontSize: 16, borderWidth: 1, borderColor: colors.border },
   rowInputs:    { flexDirection: 'row' },
   optionRow:    { flexDirection: 'row', gap: 12 },
-  optionBtn:    { flex: 1, backgroundColor: '#FFFFFF', borderRadius: 12, padding: 14, alignItems: 'center', borderWidth: 1, borderColor: '#E2E8F0' },
-  optionBtnActive: { backgroundColor: '#2563EB', borderColor: '#2563EB' },
-  optionBtnText:   { color: '#64748B', fontSize: 15, fontWeight: '600' },
-  optionBtnTextActive: { color: '#FFFFFF' },
+  optionBtn:    { flex: 1, backgroundColor: colors.bg, borderRadius: 12, padding: 14, alignItems: 'center', borderWidth: 1, borderColor: colors.border },
+  optionBtnActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+  optionBtnText:   { color: colors.textSecondary, fontSize: 15, fontWeight: '600' },
+  optionBtnTextActive: { color: colors.textOnPrimary },
   termsSection: { marginBottom: 24 },
   termsLinks: { marginLeft: 36, marginTop: 4 },
-  termsSubmenu: { backgroundColor: '#F8F9FA', borderRadius: 12, padding: 12, marginTop: 8, borderWidth: 1, borderColor: '#E2E8F0' },
+  termsSubmenu: { backgroundColor: colors.bgCard, borderRadius: 12, padding: 12, marginTop: 8, borderWidth: 1, borderColor: colors.border },
   termsSubmenuItem: { paddingVertical: 8, paddingHorizontal: 4 },
-  termsSubmenuText: { color: '#2563EB', fontSize: 14, fontWeight: '600' },
-  termsSubmenuHint: { color: '#94A3B8', fontSize: 11, textAlign: 'center', marginTop: 8, lineHeight: 16 },
-  linkText:     { color: '#2563EB', fontSize: 14, fontWeight: '600' },
+  termsSubmenuText: { color: colors.primary, fontSize: 14, fontWeight: '600' },
+  termsSubmenuHint: { color: colors.textMuted, fontSize: 11, textAlign: 'center', marginTop: 8, lineHeight: 16 },
+  linkText:     { color: colors.primary, fontSize: 14, fontWeight: '600' },
   checkRow:     { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, gap: 12 },
-  checkbox:     { width: 24, height: 24, borderRadius: 6, borderWidth: 2, borderColor: '#CBD5E1', justifyContent: 'center', alignItems: 'center' },
-  checkboxActive: { backgroundColor: '#2563EB', borderColor: '#2563EB' },
-  checkmark:    { color: '#FFFFFF', fontSize: 14, fontWeight: '700' },
-  checkLabel:   { color: '#1E293B', fontSize: 15 },
-  finishBtn:    { backgroundColor: '#2563EB', borderRadius: 16, padding: 18, alignItems: 'center', marginTop: 8, marginBottom: 12 },
-  finishBtnText:{ color: '#FFFFFF', fontSize: 17, fontWeight: '700' },
-  profileComplete: { color: '#2563EB', fontSize: 13, textAlign: 'center', marginBottom: 16 },
-  privacyNote:  { color: '#94A3B8', fontSize: 12, textAlign: 'center', lineHeight: 18 },
+  checkbox:     { width: 24, height: 24, borderRadius: 6, borderWidth: 2, borderColor: colors.border, justifyContent: 'center', alignItems: 'center' },
+  checkmark:    { color: colors.textOnPrimary, fontSize: 14, fontWeight: '700' },
+  checkLabel:   { color: colors.textPrimary, fontSize: 15 },
+  finishBtn:    { backgroundColor: colors.primary, borderRadius: 16, padding: 18, alignItems: 'center', marginTop: 8, marginBottom: 12 },
+  finishBtnText:{ color: colors.textOnPrimary, fontSize: 17, fontWeight: '700' },
+  profileComplete: { color: colors.primary, fontSize: 13, textAlign: 'center', marginBottom: 16 },
+  privacyNote:  { color: colors.textMuted, fontSize: 12, textAlign: 'center', lineHeight: 18 },
 });

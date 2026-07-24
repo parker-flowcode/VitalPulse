@@ -1,15 +1,20 @@
 /**
- * CalibrationScreen.js — VitalPulse
+ * CalibrationScreen.js — VitalPulse v5.0
  *
  * Pantalla para que el usuario introduzca una medición real de presión arterial
  * y la asocie a la última medición de PPG, creando un punto de calibración.
+ * Soporta tema dinámico mediante ThemeContext.
  */
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTheme } from '../theme/ThemeContext';
 import useHealthStore from '../store/healthstore';
+import { SPACING, RADIUS } from '../theme/designTokens';
 
 export default function CalibrationScreen({ navigation, route }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { addCalibrationPoint, calibration } = useHealthStore();
   // La pantalla puede recibir la medición reciente para asociar datos de morfología y BPM
   const measurement = route?.params?.measurement || null;
@@ -37,37 +42,37 @@ export default function CalibrationScreen({ navigation, route }) {
   };
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]}>
       <View style={styles.container}>
-        <Text style={styles.title}>Calibración manual</Text>
-        <Text style={styles.subtitle}>
+        <Text style={[styles.title, { color: colors.textPrimary }]}>Calibración manual</Text>
+        <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
           Introduce los valores de tu tensiómetro real para mejorar la precisión.
         </Text>
-        <Text style={styles.label}>Presión sistólica (mmHg)</Text>
+        <Text style={[styles.label, { color: colors.primary }]}>Presión sistólica (mmHg)</Text>
         <TextInput
-          style={styles.input}
+          style={[styles.input, { backgroundColor: colors.bgSecondary, color: colors.textPrimary, borderColor: colors.border }]}
           value={systolic}
           onChangeText={setSystolic}
           keyboardType="number-pad"
           placeholder="120"
-          placeholderTextColor="#94A3B8"
+          placeholderTextColor={colors.textMuted}
         />
-        <Text style={styles.label}>Presión diastólica (mmHg)</Text>
+        <Text style={[styles.label, { color: colors.primary }]}>Presión diastólica (mmHg)</Text>
         <TextInput
-          style={styles.input}
+          style={[styles.input, { backgroundColor: colors.bgSecondary, color: colors.textPrimary, borderColor: colors.border }]}
           value={diastolic}
           onChangeText={setDiastolic}
           keyboardType="number-pad"
           placeholder="80"
-          placeholderTextColor="#94A3B8"
+          placeholderTextColor={colors.textMuted}
         />
-        <TouchableOpacity style={styles.saveBtn} onPress={handleSave}>
-          <Text style={styles.saveBtnText}>Guardar punto de calibración</Text>
+        <TouchableOpacity style={[styles.saveBtn, { backgroundColor: colors.primary }]} onPress={handleSave}>
+          <Text style={[styles.saveBtnText, { color: colors.textOnPrimary }]}>Guardar punto de calibración</Text>
         </TouchableOpacity>
         {calibration?.points?.length > 0 && (
-          <View style={styles.infoCard}>
+          <View style={[styles.infoCard, { backgroundColor: colors.primarySubtle, borderColor: colors.primaryMuted }]}>
             <Text style={styles.infoIcon}>📏</Text>
-            <Text style={styles.infoText}>Puntos guardados: {calibration.points.length}</Text>
+            <Text style={[styles.infoText, { color: colors.primary }]}>Puntos guardados: {calibration.points.length}</Text>
           </View>
         )}
       </View>
@@ -75,41 +80,42 @@ export default function CalibrationScreen({ navigation, route }) {
   );
 }
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#FFFFFF' },
+// ─── Styles factory ────────────────────────────────────────────────────────────
+const createStyles = (colors) => StyleSheet.create({
+  safe: { flex: 1, backgroundColor: colors.bg },
   container: { padding: 24 },
-  title: { color: '#1E293B', fontSize: 24, fontWeight: '700', marginBottom: 8 },
-  subtitle: { color: '#64748B', fontSize: 14, lineHeight: 20, marginBottom: 24 },
-  label: { color: '#2563EB', fontSize: 14, fontWeight: '600', marginBottom: 6 },
+  title: { color: colors.textPrimary, fontSize: 24, fontWeight: '700', marginBottom: 8 },
+  subtitle: { color: colors.textSecondary, fontSize: 14, lineHeight: 20, marginBottom: 24 },
+  label: { color: colors.primary, fontSize: 14, fontWeight: '600', marginBottom: 6 },
   input: {
-    backgroundColor: '#F1F5F9',
+    backgroundColor: colors.bgSecondary,
     borderRadius: 12,
     padding: 14,
-    color: '#1E293B',
+    color: colors.textPrimary,
     fontSize: 16,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: colors.border,
     marginBottom: 12,
   },
   saveBtn: {
-    backgroundColor: '#2563EB',
+    backgroundColor: colors.primary,
     borderRadius: 12,
     padding: 14,
     alignItems: 'center',
     marginTop: 8,
   },
-  saveBtnText: { color: '#FFFFFF', fontSize: 15, fontWeight: '600' },
+  saveBtnText: { color: colors.textOnPrimary, fontSize: 15, fontWeight: '600' },
   infoCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#EFF6FF',
+    backgroundColor: colors.primarySubtle,
     borderRadius: 10,
     padding: 14,
     marginTop: 16,
     borderWidth: 1,
-    borderColor: '#DBEAFE',
+    borderColor: colors.primaryMuted,
     gap: 10,
   },
   infoIcon: { fontSize: 18 },
-  infoText: { color: '#2563EB', fontSize: 13, fontWeight: '600' },
+  infoText: { color: colors.primary, fontSize: 13, fontWeight: '600' },
 });

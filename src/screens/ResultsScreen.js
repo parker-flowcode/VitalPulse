@@ -1,12 +1,12 @@
 /**
  * ResultsScreen.js — VitalPulse v5.0
  *
- * Pantalla de resultados con diseño minimalista premium blanco.
+ * Pantalla de resultados con diseño minimalista premium blanco y tema dinámico.
  * Jerarquía UX: Alertas -> FC -> PA -> Calidad -> HRV -> Acciones.
  *
  * Responsive: se adapta a pantallas estrechas (<360dp) como Samsung S22.
  */
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -19,6 +19,7 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTheme } from '../theme/ThemeContext';
 import { classifyBPM, classifyBP } from '../utils/bpEstimator';
 import {
   translateSignalQuality,
@@ -29,11 +30,13 @@ import {
   validateMeasurement,
 } from '../utils/uxTranslations';
 import LegalDisclaimer from '../components/LegalDisclaimer';
+import BannerAd from '../components/BannerAd';
 import { shareMeasurementSummary } from '../services/exportService';
 import { showInterstitialAd } from '../services/ads';
-import { COLORS, SHADOWS, RADIUS } from '../theme/designTokens';
+import { SPACING, RADIUS, SHADOWS } from '../theme/designTokens';
 
 export default function ResultsScreen({ navigation, route }) {
+  const { colors } = useTheme();
   // ─── Responsive: dimensiones de pantalla y área segura ──────────────
   const { width: screenWidth } = useWindowDimensions();
   const insets = useSafeAreaInsets();
@@ -56,6 +59,9 @@ export default function ResultsScreen({ navigation, route }) {
     (screenWidth - 2 * gridPadding - 2 * gridGap) / gridColumns,
   );
 
+  // Dynamic styles
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   // ─── Anuncio intersticial después de cada medición ──────────────────
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -67,18 +73,18 @@ export default function ResultsScreen({ navigation, route }) {
   // ─── Estado vacío / error ───────────────────────────────────────────
   if (!route?.params?.measurement) {
     return (
-      <SafeAreaView style={styles.safe}>
-        <StatusBar barStyle="dark-content" backgroundColor={COLORS.bgCard} />
+      <SafeAreaView style={[styles.safe, { backgroundColor: colors.bgCard }]}>
+        <StatusBar barStyle="dark-content" backgroundColor={colors.bgCard} />
         <View style={styles.center}>
           <Text style={styles.errorIcon}>{'⚠️'}</Text>
-          <Text style={styles.errorText}>
+          <Text style={[styles.errorText, { color: colors.textSecondary }]}>
             No hay datos de medición disponibles.
           </Text>
           <TouchableOpacity
-            style={styles.primaryBtn}
+            style={[styles.primaryBtn, { backgroundColor: colors.primary }]}
             onPress={() => navigation.navigate('HomeMain')}
           >
-            <Text style={styles.primaryBtnText}>Volver al inicio</Text>
+            <Text style={[styles.primaryBtnText, { color: colors.textOnPrimary }]}>Volver al inicio</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -119,8 +125,8 @@ export default function ResultsScreen({ navigation, route }) {
   const bpClass = bp ? classifyBP(bp.systolic, bp.diastolic) : null;
 
   return (
-    <SafeAreaView style={styles.safe}>
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.bgCard} />
+    <SafeAreaView style={[styles.safe, { backgroundColor: colors.bgCard }]}>
+      <StatusBar barStyle="dark-content" backgroundColor={colors.bgCard} />
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -135,26 +141,26 @@ export default function ResultsScreen({ navigation, route }) {
         >
           {/* ─── Nivel 0: Alertas y validaciones ───────────────────── */}
           {issues.map((issue, i) => {
-            const alertStyle =
+            const alertBg =
               issue.type === 'error'
-                ? styles.alertError
+                ? colors.dangerLight
                 : issue.type === 'warning'
-                  ? styles.alertWarning
-                  : styles.alertInfo;
-            const alertBorderStyle =
+                  ? colors.warningLight
+                  : colors.primarySubtle;
+            const alertBorderColor =
               issue.type === 'error'
-                ? styles.alertBorderError
+                ? colors.danger
                 : issue.type === 'warning'
-                  ? styles.alertBorderWarning
-                  : styles.alertBorderInfo;
+                  ? colors.warning
+                  : colors.info;
             return (
               <View
                 key={i}
                 style={[
                   styles.alertCard,
-                  alertStyle,
-                  alertBorderStyle,
                   {
+                    backgroundColor: alertBg,
+                    borderLeftColor: alertBorderColor,
                     paddingVertical: alertPadV,
                     paddingHorizontal: alertPadH,
                   },
@@ -163,8 +169,8 @@ export default function ResultsScreen({ navigation, route }) {
                 <View style={styles.alertRow}>
                   <Text style={styles.alertIcon}>{issue.icon}</Text>
                   <View style={styles.alertTextWrap}>
-                    <Text style={styles.alertTitle}>{issue.title}</Text>
-                    <Text style={styles.alertMessage}>{issue.message}</Text>
+                    <Text style={[styles.alertTitle, { color: colors.textPrimary }]}>{issue.title}</Text>
+                    <Text style={[styles.alertMessage, { color: colors.textSecondary }]}>{issue.message}</Text>
                   </View>
                 </View>
               </View>
@@ -175,13 +181,11 @@ export default function ResultsScreen({ navigation, route }) {
           <View
             style={[
               styles.resultCard,
-              {
-                paddingVertical: cardPadV,
-                paddingHorizontal: cardPadH,
-              },
+              SHADOWS.card,
+              { backgroundColor: colors.bg, paddingVertical: cardPadV, paddingHorizontal: cardPadH },
             ]}
           >
-            <Text style={styles.cardLabel}>Frecuencia cardíaca</Text>
+            <Text style={[styles.cardLabel, { color: colors.textMuted }]}>Frecuencia cardíaca</Text>
             <Text
               style={[
                 styles.bpmValue,
@@ -191,7 +195,7 @@ export default function ResultsScreen({ navigation, route }) {
             >
               {bpm || '—'}
             </Text>
-            <Text style={styles.cardUnit}>pulsaciones por minuto</Text>
+            <Text style={[styles.cardUnit, { color: colors.textSecondary }]}>pulsaciones por minuto</Text>
             <View
               style={[
                 styles.badgePill,
@@ -202,7 +206,7 @@ export default function ResultsScreen({ navigation, route }) {
                 {bpmClass.label}
               </Text>
             </View>
-            <Text style={styles.rangeText}>
+            <Text style={[styles.rangeText, { color: colors.textMuted }]}>
               Rango normal en reposo: 60–100 BPM
             </Text>
           </View>
@@ -212,25 +216,23 @@ export default function ResultsScreen({ navigation, route }) {
             <View
               style={[
                 styles.resultCard,
-                {
-                  paddingVertical: cardPadV,
-                  paddingHorizontal: cardPadH,
-                },
+                SHADOWS.card,
+                { backgroundColor: colors.bg, paddingVertical: cardPadV, paddingHorizontal: cardPadH },
               ]}
             >
-              <Text style={styles.cardLabel}>
+              <Text style={[styles.cardLabel, { color: colors.textMuted }]}>
                 Presión arterial estimada
               </Text>
               {!bp.isCalibrated && (
-                <View style={styles.calibrationWarning}>
-                  <Text style={styles.calibrationWarningText}>
+                <View style={[styles.calibrationWarning, { backgroundColor: colors.warningLight }]}>
+                  <Text style={[styles.calibrationWarningText, { color: colors.warning }]}>
                     {'⚡'} Sin calibración — valores orientativos
                   </Text>
                 </View>
               )}
               {bp.isCalibrated && (
-                <View style={styles.calibrationOk}>
-                  <Text style={styles.calibrationOkText}>
+                <View style={[styles.calibrationOk, { backgroundColor: colors.successLight }]}>
+                  <Text style={[styles.calibrationOkText, { color: colors.success }]}>
                     {'✅'} Calibrado con {bp.calibrationPoints ?? 0} punto
                     {(bp.calibrationPoints ?? 0) > 1 ? 's' : ''}
                   </Text>
@@ -245,7 +247,7 @@ export default function ResultsScreen({ navigation, route }) {
               >
                 {bp.systolic}/{bp.diastolic}
               </Text>
-              <Text style={styles.cardUnit}>
+              <Text style={[styles.cardUnit, { color: colors.textSecondary }]}>
                 mmHg (sistólica / diastólica)
               </Text>
               <View
@@ -258,15 +260,15 @@ export default function ResultsScreen({ navigation, route }) {
                   {bpClass.label}
                 </Text>
               </View>
-              <Text style={styles.rangeText}>
+              <Text style={[styles.rangeText, { color: colors.textMuted }]}>
                 Óptima: menor a 120/80 mmHg
               </Text>
             </View>
           )}
 
           {/* ─── Nivel 2: Calidad de la medición — Grid dinámico ──── */}
-          <View style={styles.qualityCard}>
-            <Text style={styles.cardLabel}>
+          <View style={[styles.qualityCard, SHADOWS.card, { backgroundColor: colors.bg }]}>
+            <Text style={[styles.cardLabel, { color: colors.textMuted }]}>
               Calidad de la medición
             </Text>
 
@@ -280,7 +282,7 @@ export default function ResultsScreen({ navigation, route }) {
             >
               {/* Señal */}
               <View
-                style={[styles.qualityCell, { width: qualityCellWidth }]}
+                style={[styles.qualityCell, { width: qualityCellWidth, backgroundColor: colors.bgSecondary, borderColor: colors.border }]}
               >
                 <Text style={styles.qualityCellIcon}>
                   {qualityUX.icon || '📶'}
@@ -288,35 +290,35 @@ export default function ResultsScreen({ navigation, route }) {
                 <Text
                   style={[
                     styles.qualityCellValue,
-                    { color: qualityUX.color },
+                    { color: qualityUX.color || colors.textPrimary },
                   ]}
                   numberOfLines={2}
                 >
                   {qualityUX.label}
                 </Text>
-                <Text style={styles.qualityCellLabel}>Señal</Text>
+                <Text style={[styles.qualityCellLabel, { color: colors.textMuted }]}>Señal</Text>
               </View>
 
               {/* Confianza */}
               <View
-                style={[styles.qualityCell, { width: qualityCellWidth }]}
+                style={[styles.qualityCell, { width: qualityCellWidth, backgroundColor: colors.bgSecondary, borderColor: colors.border }]}
               >
                 <Text style={styles.qualityCellIcon}>{'🎯'}</Text>
                 <Text
                   style={[
                     styles.qualityCellValue,
-                    { color: confidenceUX.color },
+                    { color: confidenceUX.color || colors.textPrimary },
                   ]}
                   numberOfLines={2}
                 >
                   {confidenceUX.label}
                 </Text>
-                <Text style={styles.qualityCellLabel}>Confianza</Text>
+                <Text style={[styles.qualityCellLabel, { color: colors.textMuted }]}>Confianza</Text>
               </View>
 
               {/* Estabilidad */}
               <View
-                style={[styles.qualityCell, { width: qualityCellWidth }]}
+                style={[styles.qualityCell, { width: qualityCellWidth, backgroundColor: colors.bgSecondary, borderColor: colors.border }]}
               >
                 <Text style={styles.qualityCellIcon}>
                   {'⚖️'}
@@ -324,50 +326,50 @@ export default function ResultsScreen({ navigation, route }) {
                 <Text
                   style={[
                     styles.qualityCellValue,
-                    { color: stabilityUX.color },
+                    { color: stabilityUX.color || colors.textPrimary },
                   ]}
                   numberOfLines={2}
                 >
                   {stabilityUX.label}
                 </Text>
-                <Text style={styles.qualityCellLabel}>Estabilidad</Text>
+                <Text style={[styles.qualityCellLabel, { color: colors.textMuted }]}>Estabilidad</Text>
               </View>
 
               {/* Frames */}
               <View
-                style={[styles.qualityCell, { width: qualityCellWidth }]}
+                style={[styles.qualityCell, { width: qualityCellWidth, backgroundColor: colors.bgSecondary, borderColor: colors.border }]}
               >
                 <Text style={styles.qualityCellIcon}>
                   {'📊'}
                 </Text>
                 <Text
-                  style={styles.qualityCellValue}
+                  style={[styles.qualityCellValue, { color: colors.textPrimary }]}
                   numberOfLines={2}
                 >
                   {measurement.signalLength || 0}
                 </Text>
-                <Text style={styles.qualityCellLabel}>Frames</Text>
+                <Text style={[styles.qualityCellLabel, { color: colors.textMuted }]}>Frames</Text>
               </View>
 
               {/* Latidos */}
               <View
-                style={[styles.qualityCell, { width: qualityCellWidth }]}
+                style={[styles.qualityCell, { width: qualityCellWidth, backgroundColor: colors.bgSecondary, borderColor: colors.border }]}
               >
                 <Text style={styles.qualityCellIcon}>
                   {'❤️'}
                 </Text>
                 <Text
-                  style={styles.qualityCellValue}
+                  style={[styles.qualityCellValue, { color: colors.textPrimary }]}
                   numberOfLines={2}
                 >
                   {rrIntervals?.length || 0}
                 </Text>
-                <Text style={styles.qualityCellLabel}>Latidos</Text>
+                <Text style={[styles.qualityCellLabel, { color: colors.textMuted }]}>Latidos</Text>
               </View>
 
               {/* Sensor */}
               <View
-                style={[styles.qualityCell, { width: qualityCellWidth }]}
+                style={[styles.qualityCell, { width: qualityCellWidth, backgroundColor: colors.bgSecondary, borderColor: colors.border }]}
               >
                 <Text style={styles.qualityCellIcon}>
                   {saturatedAlert ? '💡' : '✅'}
@@ -378,19 +380,19 @@ export default function ResultsScreen({ navigation, route }) {
                     {
                       color: saturatedAlert
                         ? saturatedAlert.color
-                        : COLORS.success,
+                        : colors.success,
                     },
                   ]}
                   numberOfLines={2}
                 >
                   {saturatedAlert ? 'Saturada' : 'Normal'}
                 </Text>
-                <Text style={styles.qualityCellLabel}>Sensor</Text>
+                <Text style={[styles.qualityCellLabel, { color: colors.textMuted }]}>Sensor</Text>
               </View>
             </View>
 
             {hasWarning && !hasCriticalIssue && (
-              <Text style={styles.qualityHint}>
+              <Text style={[styles.qualityHint, { color: colors.warning }]}>
                 {'💡'} Los resultados son aproximados. Para mejor
                 precisión, recoloca el dedo y vuelve a medir.
               </Text>
@@ -399,8 +401,8 @@ export default function ResultsScreen({ navigation, route }) {
 
           {/* ─── Nivel 3: HRV avanzado ────────────────────────────── */}
           {showAdvancedHRV ? (
-            <View style={styles.hrvCard}>
-              <Text style={styles.cardLabel}>
+            <View style={[styles.hrvCard, SHADOWS.card, { backgroundColor: colors.bg }]}>
+              <Text style={[styles.cardLabel, { color: colors.textMuted }]}>
                 Variabilidad cardíaca (HRV)
               </Text>
               <View style={styles.hrvHeader}>
@@ -409,11 +411,11 @@ export default function ResultsScreen({ navigation, route }) {
                   {hrvUX.label}
                 </Text>
               </View>
-              <Text style={styles.hrvDescription}>
+              <Text style={[styles.hrvDescription, { color: colors.textSecondary }]}>
                 {hrvUX.description}
               </Text>
               {hrvUX.showValues && (
-                <View style={styles.hrvMetricsRow}>
+                <View style={[styles.hrvMetricsRow, { backgroundColor: colors.bgSecondary }]}>
                   <View style={styles.hrvMetricBlock}>
                     <Text
                       style={[
@@ -427,10 +429,10 @@ export default function ResultsScreen({ navigation, route }) {
                     >
                       {hrvUX.sdnnMs ?? '—'}
                     </Text>
-                    <Text style={styles.hrvMetricBlockUnit}>ms</Text>
-                    <Text style={styles.hrvMetricBlockLabel}>SDNN</Text>
+                    <Text style={[styles.hrvMetricBlockUnit, { color: colors.textMuted }]}>ms</Text>
+                    <Text style={[styles.hrvMetricBlockLabel, { color: colors.textMuted }]}>SDNN</Text>
                   </View>
-                  <View style={styles.hrvMetricDivider} />
+                  <View style={[styles.hrvMetricDivider, { backgroundColor: colors.border }]} />
                   <View style={styles.hrvMetricBlock}>
                     <Text
                       style={[
@@ -444,12 +446,12 @@ export default function ResultsScreen({ navigation, route }) {
                     >
                       {hrvUX.latidos ?? '—'}
                     </Text>
-                    <Text style={styles.hrvMetricBlockUnit}>latidos</Text>
-                    <Text style={styles.hrvMetricBlockLabel}>
+                    <Text style={[styles.hrvMetricBlockUnit, { color: colors.textMuted }]}>latidos</Text>
+                    <Text style={[styles.hrvMetricBlockLabel, { color: colors.textMuted }]}>
                       Registrados
                     </Text>
                   </View>
-                  <View style={styles.hrvMetricDivider} />
+                  <View style={[styles.hrvMetricDivider, { backgroundColor: colors.border }]} />
                   <View style={styles.hrvMetricBlock}>
                     <Text
                       style={[
@@ -462,34 +464,34 @@ export default function ResultsScreen({ navigation, route }) {
                       ]}
                     >
                       {hrvUX.score ?? '—'}
-                      <Text style={styles.hrvMetricBlockScoreMax}>
+                      <Text style={[styles.hrvMetricBlockScoreMax, { color: colors.textMuted }]}>
                         /4
                       </Text>
                     </Text>
-                    <Text style={styles.hrvMetricBlockLabel}>
+                    <Text style={[styles.hrvMetricBlockLabel, { color: colors.textMuted }]}>
                       Puntuación
                     </Text>
                   </View>
                 </View>
               )}
-              <Text style={styles.rangeText}>
+              <Text style={[styles.rangeText, { color: colors.textMuted }]}>
                 HRV normal: 50–100 ms {'·'} Mayor HRV = mejor salud
                 cardiovascular
               </Text>
             </View>
           ) : (
-            <View style={styles.hrvCard}>
-              <Text style={styles.cardLabel}>
+            <View style={[styles.hrvCard, SHADOWS.card, { backgroundColor: colors.bg }]}>
+              <Text style={[styles.cardLabel, { color: colors.textMuted }]}>
                 Variabilidad cardíaca (HRV)
               </Text>
               <View style={styles.hrvEmptyState}>
                 <Text style={styles.hrvEmptyIcon}>
                   {'⏱️'}
                 </Text>
-                <Text style={styles.hrvEmptyTitle}>
+                <Text style={[styles.hrvEmptyTitle, { color: colors.textSecondary }]}>
                   Datos insuficientes
                 </Text>
-                <Text style={styles.hrvEmptyText}>
+                <Text style={[styles.hrvEmptyText, { color: colors.textMuted }]}>
                   {hasCriticalIssue
                     ? 'La medición fue demasiado corta. Mantén el dedo quieto sobre la cámara durante 60 segundos completos para obtener datos de HRV.'
                     : 'Se necesitan más latidos para analizar la variabilidad cardíaca. Continúa midiendo regularmente.'}
@@ -500,23 +502,23 @@ export default function ResultsScreen({ navigation, route }) {
 
           {/* ─── Acciones ──────────────────────────────────────────── */}
           <TouchableOpacity
-            style={styles.shareBtn}
+            style={[styles.shareBtn, { backgroundColor: colors.primarySubtle }]}
             onPress={() => shareMeasurementSummary(measurement)}
           >
             <Text style={styles.shareBtnIcon}>{'📤'}</Text>
-            <Text style={styles.shareBtnText}>
+            <Text style={[styles.shareBtnText, { color: colors.primary }]}>
               Compartir resultado
             </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={styles.calibrateBtn}
+            style={[styles.calibrateBtn, { backgroundColor: colors.bg, borderColor: colors.primary }]}
             onPress={() =>
               navigation.navigate('Calibration', { measurement })
             }
           >
             <Text style={styles.calibrateBtnIcon}>{'📏'}</Text>
-            <Text style={styles.calibrateBtnText}>
+            <Text style={[styles.calibrateBtnText, { color: colors.primary }]}>
               Tengo un tensiómetro — calibrar para mayor
               precisión
             </Text>
@@ -525,21 +527,24 @@ export default function ResultsScreen({ navigation, route }) {
           {/* Disclaimer legal */}
           <LegalDisclaimer />
 
+          {/* Banner ad */}
+          <BannerAd />
+
           {/* Navegación principal */}
           <View style={styles.actionsRow}>
             <TouchableOpacity
-              style={styles.primaryBtn}
+              style={[styles.primaryBtn, { backgroundColor: colors.primary }]}
               onPress={() => navigation.navigate('Measure')}
             >
-              <Text style={styles.primaryBtnText}>
+              <Text style={[styles.primaryBtnText, { color: colors.textOnPrimary }]}>
                 Nueva medición
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={styles.secondaryBtn}
+              style={[styles.secondaryBtn, { backgroundColor: colors.bg, borderColor: colors.primary }]}
               onPress={() => navigation.navigate('HomeMain')}
             >
-              <Text style={styles.secondaryBtnText}>Inicio</Text>
+              <Text style={[styles.secondaryBtnText, { color: colors.primary }]}>Inicio</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -548,12 +553,12 @@ export default function ResultsScreen({ navigation, route }) {
   );
 }
 
-// ─── Estilos (los valores dinámicos se aplican inline en el JSX) ─────
-const styles = StyleSheet.create({
+// ─── Styles factory ────────────────────────────────────────────────────────────
+const createStyles = (colors) => StyleSheet.create({
   // ─── Contenedores principales ──────────────────────────────────────
   safe: {
     flex: 1,
-    backgroundColor: COLORS.bgCard,
+    backgroundColor: colors.bgCard,
   },
   scroll: {
     padding: 20,
@@ -572,7 +577,7 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 16,
-    color: COLORS.textSecondary,
+    color: colors.textSecondary,
     marginBottom: 24,
     textAlign: 'center',
     lineHeight: 24,
@@ -583,24 +588,6 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.md,
     marginBottom: 12,
     borderLeftWidth: 4,
-  },
-  alertError: {
-    backgroundColor: COLORS.dangerLight,
-  },
-  alertWarning: {
-    backgroundColor: COLORS.warningLight,
-  },
-  alertInfo: {
-    backgroundColor: COLORS.primarySubtle,
-  },
-  alertBorderError: {
-    borderLeftColor: COLORS.danger,
-  },
-  alertBorderWarning: {
-    borderLeftColor: COLORS.warning,
-  },
-  alertBorderInfo: {
-    borderLeftColor: COLORS.info,
   },
   alertRow: {
     flexDirection: 'row',
@@ -617,40 +604,39 @@ const styles = StyleSheet.create({
   alertTitle: {
     fontSize: 14,
     fontWeight: '700',
-    color: COLORS.textPrimary,
+    color: colors.textPrimary,
     marginBottom: 4,
   },
   alertMessage: {
     fontSize: 13,
     lineHeight: 20,
-    color: COLORS.textSecondary,
+    color: colors.textSecondary,
   },
 
   // ─── Tarjetas de resultado ─────────────────────────────────────────
   resultCard: {
-    backgroundColor: COLORS.bg,
+    backgroundColor: colors.bg,
     borderRadius: RADIUS.xl,
     marginBottom: 16,
     alignItems: 'center',
-    ...SHADOWS.card,
   },
   cardLabel: {
     fontSize: 11,
     fontWeight: '700',
-    color: COLORS.textMuted,
+    color: colors.textMuted,
     letterSpacing: 1.2,
     textTransform: 'uppercase',
     marginBottom: 16,
   },
   cardUnit: {
     fontSize: 13,
-    color: COLORS.textSecondary,
+    color: colors.textSecondary,
     marginTop: 4,
     marginBottom: 16,
   },
   rangeText: {
     fontSize: 12,
-    color: COLORS.textMuted,
+    color: colors.textMuted,
     textAlign: 'center',
     marginTop: 4,
     lineHeight: 18,
@@ -683,7 +669,6 @@ const styles = StyleSheet.create({
 
   // ─── Calibración ───────────────────────────────────────────────────
   calibrationWarning: {
-    backgroundColor: COLORS.warningLight,
     borderRadius: RADIUS.sm,
     paddingVertical: 8,
     paddingHorizontal: 12,
@@ -691,13 +676,11 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   calibrationWarningText: {
-    color: COLORS.warning,
     fontSize: 12,
     fontWeight: '600',
     textAlign: 'center',
   },
   calibrationOk: {
-    backgroundColor: COLORS.successLight,
     borderRadius: RADIUS.sm,
     paddingVertical: 8,
     paddingHorizontal: 12,
@@ -705,7 +688,6 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   calibrationOkText: {
-    color: COLORS.success,
     fontSize: 12,
     fontWeight: '600',
     textAlign: 'center',
@@ -713,12 +695,11 @@ const styles = StyleSheet.create({
 
   // ─── Calidad de la medición ────────────────────────────────────────
   qualityCard: {
-    backgroundColor: COLORS.bg,
+    backgroundColor: colors.bg,
     borderRadius: RADIUS.lg,
     paddingVertical: 20,
     paddingHorizontal: 20,
     marginBottom: 16,
-    ...SHADOWS.card,
   },
   qualityGrid: {
     flexDirection: 'row',
@@ -730,10 +711,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: 12,
     paddingHorizontal: 4,
-    backgroundColor: COLORS.bgSecondary,
+    backgroundColor: colors.bgSecondary,
     borderRadius: RADIUS.md,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: colors.border,
   },
   qualityCellIcon: {
     fontSize: 18,
@@ -743,20 +724,19 @@ const styles = StyleSheet.create({
   qualityCellValue: {
     fontSize: 12,
     fontWeight: '700',
-    color: COLORS.textPrimary,
+    color: colors.textPrimary,
     textAlign: 'center',
   },
   qualityCellLabel: {
     fontSize: 9,
     fontWeight: '600',
-    color: COLORS.textMuted,
+    color: colors.textMuted,
     marginTop: 2,
     textTransform: 'uppercase',
     letterSpacing: 0.6,
     textAlign: 'center',
   },
   qualityHint: {
-    color: COLORS.warning,
     fontSize: 12,
     textAlign: 'center',
     marginTop: 14,
@@ -765,12 +745,11 @@ const styles = StyleSheet.create({
 
   // ─── HRV ───────────────────────────────────────────────────────────
   hrvCard: {
-    backgroundColor: COLORS.bg,
+    backgroundColor: colors.bg,
     borderRadius: RADIUS.lg,
     paddingVertical: 20,
     paddingHorizontal: 20,
     marginBottom: 16,
-    ...SHADOWS.card,
   },
   hrvHeader: {
     flexDirection: 'row',
@@ -788,7 +767,7 @@ const styles = StyleSheet.create({
   hrvDescription: {
     fontSize: 13,
     lineHeight: 20,
-    color: COLORS.textSecondary,
+    color: colors.textSecondary,
     marginBottom: 16,
   },
   hrvMetricsRow: {
@@ -796,7 +775,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 16,
-    backgroundColor: COLORS.bgSecondary,
+    backgroundColor: colors.bgSecondary,
     borderRadius: RADIUS.md,
     paddingVertical: 14,
     paddingHorizontal: 8,
@@ -813,11 +792,11 @@ const styles = StyleSheet.create({
   hrvMetricBlockScoreMax: {
     fontSize: 14,
     fontWeight: '400',
-    color: COLORS.textMuted,
+    color: colors.textMuted,
   },
   hrvMetricBlockUnit: {
     fontSize: 11,
-    color: COLORS.textMuted,
+    color: colors.textMuted,
     marginTop: 1,
     fontWeight: '500',
     textTransform: 'lowercase',
@@ -825,7 +804,7 @@ const styles = StyleSheet.create({
   hrvMetricBlockLabel: {
     fontSize: 10,
     fontWeight: '600',
-    color: COLORS.textMuted,
+    color: colors.textMuted,
     marginTop: 4,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -833,7 +812,7 @@ const styles = StyleSheet.create({
   hrvMetricDivider: {
     width: 1,
     height: 36,
-    backgroundColor: COLORS.border,
+    backgroundColor: colors.border,
   },
   hrvEmptyState: {
     alignItems: 'center',
@@ -846,12 +825,12 @@ const styles = StyleSheet.create({
   hrvEmptyTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: COLORS.textSecondary,
+    color: colors.textSecondary,
     marginBottom: 8,
   },
   hrvEmptyText: {
     fontSize: 13,
-    color: COLORS.textMuted,
+    color: colors.textMuted,
     textAlign: 'center',
     lineHeight: 20,
     paddingHorizontal: 8,
@@ -862,7 +841,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: COLORS.primarySubtle,
+    backgroundColor: colors.primarySubtle,
     borderRadius: RADIUS.md,
     paddingVertical: 14,
     paddingHorizontal: 20,
@@ -875,19 +854,19 @@ const styles = StyleSheet.create({
   shareBtnText: {
     fontSize: 15,
     fontWeight: '600',
-    color: COLORS.primary,
+    color: colors.primary,
   },
   calibrateBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: COLORS.bg,
+    backgroundColor: colors.bg,
     borderRadius: RADIUS.md,
     paddingVertical: 14,
     paddingHorizontal: 20,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: COLORS.primary,
+    borderColor: colors.primary,
     gap: 8,
   },
   calibrateBtnIcon: {
@@ -896,7 +875,7 @@ const styles = StyleSheet.create({
   calibrateBtnText: {
     fontSize: 14,
     fontWeight: '600',
-    color: COLORS.primary,
+    color: colors.primary,
     textAlign: 'center',
     flexShrink: 1,
   },
@@ -909,27 +888,27 @@ const styles = StyleSheet.create({
   },
   primaryBtn: {
     flex: 1,
-    backgroundColor: COLORS.primary,
+    backgroundColor: colors.primary,
     borderRadius: RADIUS.md,
     paddingVertical: 16,
     alignItems: 'center',
   },
   primaryBtnText: {
-    color: COLORS.textOnPrimary,
+    color: colors.textOnPrimary,
     fontSize: 15,
     fontWeight: '700',
   },
   secondaryBtn: {
     flex: 1,
-    backgroundColor: COLORS.bg,
+    backgroundColor: colors.bg,
     borderRadius: RADIUS.md,
     paddingVertical: 16,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: COLORS.primary,
+    borderColor: colors.primary,
   },
   secondaryBtnText: {
-    color: COLORS.primary,
+    color: colors.primary,
     fontSize: 15,
     fontWeight: '600',
   },

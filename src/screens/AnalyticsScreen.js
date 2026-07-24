@@ -1,3 +1,9 @@
+/**
+ * AnalyticsScreen.js — VitalPulse v5.0
+ *
+ * Pantalla de análisis con gráficos de tendencias, distribución de PA,
+ * cuadrícula de resumen y soporte de tema dinámico.
+ */
 import React, { useMemo } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, Dimensions,
@@ -9,32 +15,34 @@ import {
   VictoryAxis,
   VictoryScatter,
 } from 'victory-native';
+import { useTheme } from '../theme/ThemeContext';
 import useHealthStore from '../store/healthstore';
 import LegalDisclaimer from '../components/LegalDisclaimer';
 import { classifyBPM, classifyBP } from '../utils/bpEstimator';
 import BannerAd from '../components/BannerAd';
-import { COLORS, SHADOWS, SPACING, RADIUS } from '../theme/designTokens';
+import { SPACING, RADIUS, SHADOWS } from '../theme/designTokens';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CHART_WIDTH = SCREEN_WIDTH - 64;
 const CHART_HEIGHT = 200;
 
-function MetricCard({ label, value, unit, color, icon }) {
+function MetricCard({ label, value, unit, color, icon, c }) {
   return (
-    <View style={[styles.metricCard, SHADOWS.card]}>
+    <View style={[styles.metricCard, SHADOWS.card, { backgroundColor: c.bg, borderColor: c.border }]}>
       <View style={styles.metricTop}>
-        <Text style={[styles.metricIcon]}>{icon}</Text>
-        <Text style={[styles.metricValue, { color: color || COLORS.textPrimary }]}>
+        <Text style={styles.metricIcon}>{icon}</Text>
+        <Text style={[styles.metricValue, { color: color || c.textPrimary }]}>
           {value}
         </Text>
-        {unit && <Text style={styles.metricUnit}>{unit}</Text>}
+        {unit && <Text style={[styles.metricUnit, { color: c.textMuted }]}>{unit}</Text>}
       </View>
-      <Text style={styles.metricLabel}>{label}</Text>
+      <Text style={[styles.metricLabel, { color: c.textSecondary }]}>{label}</Text>
     </View>
   );
 }
 
 export default function AnalyticsScreen() {
+  const { colors } = useTheme();
   const { history } = useHealthStore();
 
   const chronological = useMemo(
@@ -198,12 +206,12 @@ export default function AnalyticsScreen() {
   // ─── BP Distribution ─────────────────────────────────────────────────
   const bpDistribution = useMemo(() => {
     const categoryColors = {
-      'Optima': COLORS.success,
-      'Normal': COLORS.primary,
-      'Normal-Alta': COLORS.warning,
-      'HTA Grado 1': COLORS.danger,
-      'HTA Grado 2': COLORS.danger,
-      'HTA Grado 3': COLORS.danger,
+      'Optima': colors.success,
+      'Normal': colors.primary,
+      'Normal-Alta': colors.warning,
+      'HTA Grado 1': colors.danger,
+      'HTA Grado 2': colors.danger,
+      'HTA Grado 3': colors.danger,
     };
     const counts = {};
     const activeLabels = [];
@@ -225,44 +233,44 @@ export default function AnalyticsScreen() {
 
     const maxCount = Math.max(...activeLabels.map((l) => l.count), 1);
     return { items: activeLabels, max: maxCount };
-  }, [history]);
+  }, [history, colors]);
 
   // ─── Axis base style ─────────────────────────────────────────────────
-  const axisStyle = {
-    axis: { stroke: COLORS.border, strokeWidth: 1 },
+  const axisStyle = useMemo(() => ({
+    axis: { stroke: colors.border, strokeWidth: 1 },
     axisLabel: { padding: 30 },
     tickLabels: {
-      fill: COLORS.textMuted,
+      fill: colors.textMuted,
       fontSize: 10,
       fontFamily: 'System',
     },
     grid: {
-      stroke: COLORS.chartGrid,
+      stroke: colors.chartGrid,
       strokeWidth: 1,
     },
-  };
+  }), [colors]);
 
-  const dependentAxisStyle = {
+  const dependentAxisStyle = useMemo(() => ({
     ...axisStyle,
     tickLabels: { ...axisStyle.tickLabels, fontSize: 9 },
     grid: {
-      stroke: COLORS.chartGrid,
+      stroke: colors.chartGrid,
       strokeWidth: 1,
     },
-  };
+  }), [axisStyle]);
 
   // ─── Render ─────────────────────────────────────────────────────────
   if (history.length === 0) {
     return (
-      <SafeAreaView style={styles.safe}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Analisis</Text>
+      <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]}>
+        <View style={[styles.header]}>
+          <Text style={[styles.title, { color: colors.textPrimary }]}>Análisis</Text>
         </View>
         <View style={styles.empty}>
           <Text style={styles.emptyIcon}>📊</Text>
-          <Text style={styles.emptyTitle}>Sin datos disponibles</Text>
-          <Text style={styles.emptySub}>
-            Realiza al menos una medicion para ver tus graficas y estadisticas
+          <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>Sin datos disponibles</Text>
+          <Text style={[styles.emptySub, { color: colors.textSecondary }]}>
+            Realiza al menos una medición para ver tus gráficas y estadísticas
           </Text>
         </View>
       </SafeAreaView>
@@ -274,13 +282,13 @@ export default function AnalyticsScreen() {
   const showHrvChart = hrvChartData.length > 1;
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]}>
       <ScrollView
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.header}>
-          <Text style={styles.title}>Analisis</Text>
+        <View style={[styles.header]}>
+          <Text style={[styles.title, { color: colors.textPrimary }]}>Análisis</Text>
         </View>
 
         {/* ── Summary Strip (2x2 Grid) ──────────────────────────────── */}
@@ -289,15 +297,17 @@ export default function AnalyticsScreen() {
             label="Promedio BPM"
             value={summaryMetrics.avgBpm}
             unit="BPM"
-            color={COLORS.chartBPM}
+            color={colors.chartBPM}
             icon="💓"
+            c={colors}
           />
           <MetricCard
-            label="Ultima PA"
+            label="Última PA"
             value={summaryMetrics.lastBpStr}
             unit="mmHg"
-            color={COLORS.chartSystolic}
+            color={colors.chartSystolic}
             icon="🩸"
+            c={colors}
           />
           <MetricCard
             label="HRV Promedio"
@@ -307,23 +317,25 @@ export default function AnalyticsScreen() {
                 : '--'
             }
             unit="ms"
-            color={COLORS.chartHRV}
+            color={colors.chartHRV}
             icon="📊"
+            c={colors}
           />
           <MetricCard
             label="Total Mediciones"
             value={summaryMetrics.total}
-            color={COLORS.textPrimary}
+            color={colors.textPrimary}
             icon="📋"
+            c={colors}
           />
         </View>
 
         {/* ── BPM Trend Chart ───────────────────────────────────────── */}
         {showBpmChart && (
-          <View style={[styles.chartCard, SHADOWS.card]}>
-            <Text style={styles.chartTitle}>Frecuencia Cardiaca</Text>
-            <Text style={styles.chartSub}>
-              Ultimas {bpmChartData.length} mediciones
+          <View style={[styles.chartCard, SHADOWS.card, { backgroundColor: colors.bg, borderColor: colors.border }]}>
+            <Text style={[styles.chartTitle, { color: colors.textPrimary }]}>Frecuencia Cardíaca</Text>
+            <Text style={[styles.chartSub, { color: colors.textMuted }]}>
+              Últimas {bpmChartData.length} mediciones
             </Text>
             <VictoryChart
               width={CHART_WIDTH}
@@ -344,7 +356,7 @@ export default function AnalyticsScreen() {
                 data={bpmChartData}
                 style={{
                   data: {
-                    stroke: COLORS.chartBPM,
+                    stroke: colors.chartBPM,
                     strokeWidth: 2,
                   },
                 }}
@@ -355,7 +367,7 @@ export default function AnalyticsScreen() {
                 size={3}
                 style={{
                   data: {
-                    fill: COLORS.chartBPM,
+                    fill: colors.chartBPM,
                   },
                 }}
               />
@@ -365,10 +377,10 @@ export default function AnalyticsScreen() {
 
         {/* ── BP Trend Chart ────────────────────────────────────────── */}
         {showBpChart && (
-          <View style={[styles.chartCard, SHADOWS.card]}>
-            <Text style={styles.chartTitle}>Presion Arterial</Text>
-            <Text style={styles.chartSub}>
-              Sistolica (azul) · Diastolica (celeste)
+          <View style={[styles.chartCard, SHADOWS.card, { backgroundColor: colors.bg, borderColor: colors.border }]}>
+            <Text style={[styles.chartTitle, { color: colors.textPrimary }]}>Presión Arterial</Text>
+            <Text style={[styles.chartSub, { color: colors.textMuted }]}>
+              Sistólica (azul) · Diastólica (celeste)
             </Text>
             <VictoryChart
               width={CHART_WIDTH}
@@ -389,7 +401,7 @@ export default function AnalyticsScreen() {
                 data={bpChartData.sys}
                 style={{
                   data: {
-                    stroke: COLORS.chartSystolic,
+                    stroke: colors.chartSystolic,
                     strokeWidth: 2,
                   },
                 }}
@@ -399,7 +411,7 @@ export default function AnalyticsScreen() {
                 data={bpChartData.dia}
                 style={{
                   data: {
-                    stroke: COLORS.chartDiastolic,
+                    stroke: colors.chartDiastolic,
                     strokeWidth: 2,
                   },
                 }}
@@ -411,19 +423,19 @@ export default function AnalyticsScreen() {
                 <View
                   style={[
                     styles.legendDot,
-                    { backgroundColor: COLORS.chartSystolic },
+                    { backgroundColor: colors.chartSystolic },
                   ]}
                 />
-                <Text style={styles.legendText}>Sistolica</Text>
+                <Text style={[styles.legendText, { color: colors.textSecondary }]}>Sistólica</Text>
               </View>
               <View style={styles.legendItem}>
                 <View
                   style={[
                     styles.legendDot,
-                    { backgroundColor: COLORS.chartDiastolic },
+                    { backgroundColor: colors.chartDiastolic },
                   ]}
                 />
-                <Text style={styles.legendText}>Diastolica</Text>
+                <Text style={[styles.legendText, { color: colors.textSecondary }]}>Diastólica</Text>
               </View>
             </View>
           </View>
@@ -431,12 +443,12 @@ export default function AnalyticsScreen() {
 
         {/* ── HRV Trend Chart ───────────────────────────────────────── */}
         {showHrvChart && hasHrvData && (
-          <View style={[styles.chartCard, SHADOWS.card]}>
-            <Text style={styles.chartTitle}>
-              Variabilidad Cardiaca (SDNN)
+          <View style={[styles.chartCard, SHADOWS.card, { backgroundColor: colors.bg, borderColor: colors.border }]}>
+            <Text style={[styles.chartTitle, { color: colors.textPrimary }]}>
+              Variabilidad Cardíaca (SDNN)
             </Text>
-            <Text style={styles.chartSub}>
-              Ultimas {hrvChartData.length} mediciones
+            <Text style={[styles.chartSub, { color: colors.textMuted }]}>
+              Últimas {hrvChartData.length} mediciones
             </Text>
             <VictoryChart
               width={CHART_WIDTH}
@@ -457,7 +469,7 @@ export default function AnalyticsScreen() {
                 data={hrvChartData}
                 style={{
                   data: {
-                    stroke: COLORS.chartHRV,
+                    stroke: colors.chartHRV,
                     strokeWidth: 2,
                   },
                 }}
@@ -468,7 +480,7 @@ export default function AnalyticsScreen() {
                 size={3}
                 style={{
                   data: {
-                    fill: COLORS.chartHRV,
+                    fill: colors.chartHRV,
                   },
                 }}
               />
@@ -478,18 +490,18 @@ export default function AnalyticsScreen() {
 
         {/* ── BP Distribution ───────────────────────────────────────── */}
         {bpDistribution.items.length > 0 && (
-          <View style={[styles.chartCard, SHADOWS.card]}>
-            <Text style={styles.chartTitle}>Distribucion de PA</Text>
-            <Text style={styles.chartSub}>
-              Clasificacion de mediciones de presion arterial
+          <View style={[styles.chartCard, SHADOWS.card, { backgroundColor: colors.bg, borderColor: colors.border }]}>
+            <Text style={[styles.chartTitle, { color: colors.textPrimary }]}>Distribución de PA</Text>
+            <Text style={[styles.chartSub, { color: colors.textMuted }]}>
+              Clasificación de mediciones de presión arterial
             </Text>
             <View style={styles.distContainer}>
               {bpDistribution.items.map((item) => {
                 const pct = (item.count / bpDistribution.max) * 100;
                 return (
                   <View key={item.label} style={styles.distRow}>
-                    <Text style={styles.distLabel}>{item.label}</Text>
-                    <View style={styles.distBarTrack}>
+                    <Text style={[styles.distLabel, { color: colors.textSecondary }]}>{item.label}</Text>
+                    <View style={[styles.distBarTrack, { backgroundColor: colors.bgCard }]}>
                       <View
                         style={[
                           styles.distBarFill,
@@ -500,7 +512,7 @@ export default function AnalyticsScreen() {
                         ]}
                       />
                     </View>
-                    <Text style={styles.distCount}>{item.count}</Text>
+                    <Text style={[styles.distCount, { color: colors.textPrimary }]}>{item.count}</Text>
                   </View>
                 );
               })}
@@ -510,18 +522,18 @@ export default function AnalyticsScreen() {
 
         {/* ── Footer ────────────────────────────────────────────────── */}
         <View style={styles.footerSection}>
+          <LegalDisclaimer />
           <BannerAd compact />
         </View>
-        <LegalDisclaimer />
       </ScrollView>
     </SafeAreaView>
   );
 }
 
+// ─── Static layout styles (no color references) ───────────────────────────────
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: COLORS.bg,
   },
   header: {
     paddingHorizontal: 20,
@@ -531,7 +543,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 26,
     fontWeight: '700',
-    color: COLORS.textPrimary,
     letterSpacing: -0.3,
     marginBottom: 8,
   },
@@ -552,12 +563,10 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: COLORS.textPrimary,
     marginBottom: 8,
   },
   emptySub: {
     fontSize: 14,
-    color: COLORS.textSecondary,
     textAlign: 'center',
     lineHeight: 20,
   },
@@ -570,11 +579,9 @@ const styles = StyleSheet.create({
   },
   metricCard: {
     width: (SCREEN_WIDTH - 50) / 2,
-    backgroundColor: COLORS.bg,
     borderRadius: RADIUS.md,
     padding: 14,
     borderWidth: 1,
-    borderColor: COLORS.border,
   },
   metricTop: {
     flexDirection: 'row',
@@ -591,33 +598,27 @@ const styles = StyleSheet.create({
   },
   metricUnit: {
     fontSize: 12,
-    color: COLORS.textMuted,
     fontWeight: '500',
   },
   metricLabel: {
     fontSize: 12,
-    color: COLORS.textSecondary,
     fontWeight: '500',
     marginTop: 2,
   },
   chartCard: {
-    backgroundColor: COLORS.bg,
     borderRadius: RADIUS.lg,
     padding: 16,
     marginHorizontal: 20,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: COLORS.border,
   },
   chartTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: COLORS.textPrimary,
     marginBottom: 2,
   },
   chartSub: {
     fontSize: 12,
-    color: COLORS.textMuted,
     marginBottom: 8,
   },
   legendRow: {
@@ -638,7 +639,6 @@ const styles = StyleSheet.create({
   },
   legendText: {
     fontSize: 12,
-    color: COLORS.textSecondary,
     fontWeight: '500',
   },
   distContainer: {
@@ -652,13 +652,11 @@ const styles = StyleSheet.create({
   distLabel: {
     width: 96,
     fontSize: 12,
-    color: COLORS.textSecondary,
     fontWeight: '600',
   },
   distBarTrack: {
     flex: 1,
     height: 20,
-    backgroundColor: COLORS.bgCard,
     borderRadius: 10,
     overflow: 'hidden',
     marginHorizontal: 8,
@@ -671,7 +669,6 @@ const styles = StyleSheet.create({
     width: 28,
     fontSize: 13,
     fontWeight: '700',
-    color: COLORS.textPrimary,
     textAlign: 'right',
   },
   footerSection: {

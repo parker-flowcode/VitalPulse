@@ -1,19 +1,28 @@
-import React from 'react';
+/**
+ * HomeScreen.js — VitalPulse v5.0
+ *
+ * Premium minimalist redesign using theme system.
+ * No logo, clean cards, always-visible measurement pill, blue accents.
+ */
+import React, { useState, useCallback } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet,
-  ScrollView, StatusBar, Alert, Image,
+  ScrollView, StatusBar, Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { COLORS, SHADOWS } from '../theme/designTokens';
+import { useTheme } from '../theme/ThemeContext';
 import useHealthStore from '../store/healthstore';
 import LegalDisclaimer from '../components/LegalDisclaimer';
 import BannerAd from '../components/BannerAd';
+import ProFeaturesModal from '../components/ProFeaturesModal';
 import { classifyBPM, classifyBP } from '../utils/bpEstimator';
 import { getCurrentPlan, getRemainingMeasurements, isPro } from '../services/subscriptions';
 import { showRewardedAd, useExtraMeasurement, getExtraMeasurements } from '../services/ads';
 
 export default function HomeScreen({ navigation }) {
+  const { colors } = useTheme();
   const { history } = useHealthStore();
+  const [showProModal, setShowProModal] = useState(false);
 
   const last = history[0] || null;
   const plan = getCurrentPlan();
@@ -34,118 +43,109 @@ export default function HomeScreen({ navigation }) {
       ? Math.round(history.reduce((a, b) => a + (b.bpm || 0), 0) / history.length)
       : 0;
 
-  const handleStartMeasurement = async () => {
+  const atLimit = remaining === 0 && extraMeasurements === 0 && !isPro();
+
+  const handleStartMeasurement = useCallback(async () => {
     if (remaining > 0 || isPro()) {
       navigation.navigate('Measure');
       return;
     }
-
     if (extraMeasurements > 0) {
       useExtraMeasurement();
       navigation.navigate('Measure');
       return;
     }
+    setShowProModal(true);
+  }, [remaining, extraMeasurements, navigation]);
 
-    Alert.alert(
-      'Mediciones agotadas',
-      `Has alcanzado el limite de ${plan.maxMeasurementsPerDay} mediciones gratuitas por dia.\n\nPuedes ver un anuncio para obtener 1 medicion extra o actualizar a Pro.`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Ver anuncio (+1 gratis)',
-          onPress: async () => {
-            const rewarded = await showRewardedAd();
-            if (rewarded) {
-              Alert.alert(
-                'Recompensa obtenida',
-                'Gracias por ver el anuncio. Tienes 1 medicion extra disponible.',
-                [{ text: 'Medir ahora', onPress: () => navigation.navigate('Measure') }]
-              );
-            }
-          },
-        },
-        { text: 'VitalPulse Pro', onPress: () => navigation.navigate('Upgrade') },
-      ]
-    );
-  };
-
-  const handleWatchAd = async () => {
+  const handleWatchAd = useCallback(async (fromModal = false) => {
     const rewarded = await showRewardedAd();
     if (rewarded) {
       Alert.alert(
         'Recompensa obtenida',
-        'Tienes 1 medicion extra disponible.',
-        [{ text: 'Medir ahora', onPress: () => navigation.navigate('Measure') }]
+        'Gracias por ver el anuncio. Tienes 1 medicion extra disponible.',
+        [
+          {
+            text: 'Medir ahora',
+            onPress: () => navigation.navigate('Measure'),
+          },
+        ]
       );
     }
-  };
+    if (fromModal) {
+      setShowProModal(false);
+    }
+  }, [navigation]);
+
+  const handleUpgrade = useCallback(() => {
+    setShowProModal(false);
+    navigation.navigate('Upgrade');
+  }, [navigation]);
+
+  const handleCloseProModal = useCallback(() => {
+    setShowProModal(false);
+  }, []);
+
+  // ─── Derived styles ────────────────────────────────────────────────────────────
+  const styles = createStyles(colors);
 
   return (
     <SafeAreaView style={styles.safe}>
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.bg} />
+      <StatusBar barStyle="dark-content" backgroundColor={colors.bg} />
       <ScrollView
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
       >
-        {/* ───── Header ───── */}
+        {/* ───── Header: clean minimal, no logo ───── */}
         <View style={styles.header}>
-          <Image
-            source={require('../../assets/icon.png')}
-            style={styles.logoImage}
-            resizeMode="contain"
-          />
-          <Text style={styles.subtitle}>Monitor cardiovascular personal</Text>
+          <Text style={styles.headerTitle}>VitalPulse</Text>
+          <Text style={styles.headerSub}>Monitor cardiovascular personal</Text>
         </View>
 
-        {/* ───── Mediciones restantes (pill) ───── */}
-        {!isPro() && history.length > 0 && (
+        {/* ───── Mediciones disponibles pill (always visible unless Pro) ───── */}
+        {!isPro() && (
           <View style={styles.remainingPill}>
-            <View style={styles.remainingDot} />
             <Text style={styles.remainingText}>
-              {remaining} de {plan.maxMeasurementsPerDay} restantes
-              {extraMeasurements > 0 ? `  +${extraMeasurements} extra` : ''}
+              {'📊 '}{remaining}{' de '}{plan.maxMeasurementsPerDay}{' disponibles hoy'}
             </Text>
           </View>
         )}
 
-        {/* ───── Boton de medicion principal ───── */}
+        {/* ───── CTA button: clean white card, blue left border ───── */}
         <TouchableOpacity
-          style={[
-            styles.measureCard,
-            remaining === 0 && extraMeasurements === 0 && !isPro() && styles.measureCardDisabled,
-          ]}
+          style={styles.measureCard}
           onPress={handleStartMeasurement}
           activeOpacity={0.85}
         >
-          <View style={styles.measureCardAccent} />
-          <View style={styles.measureCardContent}>
-            <Text style={styles.measureIcon}>❤️</Text>
-            <Text style={styles.measureCardTitle}>Iniciar Medicion</Text>
-            <Text style={styles.measureCardSub}>~60 segundos · Camara trasera</Text>
+          <View style={styles.measureAccent} />
+          <View style={styles.measureContent}>
+            <Text style={styles.measureIcon}>{'💙'}</Text>
+            <Text style={styles.measureTitle}>Iniciar Medicion</Text>
+            <Text style={styles.measureSub}>~60 seg · Camara trasera</Text>
           </View>
         </TouchableOpacity>
 
-        {/* ───── Botones cuando se alcanza el limite ───── */}
-        {!isPro() && remaining === 0 && extraMeasurements === 0 && history.length > 0 && (
+        {/* ───── Limit reached: two action buttons side by side ───── */}
+        {atLimit && (
           <View style={styles.limitRow}>
             <TouchableOpacity
               style={styles.watchAdBtn}
-              onPress={handleWatchAd}
+              onPress={() => handleWatchAd(false)}
               activeOpacity={0.8}
             >
-              <Text style={styles.watchAdBtnText}>Ver anuncio</Text>
+              <Text style={styles.watchAdBtnText}>{'🎬 Ver anuncio (+1)'}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.proBtn}
-              onPress={() => navigation.navigate('Upgrade')}
+              onPress={handleUpgrade}
               activeOpacity={0.8}
             >
-              <Text style={styles.proBtnText}>VitalPulse Pro</Text>
+              <Text style={styles.proBtnText}>{'💎 VitalPulse Pro'}</Text>
             </TouchableOpacity>
           </View>
         )}
 
-        {/* ───── Ultima medicion ───── */}
+        {/* ───── Last measurement card ───── */}
         {last ? (
           <View style={styles.lastCard}>
             <View style={styles.lastCardHeader}>
@@ -171,9 +171,7 @@ export default function HomeScreen({ navigation }) {
                   </Text>
                 </View>
               </View>
-              {last.bp && (
-                <View style={styles.metricDivider} />
-              )}
+              {last.bp && <View style={styles.metricDivider} />}
               {last.bp && (
                 <View style={styles.metric}>
                   <Text
@@ -191,7 +189,10 @@ export default function HomeScreen({ navigation }) {
                   <View
                     style={[
                       styles.badge,
-                      { backgroundColor: classifyBP(last.bp.systolic, last.bp.diastolic).color + '18' },
+                      {
+                        backgroundColor:
+                          classifyBP(last.bp.systolic, last.bp.diastolic).color + '18',
+                      },
                     ]}
                   >
                     <Text
@@ -208,16 +209,24 @@ export default function HomeScreen({ navigation }) {
             </View>
           </View>
         ) : (
+          /* ───── Empty state: clean minimal, no logo ───── */
           <View style={styles.emptyCard}>
-            <Text style={styles.emptyIcon}>❤️</Text>
             <Text style={styles.emptyTitle}>Sin mediciones</Text>
             <Text style={styles.emptySub}>
-              Realiza tu primera medicion para comenzar a monitorear tu salud cardiovascular.
+              Realiza tu primera medicion para comenzar a monitorear tu salud
+              cardiovascular.
             </Text>
+            <TouchableOpacity
+              style={styles.emptyCta}
+              onPress={handleStartMeasurement}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.emptyCtaText}>Comenzar medicion</Text>
+            </TouchableOpacity>
           </View>
         )}
 
-        {/* ───── Stats rapidas ───── */}
+        {/* ───── Stats row: 3 compact stats ───── */}
         {history.length > 0 && (
           <View style={styles.statsRow}>
             <View style={styles.statCard}>
@@ -235,287 +244,302 @@ export default function HomeScreen({ navigation }) {
           </View>
         )}
 
-        {/* ───── Boton tutorial ───── */}
+        {/* ───── Tutorial button: subtle text link ───── */}
         <TouchableOpacity
           style={styles.tutorialBtn}
           onPress={() => navigation.navigate('Tutorial')}
           activeOpacity={0.7}
         >
-          <Text style={styles.tutorialBtnIcon}>🎮</Text>
-          <Text style={styles.tutorialBtnText}>Modo Tutorial (sin camara)</Text>
+          <Text style={styles.tutorialBtnText}>
+            {'🎮 '}Modo Tutorial (sin camara)
+          </Text>
         </TouchableOpacity>
 
-        {/* ───── Banner publicitario ───── */}
-        <BannerAd />
-
-        {/* ───── Disclaimer legal ───── */}
+        {/* ───── Disclaimer first, then BannerAd ───── */}
         <LegalDisclaimer />
+        <BannerAd />
       </ScrollView>
+
+      {/* ───── Pro Features Modal ───── */}
+      <ProFeaturesModal
+        visible={showProModal}
+        onClose={handleCloseProModal}
+        onWatchAd={() => handleWatchAd(true)}
+        onUpgrade={handleUpgrade}
+      />
     </SafeAreaView>
   );
 }
 
-const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: COLORS.bg,
-  },
-  scroll: {
-    padding: 20,
-    paddingBottom: 40,
-  },
+// ─── Dynamic styles factory ─────────────────────────────────────────────────────
+function createStyles(colors) {
+  return StyleSheet.create({
+    safe: {
+      flex: 1,
+      backgroundColor: colors.bg,
+    },
+    scroll: {
+      padding: 20,
+      paddingBottom: 40,
+    },
 
-  // ── Header ──
-  header: {
-    alignItems: 'center',
-    marginBottom: 28,
-    marginTop: 12,
-  },
-  logoImage: {
-    width: 48,
-    height: 48,
-    marginBottom: 10,
-  },
-  subtitle: {
-    color: COLORS.primary,
-    fontSize: 15,
-    fontWeight: '500',
-    letterSpacing: 0.2,
-  },
+    // ── Header ──
+    header: {
+      alignItems: 'center',
+      marginBottom: 24,
+      marginTop: 16,
+    },
+    headerTitle: {
+      fontSize: 20,
+      fontWeight: '700',
+      color: colors.textMuted,
+      letterSpacing: -0.3,
+      marginBottom: 4,
+    },
+    headerSub: {
+      fontSize: 14,
+      fontWeight: '500',
+      color: colors.primary,
+      letterSpacing: 0.2,
+    },
 
-  // ── Remaining pill ──
-  remainingPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'center',
-    backgroundColor: COLORS.primarySubtle,
-    paddingVertical: 6,
-    paddingHorizontal: 14,
-    borderRadius: 20,
-    marginBottom: 16,
-  },
-  remainingDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: COLORS.primary,
-    marginRight: 8,
-  },
-  remainingText: {
-    color: COLORS.primary,
-    fontSize: 12,
-    fontWeight: '600',
-  },
+    // ── Remaining pill (always shown unless Pro) ──
+    remainingPill: {
+      alignSelf: 'center',
+      backgroundColor: colors.primarySubtle,
+      paddingVertical: 7,
+      paddingHorizontal: 18,
+      borderRadius: 20,
+      marginBottom: 18,
+    },
+    remainingText: {
+      color: colors.primary,
+      fontSize: 12,
+      fontWeight: '600',
+    },
 
-  // ── CTA Measurement Card ──
-  measureCard: {
-    backgroundColor: COLORS.bgElevated,
-    borderRadius: 16,
-    marginBottom: 12,
-    flexDirection: 'row',
-    ...SHADOWS.card,
-  },
-  measureCardDisabled: {
-    opacity: 0.5,
-  },
-  measureCardAccent: {
-    width: 4,
-    backgroundColor: COLORS.primary,
-    borderTopLeftRadius: 16,
-    borderBottomLeftRadius: 16,
-  },
-  measureCardContent: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: 24,
-    paddingHorizontal: 20,
-  },
-  measureIcon: {
-    fontSize: 40,
-    marginBottom: 8,
-  },
-  measureCardTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: COLORS.textPrimary,
-    letterSpacing: -0.3,
-  },
-  measureCardSub: {
-    fontSize: 13,
-    color: COLORS.textMuted,
-    marginTop: 6,
-  },
+    // ── CTA Measurement Card ──
+    measureCard: {
+      backgroundColor: colors.bgElevated,
+      borderRadius: 16,
+      marginBottom: 12,
+      flexDirection: 'row',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.06,
+      shadowRadius: 8,
+      elevation: 2,
+    },
+    measureAccent: {
+      width: 4,
+      backgroundColor: colors.primary,
+      borderTopLeftRadius: 16,
+      borderBottomLeftRadius: 16,
+    },
+    measureContent: {
+      flex: 1,
+      alignItems: 'center',
+      paddingVertical: 24,
+      paddingHorizontal: 20,
+    },
+    measureIcon: {
+      fontSize: 32,
+      marginBottom: 8,
+      color: colors.primary,
+    },
+    measureTitle: {
+      fontSize: 20,
+      fontWeight: '700',
+      color: colors.textPrimary,
+      letterSpacing: -0.3,
+    },
+    measureSub: {
+      fontSize: 13,
+      color: colors.textMuted,
+      marginTop: 6,
+    },
 
-  // ── Limit reached buttons ──
-  limitRow: {
-    flexDirection: 'row',
-    gap: 10,
-    marginBottom: 16,
-  },
-  watchAdBtn: {
-    flex: 1,
-    backgroundColor: COLORS.warningLight,
-    borderRadius: 12,
-    paddingVertical: 12,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: COLORS.warning + '30',
-  },
-  watchAdBtnText: {
-    color: '#92400E',
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  proBtn: {
-    flex: 1,
-    backgroundColor: COLORS.primary,
-    borderRadius: 12,
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
-  proBtnText: {
-    color: COLORS.textOnPrimary,
-    fontSize: 13,
-    fontWeight: '700',
-  },
+    // ── Limit reached buttons ──
+    limitRow: {
+      flexDirection: 'row',
+      gap: 10,
+      marginBottom: 16,
+    },
+    watchAdBtn: {
+      flex: 1,
+      backgroundColor: colors.warningLight,
+      borderRadius: 12,
+      paddingVertical: 13,
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: colors.warning + '30',
+    },
+    watchAdBtnText: {
+      color: '#92400E',
+      fontSize: 13,
+      fontWeight: '600',
+    },
+    proBtn: {
+      flex: 1,
+      backgroundColor: colors.primary,
+      borderRadius: 12,
+      paddingVertical: 13,
+      alignItems: 'center',
+    },
+    proBtnText: {
+      color: colors.textOnPrimary,
+      fontSize: 13,
+      fontWeight: '700',
+    },
 
-  // ── Last measurement card ──
-  lastCard: {
-    backgroundColor: COLORS.bgElevated,
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 16,
-    ...SHADOWS.card,
-  },
-  lastCardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  lastCardLabel: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: COLORS.textMuted,
-    letterSpacing: 0.5,
-    textTransform: 'uppercase',
-  },
-  lastCardDate: {
-    fontSize: 12,
-    color: COLORS.textSecondary,
-  },
-  metricsRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  metric: {
-    alignItems: 'center',
-    flex: 1,
-  },
-  metricDivider: {
-    width: 1,
-    height: 40,
-    backgroundColor: COLORS.border,
-    marginHorizontal: 8,
-  },
-  metricValue: {
-    fontSize: 40,
-    fontWeight: '700',
-    color: COLORS.textPrimary,
-    fontVariant: ['tabular-nums'],
-  },
-  metricUnit: {
-    fontSize: 12,
-    color: COLORS.textMuted,
-    marginTop: 2,
-    fontWeight: '500',
-  },
-  badge: {
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-    borderRadius: 10,
-    marginTop: 8,
-  },
-  badgeText: {
-    fontSize: 11,
-    fontWeight: '700',
-  },
+    // ── Last measurement card ──
+    lastCard: {
+      backgroundColor: colors.bgElevated,
+      borderRadius: 16,
+      padding: 20,
+      marginBottom: 16,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.06,
+      shadowRadius: 8,
+      elevation: 2,
+    },
+    lastCardHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 16,
+    },
+    lastCardLabel: {
+      fontSize: 11,
+      fontWeight: '600',
+      color: colors.textMuted,
+      letterSpacing: 0.5,
+      textTransform: 'uppercase',
+    },
+    lastCardDate: {
+      fontSize: 12,
+      color: colors.textSecondary,
+    },
+    metricsRow: {
+      flexDirection: 'row',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    metric: {
+      alignItems: 'center',
+      flex: 1,
+    },
+    metricDivider: {
+      width: 1,
+      height: 40,
+      backgroundColor: colors.border,
+      marginHorizontal: 8,
+    },
+    metricValue: {
+      fontSize: 40,
+      fontWeight: '700',
+      color: colors.textPrimary,
+      fontVariant: ['tabular-nums'],
+    },
+    metricUnit: {
+      fontSize: 12,
+      color: colors.textMuted,
+      marginTop: 2,
+      fontWeight: '500',
+    },
+    badge: {
+      paddingHorizontal: 10,
+      paddingVertical: 3,
+      borderRadius: 10,
+      marginTop: 8,
+    },
+    badgeText: {
+      fontSize: 11,
+      fontWeight: '700',
+    },
 
-  // ── Empty state ──
-  emptyCard: {
-    backgroundColor: COLORS.bgCard,
-    borderRadius: 16,
-    padding: 36,
-    alignItems: 'center',
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: COLORS.borderLight,
-  },
-  emptyIcon: {
-    fontSize: 36,
-    marginBottom: 14,
-  },
-  emptyTitle: {
-    fontSize: 17,
-    fontWeight: '600',
-    color: COLORS.textPrimary,
-  },
-  emptySub: {
-    fontSize: 13,
-    color: COLORS.textMuted,
-    textAlign: 'center',
-    marginTop: 8,
-    lineHeight: 20,
-  },
+    // ── Empty state ──
+    emptyCard: {
+      backgroundColor: colors.bgCard,
+      borderRadius: 16,
+      padding: 32,
+      alignItems: 'center',
+      marginBottom: 16,
+      borderWidth: 1,
+      borderColor: colors.borderLight,
+    },
+    emptyTitle: {
+      fontSize: 17,
+      fontWeight: '600',
+      color: colors.textPrimary,
+      marginBottom: 8,
+    },
+    emptySub: {
+      fontSize: 13,
+      color: colors.textMuted,
+      textAlign: 'center',
+      lineHeight: 20,
+      marginBottom: 18,
+    },
+    emptyCta: {
+      backgroundColor: colors.primary,
+      borderRadius: 12,
+      paddingVertical: 12,
+      paddingHorizontal: 24,
+    },
+    emptyCtaText: {
+      color: colors.textOnPrimary,
+      fontSize: 14,
+      fontWeight: '600',
+    },
 
-  // ── Stats row ──
-  statsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 16,
-    gap: 10,
-  },
-  statCard: {
-    flex: 1,
-    backgroundColor: COLORS.bgElevated,
-    borderRadius: 14,
-    padding: 16,
-    alignItems: 'center',
-    ...SHADOWS.card,
-  },
-  statValue: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: COLORS.primary,
-    fontVariant: ['tabular-nums'],
-  },
-  statLabel: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: COLORS.textMuted,
-    marginTop: 4,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
+    // ── Stats row ──
+    statsRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginBottom: 16,
+      gap: 10,
+    },
+    statCard: {
+      flex: 1,
+      backgroundColor: colors.bgElevated,
+      borderRadius: 14,
+      padding: 14,
+      alignItems: 'center',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.06,
+      shadowRadius: 8,
+      elevation: 2,
+    },
+    statValue: {
+      fontSize: 20,
+      fontWeight: '700',
+      color: colors.primary,
+      fontVariant: ['tabular-nums'],
+    },
+    statLabel: {
+      fontSize: 10,
+      fontWeight: '600',
+      color: colors.textMuted,
+      marginTop: 4,
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
+    },
 
-  // ── Tutorial button ──
-  tutorialBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: COLORS.bgSecondary,
-    borderRadius: 12,
-    paddingVertical: 14,
-    marginBottom: 16,
-    gap: 8,
-  },
-  tutorialBtnIcon: {
-    fontSize: 16,
-  },
-  tutorialBtnText: {
-    color: COLORS.textSecondary,
-    fontSize: 14,
-    fontWeight: '600',
-  },
-});
+    // ── Tutorial button (subtle text link) ──
+    tutorialBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: 12,
+      marginBottom: 12,
+    },
+    tutorialBtnText: {
+      color: colors.textSecondary,
+      fontSize: 13,
+      fontWeight: '500',
+    },
+  });
+}

@@ -1,19 +1,21 @@
 /**
- * UpgradeScreen.js — VitalPulse
+ * UpgradeScreen.js — VitalPulse v5.0
  *
- * Pantalla de suscripción "Hazte Pro" refinada.
+ * Pantalla de suscripción "Hazte Pro" refinada con tema dinámico.
  * Muestra el plan actual, días restantes, planes disponibles y botón de compra.
  */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet,
   ScrollView, Alert, Platform, ActivityIndicator, Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTheme } from '../theme/ThemeContext';
 import {
   PLANS, purchaseProduct, restorePurchases,
   getCurrentPlan, isPro, getDaysRemaining, addSubscriptionListener,
 } from '../services/subscriptions';
+import { SPACING, RADIUS, SHADOWS } from '../theme/designTokens';
 
 const FEATURES = [
   { icon: '✅', text: 'Mediciones ilimitadas' },
@@ -25,6 +27,8 @@ const FEATURES = [
 ];
 
 export default function UpgradeScreen({ navigation }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [selectedPlan, setSelectedPlan] = useState('monthly');
   const [purchasing, setPurchasing] = useState(false);
   const [restoring, setRestoring] = useState(false);
@@ -81,7 +85,7 @@ export default function UpgradeScreen({ navigation }) {
     : '';
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]}>
       <ScrollView
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
@@ -89,50 +93,50 @@ export default function UpgradeScreen({ navigation }) {
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.closeBtn}>
-            <Text style={styles.closeBtnText}>✕</Text>
+            <Text style={[styles.closeBtnText, { color: colors.textMuted }]}>✕</Text>
           </TouchableOpacity>
         </View>
 
         <View style={styles.heroSection}>
           <Image source={require('../../assets/icon.png')} style={styles.heroLogo} />
-          <Text style={styles.heroTitle}>VitalPulse Pro</Text>
-          <Text style={styles.heroSubtitle}>
+          <Text style={[styles.heroTitle, { color: colors.primary }]}>VitalPulse Pro</Text>
+          <Text style={[styles.heroSubtitle, { color: colors.textSecondary }]}>
             Lleva tu monitorización cardiovascular al siguiente nivel
           </Text>
         </View>
 
         {/* Plan actual */}
-        <View style={styles.currentPlanCard}>
-          <Text style={styles.currentPlanLabel}>
+        <View style={[styles.currentPlanCard, SHADOWS.card, { backgroundColor: colors.bg, borderColor: colors.border }]}>
+          <Text style={[styles.currentPlanLabel, { color: colors.textSecondary }]}>
             {alreadyPro ? '✅ Plan actual' : '📋 Plan actual'}
           </Text>
-          <Text style={styles.currentPlanName}>
+          <Text style={[styles.currentPlanName, { color: colors.primary }]}>
             {currentPlan.name}
           </Text>
           {alreadyPro && daysLeft !== null && (
-            <Text style={styles.daysLeft}>
+            <Text style={[styles.daysLeft, { color: colors.textSecondary }]}>
               {daysLeft > 0
                 ? `⏱ ${daysLeft} día${daysLeft !== 1 ? 's' : ''} restante${daysLeft !== 1 ? 's' : ''}`
                 : '⏱ Se renueva hoy'}
             </Text>
           )}
           {alreadyPro && currentPlan.id === 'lifetime' && (
-            <Text style={styles.daysLeft}>♾️ Acceso vitalicio</Text>
+            <Text style={[styles.daysLeft, { color: colors.textSecondary }]}>♾️ Acceso vitalicio</Text>
           )}
           {!alreadyPro && (
-            <Text style={styles.currentPlanDesc}>
+            <Text style={[styles.currentPlanDesc, { color: colors.textSecondary }]}>
               {PLANS.free.maxMeasurementsPerDay} mediciones gratuitas por día
             </Text>
           )}
         </View>
 
         {/* Features */}
-        <View style={styles.featuresCard}>
-          <Text style={styles.featuresTitle}>Funciones Pro</Text>
+        <View style={[styles.featuresCard, SHADOWS.card, { backgroundColor: colors.bg, borderColor: colors.border }]}>
+          <Text style={[styles.featuresTitle, { color: colors.textPrimary }]}>Funciones Pro</Text>
           {FEATURES.map((f, i) => (
             <View key={i} style={styles.featureRow}>
-              <Text style={styles.featureIcon}>{f.icon}</Text>
-              <Text style={styles.featureText}>{f.text}</Text>
+              <Text style={[styles.featureIcon, { color: colors.success }]}>{f.icon}</Text>
+              <Text style={[styles.featureText, { color: colors.textPrimary }]}>{f.text}</Text>
             </View>
           ))}
         </View>
@@ -140,77 +144,85 @@ export default function UpgradeScreen({ navigation }) {
         {/* Planes disponibles (solo si no es Pro) */}
         {!alreadyPro && (
           <>
-            <Text style={styles.sectionTitle}>Elige tu plan</Text>
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Elige tu plan</Text>
             <View style={styles.plansContainer}>
               {/* Plan mensual */}
               <TouchableOpacity
-                style={[styles.planCard, selectedPlan === 'monthly' && styles.planCardSelected]}
+                style={[
+                  styles.planCard,
+                  { backgroundColor: colors.bg, borderColor: selectedPlan === 'monthly' ? colors.primary : colors.border },
+                  selectedPlan === 'monthly' && { backgroundColor: colors.primarySubtle || '#F8FAFF' },
+                ]}
                 onPress={() => setSelectedPlan('monthly')}
               >
                 <View style={styles.planHeader}>
-                  <Text style={styles.planName}>{PLANS.monthly.name}</Text>
-                  <View style={styles.planBadge}>
-                    <Text style={styles.planBadgeText}>RECOMENDADO</Text>
+                  <Text style={[styles.planName, { color: colors.textPrimary }]}>{PLANS.monthly.name}</Text>
+                  <View style={[styles.planBadge, { backgroundColor: colors.primary }]}>
+                    <Text style={[styles.planBadgeText, { color: colors.textOnPrimary }]}>RECOMENDADO</Text>
                   </View>
                 </View>
-                <Text style={styles.planPrice}>{PLANS.monthly.price}</Text>
-                <Text style={styles.planPeriod}>por mes</Text>
-                <Text style={styles.planDesc}>Cancela cuando quieras</Text>
+                <Text style={[styles.planPrice, { color: colors.primary }]}>{PLANS.monthly.price}</Text>
+                <Text style={[styles.planPeriod, { color: colors.textSecondary }]}>por mes</Text>
+                <Text style={[styles.planDesc, { color: colors.textSecondary }]}>Cancela cuando quieras</Text>
               </TouchableOpacity>
 
               {/* Plan vitalicio */}
               <TouchableOpacity
-                style={[styles.planCard, selectedPlan === 'lifetime' && styles.planCardSelected]}
+                style={[
+                  styles.planCard,
+                  { backgroundColor: colors.bg, borderColor: selectedPlan === 'lifetime' ? colors.primary : colors.border },
+                  selectedPlan === 'lifetime' && { backgroundColor: colors.primarySubtle || '#F8FAFF' },
+                ]}
                 onPress={() => setSelectedPlan('lifetime')}
               >
                 <View style={styles.planHeader}>
-                  <Text style={styles.planName}>{PLANS.lifetime.name}</Text>
+                  <Text style={[styles.planName, { color: colors.textPrimary }]}>{PLANS.lifetime.name}</Text>
                 </View>
-                <Text style={styles.planPrice}>{PLANS.lifetime.price}</Text>
-                <Text style={styles.planPeriod}>pago único</Text>
-                <Text style={styles.planDesc}>Sin renovaciones · Para siempre</Text>
+                <Text style={[styles.planPrice, { color: colors.primary }]}>{PLANS.lifetime.price}</Text>
+                <Text style={[styles.planPeriod, { color: colors.textSecondary }]}>pago único</Text>
+                <Text style={[styles.planDesc, { color: colors.textSecondary }]}>Sin renovaciones · Para siempre</Text>
               </TouchableOpacity>
             </View>
 
             {/* Comparativa */}
-            <View style={styles.comparisonCard}>
-              <Text style={styles.comparisonTitle}>Comparativa</Text>
-              <View style={styles.compRow}>
-                <Text style={styles.compLabel}>Mediciones/día</Text>
-                <Text style={styles.compValueFree}>5</Text>
-                <Text style={styles.compValuePro}>∞</Text>
+            <View style={[styles.comparisonCard, SHADOWS.card, { backgroundColor: colors.bg, borderColor: colors.border }]}>
+              <Text style={[styles.comparisonTitle, { color: colors.textPrimary }]}>Comparativa</Text>
+              <View style={[styles.compRow, { borderBottomColor: colors.divider }]}>
+                <Text style={[styles.compLabel, { color: colors.textSecondary }]}>Mediciones/día</Text>
+                <Text style={[styles.compValueFree, { color: colors.danger }]}>5</Text>
+                <Text style={[styles.compValuePro, { color: colors.success }]}>∞</Text>
               </View>
-              <View style={styles.compRow}>
-                <Text style={styles.compLabel}>Anuncios</Text>
-                <Text style={styles.compValueFree}>Sí</Text>
-                <Text style={styles.compValuePro}>No</Text>
+              <View style={[styles.compRow, { borderBottomColor: colors.divider }]}>
+                <Text style={[styles.compLabel, { color: colors.textSecondary }]}>Anuncios</Text>
+                <Text style={[styles.compValueFree, { color: colors.danger }]}>Sí</Text>
+                <Text style={[styles.compValuePro, { color: colors.success }]}>No</Text>
               </View>
-              <View style={styles.compRow}>
-                <Text style={styles.compLabel}>Calibración avanzada</Text>
-                <Text style={styles.compValueFree}>No</Text>
-                <Text style={styles.compValuePro}>Sí</Text>
+              <View style={[styles.compRow, { borderBottomColor: colors.divider }]}>
+                <Text style={[styles.compLabel, { color: colors.textSecondary }]}>Calibración avanzada</Text>
+                <Text style={[styles.compValueFree, { color: colors.danger }]}>No</Text>
+                <Text style={[styles.compValuePro, { color: colors.success }]}>Sí</Text>
               </View>
-              <View style={styles.compRow}>
-                <Text style={styles.compLabel}>Exportación CSV</Text>
-                <Text style={styles.compValueFree}>No</Text>
-                <Text style={styles.compValuePro}>Sí</Text>
+              <View style={[styles.compRow, { borderBottomColor: colors.divider }]}>
+                <Text style={[styles.compLabel, { color: colors.textSecondary }]}>Exportación CSV</Text>
+                <Text style={[styles.compValueFree, { color: colors.danger }]}>No</Text>
+                <Text style={[styles.compValuePro, { color: colors.success }]}>Sí</Text>
               </View>
             </View>
 
             {/* Botón de compra */}
             <TouchableOpacity
-              style={[styles.purchaseBtn, purchasing && styles.purchaseBtnDisabled]}
+              style={[styles.purchaseBtn, { backgroundColor: colors.primary }, purchasing && styles.purchaseBtnDisabled]}
               onPress={handlePurchase}
               disabled={purchasing}
             >
               {purchasing ? (
-                <ActivityIndicator color="#FFFFFF" size="small" />
+                <ActivityIndicator color={colors.textOnPrimary} size="small" />
               ) : (
                 <>
-                  <Text style={styles.purchaseBtnText}>
+                  <Text style={[styles.purchaseBtnText, { color: colors.textOnPrimary }]}>
                     Obtener {selectedPlan === 'monthly' ? PLANS.monthly.name : PLANS.lifetime.name}
                   </Text>
-                  <Text style={styles.purchaseBtnSub}>
+                  <Text style={[styles.purchaseBtnSub, { color: colors.textOnPrimary + 'B3' }]}>
                     {selectedPlan === 'monthly' ? PLANS.monthly.price : PLANS.lifetime.price}
                     {selectedPlan === 'monthly' ? ' · Cancela cuando quieras' : ' · Pago único'}
                   </Text>
@@ -223,7 +235,7 @@ export default function UpgradeScreen({ navigation }) {
         {/* Si ya es Pro, botón de gestión */}
         {alreadyPro && (
           <TouchableOpacity
-            style={styles.manageBtn}
+            style={[styles.manageBtn, { backgroundColor: colors.bg, borderColor: colors.border }]}
             onPress={() => {
               Alert.alert(
                 'Gestionar suscripción',
@@ -231,7 +243,7 @@ export default function UpgradeScreen({ navigation }) {
               );
             }}
           >
-            <Text style={styles.manageBtnText}>Gestionar suscripción</Text>
+            <Text style={[styles.manageBtnText, { color: colors.primary }]}>Gestionar suscripción</Text>
           </TouchableOpacity>
         )}
 
@@ -242,13 +254,13 @@ export default function UpgradeScreen({ navigation }) {
           disabled={restoring}
         >
           {restoring ? (
-            <ActivityIndicator color="#2563EB" size="small" />
+            <ActivityIndicator color={colors.primary} size="small" />
           ) : (
-            <Text style={styles.restoreBtnText}>Restaurar compras anteriores</Text>
+            <Text style={[styles.restoreBtnText, { color: colors.primary }]}>Restaurar compras anteriores</Text>
           )}
         </TouchableOpacity>
 
-        <Text style={styles.footer}>
+        <Text style={[styles.footer, { color: colors.textMuted }]}>
           El pago se cargará a tu cuenta de {Platform.OS === 'ios' ? 'Apple' : 'Google'}.
           Las suscripciones se renuevan automáticamente a menos que se cancelen
           24 horas antes del final del periodo actual.
@@ -258,113 +270,93 @@ export default function UpgradeScreen({ navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#FFFFFF' },
+// ─── Styles factory ────────────────────────────────────────────────────────────
+const createStyles = (colors) => StyleSheet.create({
+  safe: { flex: 1, backgroundColor: colors.bg },
   scroll: { padding: 20, paddingBottom: 40 },
   header: {
     flexDirection: 'row', justifyContent: 'flex-end',
     marginBottom: 8,
   },
   closeBtn: { width: 40, height: 40, justifyContent: 'center', alignItems: 'center' },
-  closeBtnText: { color: '#94A3B8', fontSize: 22, fontWeight: '600' },
+  closeBtnText: { color: colors.textMuted, fontSize: 22, fontWeight: '600' },
 
   heroSection: { alignItems: 'center', marginBottom: 24 },
   heroLogo: { width: 64, height: 64, marginBottom: 12, resizeMode: 'contain' },
-  heroTitle: { color: '#2563EB', fontSize: 28, fontWeight: '700', marginBottom: 8 },
-  heroSubtitle: { color: '#64748B', fontSize: 15, textAlign: 'center', lineHeight: 22 },
+  heroTitle: { color: colors.primary, fontSize: 28, fontWeight: '700', marginBottom: 8 },
+  heroSubtitle: { color: colors.textSecondary, fontSize: 15, textAlign: 'center', lineHeight: 22 },
 
   // Plan actual
   currentPlanCard: {
-    backgroundColor: '#FFFFFF', borderRadius: 16, padding: 20,
-    marginBottom: 20, borderWidth: 1, borderColor: '#E2E8F0',
+    backgroundColor: colors.bg, borderRadius: 16, padding: 20,
+    marginBottom: 20, borderWidth: 1, borderColor: colors.border,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 2,
   },
-  currentPlanLabel: { color: '#64748B', fontSize: 11, fontWeight: '700', letterSpacing: 1.2, textTransform: 'uppercase' },
-  currentPlanName: { color: '#2563EB', fontSize: 22, fontWeight: '800', marginTop: 8 },
-  daysLeft: { color: '#64748B', fontSize: 13, marginTop: 4 },
-  currentPlanDesc: { color: '#64748B', fontSize: 13, marginTop: 4 },
+  currentPlanLabel: { color: colors.textSecondary, fontSize: 11, fontWeight: '700', letterSpacing: 1.2, textTransform: 'uppercase' },
+  currentPlanName: { color: colors.primary, fontSize: 22, fontWeight: '800', marginTop: 8 },
+  daysLeft: { color: colors.textSecondary, fontSize: 13, marginTop: 4 },
+  currentPlanDesc: { color: colors.textSecondary, fontSize: 13, marginTop: 4 },
 
-  sectionTitle: { color: '#1E293B', fontSize: 17, fontWeight: '700', marginBottom: 12 },
+  sectionTitle: { color: colors.textPrimary, fontSize: 17, fontWeight: '700', marginBottom: 12 },
 
   featuresCard: {
-    backgroundColor: '#FFFFFF', borderRadius: 16, padding: 20,
-    marginBottom: 20, borderWidth: 1, borderColor: '#E2E8F0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 2,
+    backgroundColor: colors.bg, borderRadius: 16, padding: 20,
+    marginBottom: 20, borderWidth: 1, borderColor: colors.border,
   },
-  featuresTitle: { color: '#1E293B', fontSize: 16, fontWeight: '700', marginBottom: 16 },
+  featuresTitle: { color: colors.textPrimary, fontSize: 16, fontWeight: '700', marginBottom: 16 },
   featureRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 12, gap: 12 },
-  featureIcon: { color: '#10B981', fontSize: 18, fontWeight: '700' },
-  featureText: { color: '#1E293B', fontSize: 14, flex: 1 },
+  featureIcon: { color: colors.success, fontSize: 18, fontWeight: '700' },
+  featureText: { color: colors.textPrimary, fontSize: 14, flex: 1 },
 
   plansContainer: { gap: 12, marginBottom: 20 },
   planCard: {
-    backgroundColor: '#FFFFFF', borderRadius: 16, padding: 20,
-    borderWidth: 2, borderColor: '#E2E8F0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    elevation: 1,
+    backgroundColor: colors.bg, borderRadius: 16, padding: 20,
+    borderWidth: 2, borderColor: colors.border,
   },
-  planCardSelected: { borderColor: '#2563EB', backgroundColor: '#F8FAFF' },
   planHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },
-  planName: { color: '#1E293B', fontSize: 17, fontWeight: '700' },
+  planName: { color: colors.textPrimary, fontSize: 17, fontWeight: '700' },
   planBadge: {
-    backgroundColor: '#2563EB',
+    backgroundColor: colors.primary,
     paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6,
   },
-  planBadgeText: { color: '#FFFFFF', fontSize: 10, fontWeight: '800' },
-  planPrice: { color: '#2563EB', fontSize: 32, fontWeight: '700' },
-  planPeriod: { color: '#64748B', fontSize: 13, marginTop: 2 },
-  planDesc: { color: '#64748B', fontSize: 12, marginTop: 8 },
+  planBadgeText: { color: colors.textOnPrimary, fontSize: 10, fontWeight: '800' },
+  planPrice: { color: colors.primary, fontSize: 32, fontWeight: '700' },
+  planPeriod: { color: colors.textSecondary, fontSize: 13, marginTop: 2 },
+  planDesc: { color: colors.textSecondary, fontSize: 12, marginTop: 8 },
 
   comparisonCard: {
-    backgroundColor: '#FFFFFF', borderRadius: 16, padding: 20,
-    marginBottom: 20, borderWidth: 1, borderColor: '#E2E8F0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    elevation: 1,
+    backgroundColor: colors.bg, borderRadius: 16, padding: 20,
+    marginBottom: 20, borderWidth: 1, borderColor: colors.border,
   },
-  comparisonTitle: { color: '#1E293B', fontSize: 15, fontWeight: '700', marginBottom: 12 },
+  comparisonTitle: { color: colors.textPrimary, fontSize: 15, fontWeight: '700', marginBottom: 12 },
   compRow: {
     flexDirection: 'row', alignItems: 'center', paddingVertical: 8,
-    borderBottomWidth: 1, borderBottomColor: '#F1F5F9',
+    borderBottomWidth: 1, borderBottomColor: colors.divider,
   },
-  compLabel: { flex: 1, color: '#64748B', fontSize: 13 },
-  compValueFree: { color: '#EF4444', fontSize: 13, fontWeight: '600', width: 40, textAlign: 'center' },
-  compValuePro: { color: '#10B981', fontSize: 13, fontWeight: '700', width: 40, textAlign: 'center' },
+  compLabel: { flex: 1, color: colors.textSecondary, fontSize: 13 },
+  compValueFree: { color: colors.danger, fontSize: 13, fontWeight: '600', width: 40, textAlign: 'center' },
+  compValuePro: { color: colors.success, fontSize: 13, fontWeight: '700', width: 40, textAlign: 'center' },
 
   purchaseBtn: {
-    backgroundColor: '#2563EB', borderRadius: 16, padding: 18,
+    backgroundColor: colors.primary, borderRadius: 16, padding: 18,
     alignItems: 'center', marginBottom: 12, minHeight: 56,
     justifyContent: 'center',
   },
   purchaseBtnDisabled: { opacity: 0.6 },
-  purchaseBtnText: { color: '#FFFFFF', fontSize: 18, fontWeight: '700' },
-  purchaseBtnSub: { color: 'rgba(255,255,255,0.7)', fontSize: 13, marginTop: 4 },
+  purchaseBtnText: { color: colors.textOnPrimary, fontSize: 18, fontWeight: '700' },
+  purchaseBtnSub: { color: colors.textOnPrimary + 'B3', fontSize: 13, marginTop: 4 },
 
   manageBtn: {
-    backgroundColor: '#FFFFFF', borderRadius: 12, padding: 14,
+    backgroundColor: colors.bg, borderRadius: 12, padding: 14,
     alignItems: 'center', marginBottom: 12,
-    borderWidth: 1, borderColor: '#E2E8F0',
+    borderWidth: 1, borderColor: colors.border,
   },
-  manageBtnText: { color: '#2563EB', fontSize: 15, fontWeight: '600' },
+  manageBtnText: { color: colors.primary, fontSize: 15, fontWeight: '600' },
 
   restoreBtn: { alignItems: 'center', padding: 12, marginBottom: 16, minHeight: 44, justifyContent: 'center' },
-  restoreBtnText: { color: '#2563EB', fontSize: 14, textDecorationLine: 'underline' },
+  restoreBtnText: { color: colors.primary, fontSize: 14, textDecorationLine: 'underline' },
 
   footer: {
-    color: '#94A3B8', fontSize: 11, textAlign: 'center', lineHeight: 16,
+    color: colors.textMuted, fontSize: 11, textAlign: 'center', lineHeight: 16,
   },
 });

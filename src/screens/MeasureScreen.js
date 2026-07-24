@@ -1,20 +1,22 @@
 /**
  * MeasureScreen.js — VitalPulse
  *
- * Usa vision-camera-resize-plugin v3.2.0 para acceder a píxeles de forma
+ * Usa vision-camera-resize-plugin v3.2.0 para acceder a pixeles de forma
  * compatible con el Oppo Reno 12F (chip MediaTek Helio G99).
  *
- * Por qué useResizePlugin y no toArrayBuffer():
+ * Por que useResizePlugin y no toArrayBuffer():
  * - toArrayBuffer() con pixelFormat="yuv" falla en MediaTek porque el buffer
  *   YUV NV21 no es contiguo en memoria en este chip.
- * - El resize plugin usa la API nativa de Android (ImageReader) que sí
+ * - El resize plugin usa la API nativa de Android (ImageReader) que si
  *   funciona correctamente en todos los chips.
  *
  * Canal usado: float32 en lugar de uint8
  * - Con uint8 y pixelFormat='rgb', el Oppo devuelve 255 en todos los bytes
- *   (saturación por la AEC automática del sensor).
- * - Con float32, los valores van de 0.0 a 1.0 y tenemos más precisión.
+ *   (saturacion por la AEC automatica del sensor).
+ * - Con float32, los valores van de 0.0 a 1.0 y tenemos mas precision.
  * - Multiplicamos por 255 para trabajar en la misma escala que los algoritmos.
+ *
+ * v5.1: Siempre modo claro (blanco). Tema extraido de ThemeContext.
  */
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
@@ -38,12 +40,19 @@ import CircularProgress from '../components/CircularProgress';
 import useHealthStore from '../store/healthstore';
 import { processPPGSignal, detrend, resetKalman, detectRawSaturation, detectFinger } from '../utils/ppgProcessor';
 import { estimateBPCalibrated } from '../utils/bpEstimator';
-import { COLORS, SPACING, RADIUS, SHADOWS } from '../theme/designTokens';
+import { SPACING, RADIUS, SHADOWS } from '../theme/designTokens';
+import { useTheme } from '../theme/ThemeContext';
 
 const MEASURE_DURATION = 60;
 const MOTION_THRESHOLD = 0.12;
+const PREP_DELAY = 1000;        // v5.1: reducido de 1500ms a 1000ms
+const CAPTURE_START_DELAY = 200;
+const CHART_UPDATE_INTERVAL = 2;    // v5.1: cada 2 frames (era 4)
+const BPM_CHECK_INTERVAL = 10;      // v5.1: cada 10 frames (era 30)
 
 export default function MeasureScreen({ navigation }) {
+  const { colors } = useTheme();
+
   const insets = useSafeAreaInsets();
   const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = useWindowDimensions();
   const fontScale = Math.max(0.85, Math.min(1.15, SCREEN_WIDTH / 390));
@@ -58,18 +67,17 @@ export default function MeasureScreen({ navigation }) {
 
   const { resize } = useResizePlugin();
 
-  const accelSubscription   = useRef(null);
-  const isPausedRef        = useRef(false);
-  const appStateRef         = useRef(AppState.currentState);
-  const isFinalizedRef      = useRef(false);
-  const isCapturingRef      = useRef(false);
-  const localValuesRef      = useRef([]);
-  const timerRef            = useRef(null);
-  const workletCallbackRef  = useRef(null);
-  // BUG#16: Refs para controlar cada cuánto procesamos (evita reprocesar toda la señal cada vez)
-  const lastChartUpdateRef  = useRef(0);
-  const lastBPMCheckRef     = useRef(0);
-  const lastAutoCancelRef   = useRef(0);
+  const accelSubscription      = useRef(null);
+  const isPausedRef            = useRef(false);
+  const appStateRef            = useRef(AppState.currentState);
+  const isFinalizedRef         = useRef(false);
+  const isCapturingRef         = useRef(false);
+  const localValuesRef         = useRef([]);
+  const timerRef               = useRef(null);
+  const workletCallbackRef     = useRef(null);
+  const lastChartUpdateRef     = useRef(0);
+  const lastBPMCheckRef        = useRef(0);
+  const lastAutoCancelRef      = useRef(0);
 
   const isCapturingSV = useSharedValue(false);
 
@@ -117,16 +125,16 @@ export default function MeasureScreen({ navigation }) {
 
     if (newCount % 15 === 0) setFrameCount(newCount);
 
-    // Actualizar gráfico cada ~4 frames nuevos (más rápido, menos latencia visual)
-    if (newCount - lastChartUpdateRef.current >= 4 && newCount > 5) {
+    // v5.1: Actualizar grafico cada 2 frames (mas rapido, menos latencia)
+    if (newCount - lastChartUpdateRef.current >= CHART_UPDATE_INTERVAL && newCount > 5) {
       lastChartUpdateRef.current = newCount;
       const raw = localValuesRef.current.slice(-100);
       const detrended = detrend(raw);
       setDisplayValues(detrended);
     }
 
-    // BPM + finger detection cada ~30 frames nuevos (empezar antes)
-    if (newCount - lastBPMCheckRef.current >= 30 && newCount > 30) {
+    // v5.1: BPM + finger detection cada 10 frames (empezar antes)
+    if (newCount - lastBPMCheckRef.current >= BPM_CHECK_INTERVAL && newCount > 30) {
       lastBPMCheckRef.current = newCount;
       const elapsed = MEASURE_DURATION - timeLeft;
       const currentFps = elapsed > 0 ? Math.round(newCount / elapsed) : 19;
@@ -157,7 +165,7 @@ export default function MeasureScreen({ navigation }) {
         }
       }
 
-      // Auto-cancelación cada ~1s de frames nuevos
+      // Auto-cancelacion cada ~1s de frames nuevos
       if (newCount >= currentFps * 15 && newCount - lastAutoCancelRef.current >= currentFps) {
         lastAutoCancelRef.current = newCount;
         const recent = localValuesRef.current.slice(-currentFps * 5);
@@ -170,8 +178,8 @@ export default function MeasureScreen({ navigation }) {
             setIsRunningRef.current(false);
             setPhaseRef.current('idle');
             Alert.alert(
-              '🔴 Presión excesiva',
-              'Estás presionando demasiado fuerte. La sangre se ha desplazado del tejido y el sensor solo ve luz blanca.\n\n• Reduce la presión del dedo sobre la cámara\n• Debes ver un tono rojizo, no blanco',
+              'Presion excesiva',
+              'Estas presionando demasiado fuerte. La sangre se ha desplazado del tejido y el sensor solo ve luz blanca.\n\nReduce la presion del dedo sobre la camara\nDebes ver un tono rojizo, no blanco',
               [{ text: 'Entendido', onPress: resetToIdleRef.current }]
             );
             return;
@@ -182,15 +190,15 @@ export default function MeasureScreen({ navigation }) {
             setIsRunningRef.current(false);
             setPhaseRef.current('idle');
             Alert.alert(
-              'Señal demasiado débil',
-              'La calidad de la señal es muy baja durante más de 5 segundos.\n• Cubre completamente la cámara y el flash con el dedo\n• Ajusta la presión del dedo',
+              'Senal demasiado debil',
+              'La calidad de la senal es muy baja durante mas de 5 segundos.\nCubre completamente la camara y el flash con el dedo\nAjusta la presion del dedo',
               [{ text: 'Entendido', onPress: resetToIdleRef.current }]
             );
           }
         }
       }
     }
-  }, []);
+  }, [timeLeft]);
 
   useEffect(() => {
     workletCallbackRef.current = Worklets.createRunOnJS(receiveFrame);
@@ -264,7 +272,7 @@ export default function MeasureScreen({ navigation }) {
   const startAccelerometer = () => {
     try {
       if (!Accelerometer || typeof Accelerometer.addListener !== 'function') {
-        console.warn('[Accelerometer] Módulo no disponible');
+        console.warn('[Accelerometer] Modulo no disponible');
         return;
       }
       Accelerometer.setUpdateInterval(300);
@@ -292,10 +300,10 @@ export default function MeasureScreen({ navigation }) {
     }
   };
 
-  // ─── Iniciar medición ─────────────────────────────────────────────────────
+  // ─── Iniciar medicion ─────────────────────────────────────────────────────
   const startMeasurement = () => {
     if (!cameraReady) {
-      Alert.alert('Cámara no lista', 'Espera un momento y vuelve a intentarlo.');
+      Alert.alert('Camara no lista', 'Espera un momento y vuelve a intentarlo.');
       return;
     }
 
@@ -305,7 +313,6 @@ export default function MeasureScreen({ navigation }) {
     isFinalizedRef.current = false;
     isCapturingRef.current = false;
     isCapturingSV.value    = false;
-    // Resetear contadores de procesamiento
     lastChartUpdateRef.current = 0;
     lastBPMCheckRef.current = 0;
     lastAutoCancelRef.current = 0;
@@ -317,6 +324,7 @@ export default function MeasureScreen({ navigation }) {
     setPhase('preparing');
 
     setIsRunning(true);
+    // v5.1: Delay de preparacion reducido a 1000ms
     setTimeout(() => {
       if (isFinalizedRef.current) return;
 
@@ -327,7 +335,7 @@ export default function MeasureScreen({ navigation }) {
         isCapturingSV.value    = true;
         startAccelerometer();
         Vibration.vibrate(200);
-      }, 200);
+      }, CAPTURE_START_DELAY);
 
       let elapsed = 0;
       timerRef.current = setInterval(() => {
@@ -341,7 +349,7 @@ export default function MeasureScreen({ navigation }) {
           finalizeMeasurement();
         }
       }, 1000);
-    }, 1500);
+    }, PREP_DELAY);
   };
 
   // ─── Finalizar ────────────────────────────────────────────────────────────
@@ -361,8 +369,8 @@ export default function MeasureScreen({ navigation }) {
       if (values.length < MIN_FRAMES) {
         setPhase('idle');
         Alert.alert(
-          'Señal insuficiente',
-          `Solo se capturaron ${values.length} frames (mínimo ${MIN_FRAMES}).\nCubre completamente la cámara y el flash con el dedo.`,
+          'Senal insuficiente',
+          `Solo se capturaron ${values.length} frames (minimo ${MIN_FRAMES}).\nCubre completamente la camara y el flash con el dedo.`,
           [{ text: 'Reintentar', onPress: resetToIdle }]
         );
         return;
@@ -372,9 +380,9 @@ export default function MeasureScreen({ navigation }) {
       if (satInfo.state !== 'ok') {
         setPhase('idle');
         const msg = satInfo.state === 'saturated_high'
-          ? '🔴 La señal está saturada por exceso de luz.\n• Estás presionando demasiado fuerte\n• El dedo debe verse rojizo, no blanco'
-          : '🌑 La señal está demasiado oscura.\n• Cubre completamente la cámara trasera\n• Asegúrate de que el flash esté encendido';
-        Alert.alert('Señal no válida', msg, [{ text: 'Reintentar', onPress: resetToIdle }]);
+          ? 'La senal esta saturada por exceso de luz.\nEstas presionando demasiado fuerte\nEl dedo debe verse rojizo, no blanco'
+          : 'La senal esta demasiado oscura.\nCubre completamente la camara trasera\nAsegurate de que el flash este encendido';
+        Alert.alert('Senal no valida', msg, [{ text: 'Reintentar', onPress: resetToIdle }]);
         return;
       }
 
@@ -384,8 +392,8 @@ export default function MeasureScreen({ navigation }) {
       if (!result.ready || result.bpm < 40 || result.bpm > 200) {
         setPhase('idle');
         Alert.alert(
-          'Lectura no válida',
-          `BPM: ${result.bpm || 0}\n\n• Cubre bien la cámara y el flash\n• No aprietes demasiado el dedo\n• Mantén el móvil quieto`,
+          'Lectura no valida',
+          `BPM: ${result.bpm || 0}\n\nCubre bien la camara y el flash\nNo aprietes demasiado el dedo\nManten el movil quieto`,
           [{ text: 'Reintentar', onPress: resetToIdle }]
         );
         return;
@@ -440,28 +448,19 @@ export default function MeasureScreen({ navigation }) {
     setFingerState({ state: 'waiting', message: '' });
   };
 
-  // ─── Computed values for theming ──────────────────────────────────────────
-  const isDark = phase === 'preparing' || phase === 'measuring';
-  const containerBg = isDark ? COLORS.darkBg : phase === 'processing' ? COLORS.bg : COLORS.bg;
-  const headerTextColor = isDark ? COLORS.darkText : COLORS.textPrimary;
-  const closeColor = isDark ? COLORS.darkMuted : COLORS.textMuted;
-  const timerTextColor = isDark ? COLORS.darkText : COLORS.textPrimary;
-  const timerLabelColor = isDark ? COLORS.darkMuted : COLORS.textMuted;
-  const circularTrackColor = isDark ? COLORS.darkCard : COLORS.border;
-
-  // ─── Calidad de señal ─────────────────────────────────────────────────────
+  // ─── Calidad de senal ─────────────────────────────────────────────────────
   const qualityColor = signalQuality > 0.6
-    ? COLORS.success
+    ? colors.success
     : signalQuality > 0.3
-      ? COLORS.warning
-      : COLORS.danger;
+      ? colors.warning
+      : colors.danger;
   const qualityLabel = signalQuality > 0.6
-    ? 'Señal buena'
+    ? 'Senal buena'
     : signalQuality > 0.3
-      ? 'Señal regular'
-      : 'Señal débil';
+      ? 'Senal regular'
+      : 'Senal debil';
 
-  // ─── Estilos dinámicos responsivos ────────────────────────────────────────
+  // ─── Estilos dinamicos responsivos ────────────────────────────────────────
   const bottomAreaStyle = {
     padding: 20,
     paddingBottom: insets.bottom + 16,
@@ -469,7 +468,7 @@ export default function MeasureScreen({ navigation }) {
   };
 
   const startBtnStyle = {
-    backgroundColor: COLORS.primary,
+    backgroundColor: colors.primary,
     borderRadius: 28,
     paddingVertical: 20,
     alignItems: 'center',
@@ -484,7 +483,7 @@ export default function MeasureScreen({ navigation }) {
     alignItems: 'center',
     marginBottom: 16,
     borderWidth: 1.5,
-    borderColor: COLORS.danger + '99',
+    borderColor: colors.danger + '99',
   };
 
   const waveformWidth = SCREEN_WIDTH - 32;
@@ -493,18 +492,18 @@ export default function MeasureScreen({ navigation }) {
   // ─── Permisos ─────────────────────────────────────────────────────────────
   if (!hasPermission) {
     return (
-      <SafeAreaView style={styles.safe}>
-        <StatusBar barStyle="dark-content" backgroundColor={COLORS.bg} />
-        <View style={styles.center}>
+      <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]}>
+        <StatusBar barStyle="dark-content" backgroundColor={colors.bg} />
+        <View style={[styles.center, { backgroundColor: colors.bg }]}>
           <Text style={styles.permIcon}>📷</Text>
-          <Text style={[styles.permTitle, { fontSize: Math.round(20 * fontScale) }]}>
-            Cámara requerida
+          <Text style={[styles.permTitle, { color: colors.textPrimary, fontSize: Math.round(20 * fontScale) }]}>
+            Camara requerida
           </Text>
-          <Text style={styles.permText}>
-            VitalPulse necesita la cámara trasera para medir tu pulso.
+          <Text style={[styles.permText, { color: colors.textSecondary }]}>
+            VitalPulse necesita la camara trasera para medir tu pulso.
           </Text>
-          <TouchableOpacity style={styles.startBtn} onPress={requestPermission}>
-            <Text style={styles.startBtnText}>Conceder permiso</Text>
+          <TouchableOpacity style={[styles.startBtn, { backgroundColor: colors.primary }]} onPress={requestPermission}>
+            <Text style={[styles.startBtnText, { color: colors.textOnPrimary }]}>Conceder permiso</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -513,10 +512,10 @@ export default function MeasureScreen({ navigation }) {
 
   if (!device) {
     return (
-      <View style={[styles.center, { backgroundColor: COLORS.bg }]}>
-        <StatusBar barStyle="dark-content" backgroundColor={COLORS.bg} />
-        <Text style={[styles.permText, { color: COLORS.textSecondary }]}>
-          Cámara trasera no disponible.
+      <View style={[styles.center, { backgroundColor: colors.bg }]}>
+        <StatusBar barStyle="dark-content" backgroundColor={colors.bg} />
+        <Text style={[styles.permText, { color: colors.textSecondary }]}>
+          Camara trasera no disponible.
         </Text>
       </View>
     );
@@ -524,14 +523,14 @@ export default function MeasureScreen({ navigation }) {
 
   if (phase === 'processing') {
     return (
-      <SafeAreaView style={[styles.safe, { backgroundColor: COLORS.bg }]}>
-        <StatusBar barStyle="dark-content" backgroundColor={COLORS.bg} />
-        <View style={styles.center}>
+      <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]}>
+        <StatusBar barStyle="dark-content" backgroundColor={colors.bg} />
+        <View style={[styles.center, { backgroundColor: colors.bg }]}>
           <Text style={styles.processingIcon}>🫀</Text>
-          <Text style={[styles.processingTitle, { fontSize: Math.round(22 * fontScale) }]}>
-            Analizando señal...
+          <Text style={[styles.processingTitle, { color: colors.textPrimary, fontSize: Math.round(22 * fontScale) }]}>
+            Analizando senal...
           </Text>
-          <Text style={styles.processingSubtitle}>
+          <Text style={[styles.processingSubtitle, { color: colors.textSecondary }]}>
             Procesando {frameCount} frames con FFT
           </Text>
         </View>
@@ -541,15 +540,14 @@ export default function MeasureScreen({ navigation }) {
 
   // ─── Renderizado principal ───────────────────────────────────────────────
   return (
-    <View style={[styles.container, { backgroundColor: containerBg }]}>
+    <View style={[styles.container, { backgroundColor: colors.bg }]}>
       <StatusBar
-        barStyle={isDark ? 'light-content' : 'dark-content'}
-        backgroundColor={containerBg}
+        barStyle="dark-content"
+        backgroundColor={colors.bg}
       />
       <Camera
         style={styles.hiddenCamera}
         device={device}
-        // BUG#21: Cámara solo activa cuando se necesita (ahorra batería significativamente)
         isActive={phase === 'preparing' || phase === 'measuring' || phase === 'processing'}
         format={format}
         fps={format?.maxFps ? Math.min(30, format.maxFps) : 30}
@@ -567,7 +565,7 @@ export default function MeasureScreen({ navigation }) {
         {/* ── Cabecera ── */}
         <View style={styles.header}>
           <View style={{ width: 40 }} />
-          <Text style={[styles.headerTitle, { color: headerTextColor, fontSize: Math.round(17 * fontScale) }]}>
+          <Text style={[styles.headerTitle, { color: colors.textPrimary, fontSize: Math.round(17 * fontScale) }]}>
             Midiendo pulso
           </Text>
           <TouchableOpacity
@@ -575,25 +573,26 @@ export default function MeasureScreen({ navigation }) {
             style={styles.closeBtn}
             hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
           >
-            <Text style={[styles.closeBtnText, { color: closeColor }]}>✕</Text>
+            <Text style={[styles.closeBtnText, { color: colors.textMuted }]}>✕</Text>
           </TouchableOpacity>
         </View>
 
-        {/* ── Timer ── */}
+        {/* ── Timer circular ── */}
         <View style={styles.timerContainer}>
           <View style={[styles.circularTimerWrapper, { width: timerSize, height: timerSize, borderRadius: timerSize / 2 }]}>
             <CircularProgress
               size={timerSize}
               strokeWidth={6}
               progress={1 - timeLeft / MEASURE_DURATION}
-              color={qualityColor}
-              bgColor={circularTrackColor}
+              // v5.1: Siempre azul (#2563EB) sobre gris (#E2E8F0)
+              color={colors.primary}
+              bgColor={colors.border}
             />
             <View style={styles.circularTimerInner}>
-              <Text style={[styles.timer, { color: timerTextColor, fontSize: Math.round(42 * fontScale), lineHeight: Math.round(44 * fontScale) }]}>
+              <Text style={[styles.timer, { color: colors.textPrimary, fontSize: Math.round(42 * fontScale), lineHeight: Math.round(44 * fontScale) }]}>
                 {timeLeft}
               </Text>
-              <Text style={[styles.timerLabel, { color: timerLabelColor, fontSize: Math.round(12 * fontScale) }]}>
+              <Text style={[styles.timerLabel, { color: colors.textMuted, fontSize: Math.round(12 * fontScale) }]}>
                 segundos
               </Text>
             </View>
@@ -602,54 +601,62 @@ export default function MeasureScreen({ navigation }) {
 
         {/* ── Fase: Idle ── */}
         {phase === 'idle' && (
-          <View style={styles.instructionsCard}>
-            <Text style={[styles.instructionsTitle, { fontSize: Math.round(17 * fontScale) }]}>
-              Cómo medir correctamente
+          <View style={[styles.instructionsCard, {
+            backgroundColor: colors.bgCard,
+            borderColor: colors.border,
+          }]}>
+            <Text style={[styles.instructionsTitle, { color: colors.primary, fontSize: Math.round(17 * fontScale) }]}>
+              Como medir correctamente
             </Text>
 
             <View style={styles.stepRow}>
               <Text style={styles.stepIcon}>👆</Text>
-              <Text style={styles.stepText}>
-                Coloca el dedo índice cubriendo completamente la cámara trasera y el flash.
+              <Text style={[styles.stepText, { color: colors.textSecondary }]}>
+                Coloca el dedo indice cubriendo completamente la camara trasera y el flash.
               </Text>
             </View>
 
             <View style={styles.stepRow}>
               <Text style={styles.stepIcon}>💡</Text>
-              <Text style={styles.stepText}>
-                El flash se encenderá — es normal y necesario.
+              <Text style={[styles.stepText, { color: colors.textSecondary }]}>
+                El flash se encendera es normal y necesario.
               </Text>
             </View>
 
             <View style={styles.stepRow}>
               <Text style={styles.stepIcon}>🤫</Text>
-              <Text style={styles.stepText}>
+              <Text style={[styles.stepText, { color: colors.textSecondary }]}>
                 Presiona suavemente. Sin apretar en exceso.
               </Text>
             </View>
 
             <View style={styles.stepRow}>
               <Text style={styles.stepIcon}>🧘</Text>
-              <Text style={styles.stepText}>
-                Apoya el codo y mantén el móvil completamente quieto.
+              <Text style={[styles.stepText, { color: colors.textSecondary }]}>
+                Apoya el codo y mantén el movil completamente quieto.
               </Text>
             </View>
 
             {!cameraReady && (
-              <Text style={styles.cameraLoading}>⏳ Iniciando cámara...</Text>
+              <Text style={[styles.cameraLoading, { color: colors.warning }]}>
+                ⏳ Iniciando camara...
+              </Text>
             )}
           </View>
         )}
 
         {/* ── Fase: Preparando ── */}
         {phase === 'preparing' && (
-          <View style={styles.prepCard}>
+          <View style={[styles.prepCard, {
+            backgroundColor: colors.bgCard,
+            borderColor: colors.warning + '44',
+          }]}>
             <Text style={styles.prepIcon}>👆</Text>
-            <Text style={[styles.prepText, { fontSize: Math.round(22 * fontScale) }]}>
+            <Text style={[styles.prepText, { color: colors.warning, fontSize: Math.round(22 * fontScale) }]}>
               Coloca el dedo ahora...
             </Text>
-            <Text style={styles.prepSub}>
-              Cubre completamente la cámara trasera y el flash
+            <Text style={[styles.prepSub, { color: colors.textMuted }]}>
+              Cubre completamente la camara trasera y el flash
             </Text>
           </View>
         )}
@@ -657,23 +664,23 @@ export default function MeasureScreen({ navigation }) {
         {/* ── Fase: Midiendo ── */}
         {phase === 'measuring' && (
           <View style={styles.measuringContainer}>
-            {/* Waveform */}
-            <View style={styles.waveformContainer}>
+            {/* Waveform en card clara #F8F9FA */}
+            <View style={[styles.waveformContainer, { backgroundColor: colors.bgCard }]}>
               <WaveformChart data={displayValues} width={waveformWidth} height={waveformHeight} />
             </View>
 
             {/* BPM en vivo */}
             <View style={styles.liveBPMContainer}>
-              <Text style={[styles.liveBPM, { fontSize: Math.round(56 * fontScale) }]}>
+              <Text style={[styles.liveBPM, { color: colors.primaryLight, fontSize: Math.round(56 * fontScale) }]}>
                 {liveBPM > 0 ? liveBPM : '---'}
               </Text>
-              <Text style={[styles.liveBPMLabel, { fontSize: Math.round(12 * fontScale) }]}>
+              <Text style={[styles.liveBPMLabel, { color: colors.textMuted, fontSize: Math.round(12 * fontScale) }]}>
                 {liveBPM > 0 ? 'BPM detectado' : 'Detectando...'}
               </Text>
             </View>
 
             {/* Indicadores de calidad */}
-            <View style={styles.qualityBlock}>
+            <View style={[styles.qualityBlock, { backgroundColor: colors.bgCard }]}>
               <View style={styles.qualityRow}>
                 <View style={[styles.qualityDot, { backgroundColor: qualityColor }]} />
                 <Text style={[styles.qualityText, { color: qualityColor }]}>
@@ -682,23 +689,23 @@ export default function MeasureScreen({ navigation }) {
                 <View style={styles.qualityDotRightGroup}>
                   <View style={[
                     styles.qualityDotSmall,
-                    { backgroundColor: signalQuality > 0.3 ? qualityColor : COLORS.darkMuted },
+                    { backgroundColor: signalQuality > 0.3 ? qualityColor : colors.textMuted },
                   ]} />
                   <View style={[
                     styles.qualityDotSmall,
-                    { backgroundColor: signalQuality > 0.6 ? qualityColor : COLORS.darkMuted },
+                    { backgroundColor: signalQuality > 0.6 ? qualityColor : colors.textMuted },
                   ]} />
                   <View style={[
                     styles.qualityDotSmall,
-                    { backgroundColor: signalQuality > 0.8 ? qualityColor : COLORS.darkMuted },
+                    { backgroundColor: signalQuality > 0.8 ? qualityColor : colors.textMuted },
                   ]} />
                   <View style={[
                     styles.qualityDotSmall,
-                    { backgroundColor: signalQuality > 0.95 ? qualityColor : COLORS.darkMuted },
+                    { backgroundColor: signalQuality > 0.95 ? qualityColor : colors.textMuted },
                   ]} />
                 </View>
               </View>
-              <View style={styles.qualityBar}>
+              <View style={[styles.qualityBar, { backgroundColor: colors.divider }]}>
                 <View style={[
                   styles.qualityFill,
                   {
@@ -707,16 +714,19 @@ export default function MeasureScreen({ navigation }) {
                   },
                 ]} />
               </View>
-              <Text style={styles.frameCountText}>
+              <Text style={[styles.frameCountText, { color: colors.textMuted }]}>
                 {frameCount} frames capturados
               </Text>
             </View>
 
             {/* Alerta de movimiento */}
             {motionAlert && (
-              <View style={styles.motionAlert}>
-                <Text style={styles.motionAlertText}>
-                  ⚠️ Movimiento — mantén quieto el móvil
+              <View style={[styles.motionAlert, {
+                backgroundColor: colors.dangerLight + '33',
+                borderColor: colors.danger + '44',
+              }]}>
+                <Text style={[styles.motionAlertText, { color: colors.danger }]}>
+                  ⚠️ Movimiento mantén quieto el movil
                 </Text>
               </View>
             )}
@@ -725,17 +735,26 @@ export default function MeasureScreen({ navigation }) {
             {fingerState.state !== 'waiting' && fingerState.state !== 'valid' && (
               <View style={[
                 styles.fingerAlert,
-                fingerState.state === 'saturated_high' && styles.fingerAlertSaturated,
-                fingerState.state === 'no_finger' && styles.fingerAlertDark,
-                fingerState.state === 'low_ac' && styles.fingerAlertNoFinger,
+                fingerState.state === 'saturated_high' && {
+                  backgroundColor: colors.dangerLight + '33',
+                  borderColor: colors.danger + '44',
+                },
+                fingerState.state === 'no_finger' && {
+                  backgroundColor: colors.bgCard,
+                  borderColor: colors.border,
+                },
+                fingerState.state === 'low_ac' && {
+                  backgroundColor: colors.warningLight + '33',
+                  borderColor: colors.warning + '44',
+                },
               ]}>
-                <Text style={styles.fingerAlertText}>
+                <Text style={[styles.fingerAlertText, { color: colors.warning }]}>
                   {fingerState.state === 'saturated_high'
-                    ? '🔴 Presión excesiva — reduce la fuerza'
+                    ? 'Presion excesiva reduce la fuerza'
                     : fingerState.state === 'no_finger'
-                      ? '🌑 Señal muy oscura — cubre bien la cámara'
+                      ? 'Senal muy oscura cubre bien la camara'
                       : fingerState.state === 'low_ac'
-                        ? '⚠️ Señal plana — ajusta la presión del dedo'
+                        ? 'Senal plana ajusta la presion del dedo'
                         : fingerState.message}
                 </Text>
               </View>
@@ -743,7 +762,7 @@ export default function MeasureScreen({ navigation }) {
           </View>
         )}
 
-        {/* ── Área inferior ── */}
+        {/* ── Area inferior ── */}
         <View style={[styles.bottomArea, bottomAreaStyle]}>
           {phase === 'idle' && (
             <TouchableOpacity
@@ -751,20 +770,20 @@ export default function MeasureScreen({ navigation }) {
               onPress={startMeasurement}
               disabled={!cameraReady}
             >
-              <Text style={[styles.startBtnText, { fontSize: Math.round(18 * fontScale) }]}>
-                {cameraReady ? 'Iniciar medición' : '⏳ Iniciando cámara...'}
+              <Text style={[styles.startBtnText, { color: colors.textOnPrimary, fontSize: Math.round(18 * fontScale) }]}>
+                {cameraReady ? 'Iniciar medicion' : '⏳ Iniciando camara...'}
               </Text>
             </TouchableOpacity>
           )}
           {(phase === 'measuring' || phase === 'preparing') && (
             <TouchableOpacity style={stopBtnStyle} onPress={() => stopMeasurement(true)}>
-              <Text style={[styles.stopBtnText, { fontSize: Math.round(16 * fontScale) }]}>
+              <Text style={[styles.stopBtnText, { color: colors.danger, fontSize: Math.round(16 * fontScale) }]}>
                 Cancelar
               </Text>
             </TouchableOpacity>
           )}
-          <Text style={styles.legalNote}>
-            ⚠️ Esta app no es un dispositivo médico. Consulte a su médico.
+          <Text style={[styles.legalNote, { color: colors.textMuted }]}>
+            ⚠️ Esta app no es un dispositivo medico. Consulte a su medico.
           </Text>
         </View>
       </SafeAreaView>
@@ -792,14 +811,12 @@ const styles = StyleSheet.create({
   // Safe area + centro
   safe: {
     flex: 1,
-    backgroundColor: COLORS.bg,
   },
   center: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 24,
-    backgroundColor: COLORS.bg,
   },
 
   // Permisos
@@ -808,16 +825,23 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   permTitle: {
-    color: COLORS.textPrimary,
     fontWeight: '700',
     marginBottom: 12,
   },
   permText: {
-    color: COLORS.textSecondary,
     fontSize: 14,
     textAlign: 'center',
     lineHeight: 22,
     marginBottom: 24,
+  },
+  startBtn: {
+    borderRadius: 28,
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    alignItems: 'center',
+  },
+  startBtnText: {
+    fontWeight: '700',
   },
 
   // Processing
@@ -826,12 +850,10 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   processingTitle: {
-    color: COLORS.textPrimary,
     fontWeight: '700',
     marginBottom: 10,
   },
   processingSubtitle: {
-    color: COLORS.textSecondary,
     fontSize: 14,
     textAlign: 'center',
     lineHeight: 22,
@@ -893,15 +915,12 @@ const styles = StyleSheet.create({
   instructionsCard: {
     marginHorizontal: 20,
     marginTop: 8,
-    backgroundColor: COLORS.bgCard,
     borderRadius: 16,
     padding: 20,
     borderWidth: 1,
-    borderColor: COLORS.border,
     ...SHADOWS.card,
   },
   instructionsTitle: {
-    color: COLORS.primary,
     fontWeight: '700',
     marginBottom: 16,
     textAlign: 'center',
@@ -920,12 +939,10 @@ const styles = StyleSheet.create({
   },
   stepText: {
     flex: 1,
-    color: COLORS.textSecondary,
     fontSize: 14,
     lineHeight: 22,
   },
   cameraLoading: {
-    color: COLORS.warning,
     fontSize: 13,
     marginTop: 12,
     textAlign: 'center',
@@ -935,11 +952,9 @@ const styles = StyleSheet.create({
   prepCard: {
     marginHorizontal: 20,
     marginTop: 8,
-    backgroundColor: COLORS.darkCard,
     borderRadius: 16,
     padding: 24,
     borderWidth: 1,
-    borderColor: `${COLORS.warning}44`,
     alignItems: 'center',
   },
   prepIcon: {
@@ -947,11 +962,9 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   prepText: {
-    color: COLORS.warning,
     fontWeight: '700',
   },
   prepSub: {
-    color: COLORS.darkMuted,
     fontSize: 13,
     marginTop: 10,
     textAlign: 'center',
@@ -965,7 +978,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   waveformContainer: {
-    backgroundColor: COLORS.darkCard,
     borderRadius: 16,
     padding: 0,
     marginBottom: 16,
@@ -977,18 +989,15 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   liveBPM: {
-    color: COLORS.primaryLight,
     fontWeight: '700',
     fontVariant: ['tabular-nums'],
   },
   liveBPMLabel: {
-    color: COLORS.darkMuted,
     marginTop: 2,
   },
 
   // Calidad
   qualityBlock: {
-    backgroundColor: COLORS.darkCard,
     borderRadius: 12,
     padding: 14,
     marginBottom: 16,
@@ -1022,7 +1031,6 @@ const styles = StyleSheet.create({
   },
   qualityBar: {
     height: 4,
-    backgroundColor: COLORS.darkBg,
     borderRadius: 2,
     overflow: 'hidden',
     marginTop: 10,
@@ -1032,7 +1040,6 @@ const styles = StyleSheet.create({
     borderRadius: 2,
   },
   frameCountText: {
-    color: COLORS.darkMuted,
     fontSize: 11,
     textAlign: 'center',
     marginTop: 10,
@@ -1043,15 +1050,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: COLORS.dangerLight + '33',
     borderRadius: 10,
     padding: 12,
     marginTop: 6,
     borderWidth: 1,
-    borderColor: COLORS.danger + '44',
   },
   motionAlertText: {
-    color: COLORS.danger,
     fontSize: 13,
     textAlign: 'center',
     fontWeight: '600',
@@ -1062,48 +1066,29 @@ const styles = StyleSheet.create({
     marginTop: 8,
     borderWidth: 1,
   },
-  fingerAlertSaturated: {
-    backgroundColor: COLORS.dangerLight + '33',
-    borderColor: COLORS.danger + '44',
-  },
-  fingerAlertDark: {
-    backgroundColor: COLORS.darkCard,
-    borderColor: COLORS.darkBorder,
-  },
-  fingerAlertNoFinger: {
-    backgroundColor: COLORS.warningLight + '33',
-    borderColor: COLORS.warning + '44',
-  },
   fingerAlertText: {
     fontSize: 13,
     textAlign: 'center',
     fontWeight: '500',
-    color: COLORS.warning,
   },
 
-  // Área inferior
+  // Area inferior
   bottomArea: {
-    // padding, paddingBottom, marginBottom se establecen dinámicamente
+    // padding, paddingBottom, marginBottom se establecen dinamicamente
   },
 
-  // Botón de inicio (estilo base — padding y margin se aplican dinámicamente)
+  // Boton de inicio (estado deshabilitado)
   startBtnDisabled: {
     opacity: 0.6,
   },
-  startBtnText: {
-    color: COLORS.textOnPrimary,
-    fontWeight: '700',
-  },
 
-  // Botón cancelar (estilo base)
+  // Boton cancelar (estilo base)
   stopBtnText: {
-    color: COLORS.danger,
     fontWeight: '600',
   },
 
   // Nota legal
   legalNote: {
-    color: COLORS.textMuted,
     fontSize: 11,
     textAlign: 'center',
     lineHeight: 16,

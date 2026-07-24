@@ -1,13 +1,21 @@
+/**
+ * HistoryScreen.js — VitalPulse v5.0
+ *
+ * Historial de mediciones con búsqueda, agrupación por fecha,
+ * deslizar para eliminar y soporte de tema dinámico.
+ */
 import React, { useCallback, useRef, useMemo, useState } from 'react';
 import {
   View, Text, SectionList, TouchableOpacity, StyleSheet, Alert,
   Animated, RefreshControl, PanResponder, TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTheme } from '../theme/ThemeContext';
 import useHealthStore from '../store/healthstore';
 import { classifyBPM, classifyBP } from '../utils/bpEstimator';
 import BannerAd from '../components/BannerAd';
-import { COLORS, SHADOWS, SPACING, RADIUS } from '../theme/designTokens';
+import LegalDisclaimer from '../components/LegalDisclaimer';
+import { SPACING, RADIUS, SHADOWS } from '../theme/designTokens';
 
 const SWIPE_THRESHOLD = -80;
 
@@ -35,7 +43,7 @@ function getDateGroup(timestamp) {
   return 'Anteriores';
 }
 
-function SwipeableItem({ item, onDelete }) {
+function SwipeableItem({ item, onDelete, colors }) {
   const translateX = useRef(new Animated.Value(0)).current;
   const isSwipedOpen = useRef(false);
 
@@ -86,8 +94,8 @@ function SwipeableItem({ item, onDelete }) {
 
   const handleDelete = () => {
     Alert.alert(
-      'Eliminar medicion',
-      'Eliminar la medicion de ' +
+      'Eliminar medición',
+      'Eliminar la medición de ' +
         new Date(item.timestamp).toLocaleDateString('es-ES') +
         '?',
       [
@@ -116,25 +124,25 @@ function SwipeableItem({ item, onDelete }) {
     dateStr = 'Fecha desconocida';
   }
 
-  const dotColor = bpmClass?.color || COLORS.textMuted;
-  const badgeBg = bpmClass?.color ? bpmClass.color + '18' : COLORS.border;
+  const dotColor = bpmClass?.color || colors.textMuted;
+  const badgeBg = bpmClass?.color ? bpmClass.color + '18' : colors.border;
 
   return (
     <View style={styles.swipeContainer}>
       <TouchableOpacity
-        style={styles.deleteAction}
+        style={[styles.deleteAction, { backgroundColor: colors.dangerLight }]}
         onPress={handleDelete}
         activeOpacity={0.8}
       >
-        <Text style={styles.deleteActionIcon}>🗑</Text>
-        <Text style={styles.deleteActionLabel}>Eliminar</Text>
+        <Text style={[styles.deleteActionIcon, { color: colors.danger }]}>🗑</Text>
+        <Text style={[styles.deleteActionLabel, { color: colors.danger }]}>Eliminar</Text>
       </TouchableOpacity>
 
       <Animated.View
         style={[
           styles.item,
           SHADOWS.card,
-          { transform: [{ translateX }] },
+          { transform: [{ translateX }], backgroundColor: colors.bg, borderColor: colors.border },
         ]}
         {...panResponder.panHandlers}
       >
@@ -143,28 +151,28 @@ function SwipeableItem({ item, onDelete }) {
             <View style={styles.dotWrapper}>
               <View style={[styles.dot, { backgroundColor: dotColor }]} />
             </View>
-            <Text style={styles.itemDate}>{dateStr}</Text>
+            <Text style={[styles.itemDate, { color: colors.textMuted }]}>{dateStr}</Text>
           </View>
           <View style={styles.itemBottomRow}>
             <View style={styles.metricsBlock}>
-              <Text style={[styles.bpmValue, { color: bpmClass?.color || COLORS.textPrimary }]}>
+              <Text style={[styles.bpmValue, { color: bpmClass?.color || colors.textPrimary }]}>
                 {bpm}
               </Text>
-              <Text style={styles.bpmUnit}>BPM</Text>
+              <Text style={[styles.bpmUnit, { color: colors.textSecondary }]}>BPM</Text>
             </View>
             {bpClass && item.bp && (
               <View style={styles.bpBlock}>
-                <Text style={[styles.bpValue, { color: COLORS.textSecondary }]}>
+                <Text style={[styles.bpValue, { color: colors.textSecondary }]}>
                   {item.bp.systolic}/{item.bp.diastolic}
                 </Text>
-                <Text style={styles.bpUnit}>mmHg</Text>
+                <Text style={[styles.bpUnit, { color: colors.textMuted }]}>mmHg</Text>
               </View>
             )}
           </View>
         </View>
         <View style={styles.itemRightSection}>
           <View style={[styles.badge, { backgroundColor: badgeBg }]}>
-            <Text style={[styles.badgeText, { color: bpmClass?.color || COLORS.textSecondary }]}>
+            <Text style={[styles.badgeText, { color: bpmClass?.color || colors.textSecondary }]}>
               {bpmClass?.label || '--'}
             </Text>
           </View>
@@ -179,15 +187,15 @@ function SwipeableItem({ item, onDelete }) {
   );
 }
 
-function SearchBar({ value, onChangeText }) {
+function SearchBar({ value, onChangeText, colors }) {
   return (
-    <View style={styles.searchOuter}>
-      <View style={styles.searchContainer}>
-        <Text style={styles.searchIcon}>🔍</Text>
+    <View style={[styles.searchOuter]}>
+      <View style={[styles.searchContainer, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
+        <Text style={[styles.searchIcon]}>🔍</Text>
         <TextInput
-          style={styles.searchInput}
+          style={[styles.searchInput, { color: colors.textPrimary }]}
           placeholder="Buscar por fecha o BPM..."
-          placeholderTextColor={COLORS.textMuted}
+          placeholderTextColor={colors.textMuted}
           value={value}
           onChangeText={onChangeText}
           returnKeyType="search"
@@ -199,7 +207,7 @@ function SearchBar({ value, onChangeText }) {
             style={styles.searchClearHit}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
-            <Text style={styles.searchClearIcon}>✕</Text>
+            <Text style={[styles.searchClearIcon, { color: colors.textMuted }]}>✕</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -208,6 +216,7 @@ function SearchBar({ value, onChangeText }) {
 }
 
 export default function HistoryScreen() {
+  const { colors } = useTheme();
   const { history, clearHistory, deleteMeasurement, loadAll } = useHealthStore();
   const [refreshing, setRefreshing] = useState(false);
   const [search, setSearch] = useState('');
@@ -217,7 +226,7 @@ export default function HistoryScreen() {
   const handleClear = useCallback(() => {
     Alert.alert(
       'Borrar historial',
-      'Seguro que quieres eliminar todas las mediciones? Esta accion no se puede deshacer.',
+      'Seguro que quieres eliminar todas las mediciones? Esta acción no se puede deshacer.',
       [
         { text: 'Cancelar', style: 'cancel' },
         { text: 'Borrar todo', style: 'destructive', onPress: clearHistory },
@@ -266,35 +275,35 @@ export default function HistoryScreen() {
   const isSearching = search.trim().length > 0;
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]}>
       <View style={styles.header}>
-        <Text style={styles.title}>Historial</Text>
+        <Text style={[styles.title, { color: colors.textPrimary }]}>Historial</Text>
         {hasData && (
           <TouchableOpacity
             onPress={handleClear}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
-            <Text style={styles.clearBtn}>Borrar todo</Text>
+            <Text style={[styles.clearBtn, { color: colors.danger }]}>Borrar todo</Text>
           </TouchableOpacity>
         )}
       </View>
 
-      <SearchBar value={search} onChangeText={setSearch} />
+      <SearchBar value={search} onChangeText={setSearch} colors={colors} />
 
       {!hasData && !isSearching ? (
         <View style={styles.empty}>
           <Text style={styles.emptyIcon}>📋</Text>
-          <Text style={styles.emptyTitle}>Sin mediciones guardadas</Text>
-          <Text style={styles.emptySub}>
-            Las mediciones apareceran aqui automaticamente
+          <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>Sin mediciones guardadas</Text>
+          <Text style={[styles.emptySub, { color: colors.textSecondary }]}>
+            Las mediciones aparecerán aquí automáticamente
           </Text>
         </View>
       ) : !hasFilteredData ? (
         <View style={styles.empty}>
           <Text style={styles.emptyIcon}>🔍</Text>
-          <Text style={styles.emptyTitle}>Sin resultados</Text>
-          <Text style={styles.emptySub}>
-            Intenta con otra busqueda
+          <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>Sin resultados</Text>
+          <Text style={[styles.emptySub, { color: colors.textSecondary }]}>
+            Intenta con otra búsqueda
           </Text>
         </View>
       ) : (
@@ -302,14 +311,19 @@ export default function HistoryScreen() {
           sections={sections}
           keyExtractor={(item) => item.id || item.timestamp}
           renderItem={({ item }) => (
-            <SwipeableItem item={item} onDelete={handleDeleteItem} />
+            <SwipeableItem item={item} onDelete={handleDeleteItem} colors={colors} />
           )}
           renderSectionHeader={({ section }) => (
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionHeaderText}>
+            <View style={[
+              styles.sectionHeader,
+              { backgroundColor: colors.primarySubtle || colors.bgSecondary },
+            ]}>
+              <Text style={[styles.sectionHeaderText, { color: colors.primary }]}>
                 {section.title.toUpperCase()}
               </Text>
-              <Text style={styles.sectionCount}>{section.data.length}</Text>
+              <Text style={[styles.sectionCount, { color: colors.textSecondary }]}>
+                {section.data.length}
+              </Text>
             </View>
           )}
           contentContainerStyle={styles.list}
@@ -317,6 +331,7 @@ export default function HistoryScreen() {
           onScrollBeginDrag={handleScrollBeginDrag}
           ListFooterComponent={() => (
             <View style={styles.footer}>
+              <LegalDisclaimer />
               <BannerAd compact />
             </View>
           )}
@@ -324,9 +339,9 @@ export default function HistoryScreen() {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={onRefresh}
-              tintColor={COLORS.primary}
-              colors={[COLORS.primary]}
-              progressBackgroundColor={COLORS.bg}
+              tintColor={colors.primary}
+              colors={[colors.primary]}
+              progressBackgroundColor={colors.bg}
             />
           }
         />
@@ -335,10 +350,10 @@ export default function HistoryScreen() {
   );
 }
 
+// ─── Static layout styles (no colors) ─────────────────────────────────────────
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: COLORS.bg,
   },
   header: {
     flexDirection: 'row',
@@ -351,11 +366,9 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 26,
     fontWeight: '700',
-    color: COLORS.textPrimary,
     letterSpacing: -0.3,
   },
   clearBtn: {
-    color: COLORS.danger,
     fontSize: 14,
     fontWeight: '600',
   },
@@ -366,12 +379,10 @@ const styles = StyleSheet.create({
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.bgCard,
     borderRadius: RADIUS.md,
     paddingHorizontal: 12,
     height: 42,
     borderWidth: 1,
-    borderColor: COLORS.border,
   },
   searchIcon: {
     fontSize: 14,
@@ -380,7 +391,6 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     fontSize: 14,
-    color: COLORS.textPrimary,
     paddingVertical: 0,
   },
   searchClearHit: {
@@ -389,7 +399,6 @@ const styles = StyleSheet.create({
   },
   searchClearIcon: {
     fontSize: 14,
-    color: COLORS.textMuted,
     fontWeight: '600',
   },
   list: {
@@ -400,7 +409,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: COLORS.primarySubtle,
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: RADIUS.sm,
@@ -410,13 +418,11 @@ const styles = StyleSheet.create({
   sectionHeaderText: {
     fontSize: 12,
     fontWeight: '700',
-    color: COLORS.textPrimary,
     letterSpacing: 0.5,
   },
   sectionCount: {
     fontSize: 11,
     fontWeight: '600',
-    color: COLORS.textSecondary,
   },
   swipeContainer: {
     position: 'relative',
@@ -428,7 +434,6 @@ const styles = StyleSheet.create({
     top: 0,
     bottom: 0,
     width: 90,
-    backgroundColor: COLORS.dangerLight,
     borderRadius: RADIUS.md,
     justifyContent: 'center',
     alignItems: 'center',
@@ -438,18 +443,15 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   deleteActionLabel: {
-    color: COLORS.danger,
     fontSize: 11,
     fontWeight: '700',
   },
   item: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    backgroundColor: COLORS.bg,
     borderRadius: RADIUS.md,
     padding: 14,
     borderWidth: 1,
-    borderColor: COLORS.border,
   },
   itemContent: {
     flex: 1,
@@ -473,7 +475,6 @@ const styles = StyleSheet.create({
     borderRadius: 5,
   },
   itemDate: {
-    color: COLORS.textMuted,
     fontSize: 12,
   },
   itemBottomRow: {
@@ -492,7 +493,6 @@ const styles = StyleSheet.create({
   },
   bpmUnit: {
     fontSize: 12,
-    color: COLORS.textSecondary,
     fontWeight: '600',
   },
   bpBlock: {
@@ -506,7 +506,6 @@ const styles = StyleSheet.create({
   },
   bpUnit: {
     fontSize: 11,
-    color: COLORS.textMuted,
   },
   itemRightSection: {
     alignItems: 'flex-end',
@@ -548,12 +547,10 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: COLORS.textPrimary,
     marginBottom: 8,
   },
   emptySub: {
     fontSize: 14,
-    color: COLORS.textSecondary,
     textAlign: 'center',
     lineHeight: 20,
   },

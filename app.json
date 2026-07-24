@@ -33,7 +33,7 @@
         "backgroundColor": "#2563EB"
       },
       "package": "com.vpstudios.vitalpulse",
-      "versionCode": 6,
+      "versionCode": 7,
       "permissions": [
         "android.permission.CAMERA"
       ]

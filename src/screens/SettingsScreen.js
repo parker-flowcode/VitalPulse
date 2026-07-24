@@ -1,39 +1,44 @@
 /**
- * SettingsScreen.js — VitalPulse v4.0
+ * SettingsScreen.js — VitalPulse v5.0
  *
- * Ajustes reorganizados con jerarquía visual clara:
+ * Ajustes reorganizados con jerarquía visual clara y tema dinámico.
  *
- * ┌─────────────────────────────────────┐
- * │ 1. PERFIL PERSONAL (Card)           │
- * │    Nombre, edad, sexo, peso, etc.   │
- * ├─────────────────────────────────────┤
- * │ 2. CALIBRACIÓN (Card)               │
- * │    Puntos guardados, regresión      │
- * ├─────────────────────────────────────┤
- * │ 3. ALERTAS BPM (Card)               │
- * │    Límites alto/bajo                │
- * ├─────────────────────────────────────┤
- * │ 4. VITALPULSE PRO (Card destacado)  │
- * │    Upgrade CTA                      │
- * ├─────────────────────────────────────┤
- * │ 5. EXPORTAR DATOS (Card)            │
- * │    CSV export                       │
- * ├─────────────────────────────────────┤
- * │ 6. GESTIÓN DE DATOS (Card)          │
- * │    Info privacidad local            │
- * ├─────────────────────────────────────┤
- * │ 7. ⚠️ ZONA DE PELIGRO (Card rojo)  │
- * │    Borrar historial                 │
- * │    Borrar TODOS los datos           │
- * ├─────────────────────────────────────┤
- * │ 8. ACERCA DE (Card)                 │
- * │    Versión, SDK, desarrollador      │
- * ├─────────────────────────────────────┤
- * │ [STICKY FOOTER]                     │
- * │   Política de Privacidad · Términos │
- * └─────────────────────────────────────┘
+ * ┌─────────────────────────────────────────┐
+ * │ 1. TEMA (Card) — Theme toggle          │
+ * │    Sistema · Claro · Oscuro             │
+ * ├─────────────────────────────────────────┤
+ * │ 2. PERFIL PERSONAL (Card)               │
+ * │    Nombre, edad, sexo, peso, etc.       │
+ * ├─────────────────────────────────────────┤
+ * │ 3. CALIBRACIÓN (Card)                   │
+ * │    Puntos guardados, regresión          │
+ * ├─────────────────────────────────────────┤
+ * │ 4. ALERTAS BPM (Card)                   │
+ * │    Límites alto/bajo                    │
+ * ├─────────────────────────────────────────┤
+ * │ 5. VITALPULSE PRO (Card destacado)      │
+ * │    Upgrade CTA                          │
+ * ├─────────────────────────────────────────┤
+ * │ 6. EXPORTAR DATOS (Card)                │
+ * │    CSV export                           │
+ * ├─────────────────────────────────────────┤
+ * │ 7. GESTIÓN DE DATOS (Card)              │
+ * │    Info privacidad local                │
+ * ├─────────────────────────────────────────┤
+ * │ 8. ⚠️ ZONA DE PELIGRO (Card rojo)      │
+ * │    Borrar historial                     │
+ * │    Borrar TODOS los datos               │
+ * ├─────────────────────────────────────────┤
+ * │ 9. ACERCA DE (Card)                     │
+ * │    Versión, SDK, desarrollador          │
+ * ├─────────────────────────────────────────┤
+ * │ [BannerAd]                              │
+ * ├─────────────────────────────────────────┤
+ * │ [STICKY FOOTER]                         │
+ * │   Política de Privacidad · Términos     │
+ * └─────────────────────────────────────────┘
  */
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
   ScrollView, Alert, KeyboardAvoidingView, Platform, Switch, Image,
@@ -41,10 +46,21 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import useHealthStore from '../store/healthstore';
 import { useNavigation } from '@react-navigation/native';
+import { useTheme } from '../theme/ThemeContext';
 import { generateCSV, shareCSV, getExportFilename } from '../services/exportService';
 import BannerAd from '../components/BannerAd';
+import { SPACING, RADIUS, SHADOWS } from '../theme/designTokens';
+
+const THEME_OPTIONS = [
+  { key: 'system', label: 'Sistema', icon: '📱' },
+  { key: 'light',  label: 'Claro',   icon: '☀️' },
+  { key: 'dark',   label: 'Oscuro',  icon: '🌙' },
+];
 
 export default function SettingsScreen() {
+  const { colors, theme, setTheme } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   const {
     userProfile, updateUserProfile,
     calibration, clearCalibration,
@@ -148,16 +164,16 @@ export default function SettingsScreen() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          {/* ─── Logo y t├¡tulo ─────────────────────────────────────────────── */}
+          {/* ─── Logo y título ─────────────────────────────────────────────── */}
           <View style={styles.logoSection}>
             <Image source={require('../../assets/icon.png')} style={styles.logo} />
             <Text style={styles.appTitle}>VitalPulse</Text>
-            <Text style={styles.appVersion}>v4.0.0</Text>
+            <Text style={styles.appVersion}>v5.0.0</Text>
           </View>
 
           {/* ─── Estado del perfil ──────────────────────────────────────── */}
           <View style={[styles.profileStatus, profileComplete ? styles.profileStatusOk : styles.profileStatusWarn]}>
-            <Text style={[styles.profileStatusText, { color: profileComplete ? '#10B981' : '#F59E0B' }]}>
+            <Text style={[styles.profileStatusText, { color: profileComplete ? colors.success : colors.warning }]}>
               {profileComplete
                 ? 'Perfil completo — máxima precisión activa'
                 : 'Perfil incompleto — complétalo para mayor precisión'}
@@ -165,7 +181,44 @@ export default function SettingsScreen() {
           </View>
 
           {/* ═══════════════════════════════════════════════════════════════
-              CARD 1: PERFIL PERSONAL
+              CARD 1: TEMA (Theme Toggle)
+              ═══════════════════════════════════════════════════════════════ */}
+          <View style={styles.card}>
+            <View style={styles.cardHeader}>
+              <Text style={styles.cardIcon}>🎨</Text>
+              <Text style={styles.cardTitle}>Tema</Text>
+            </View>
+            <Text style={styles.cardDesc}>
+              Elige cómo se ve VitalPulse. El modo "Sistema" sigue la configuración de tu dispositivo.
+            </Text>
+            <View style={styles.themeRow}>
+              {THEME_OPTIONS.map((opt) => {
+                const isSelected = theme === opt.key;
+                return (
+                  <TouchableOpacity
+                    key={opt.key}
+                    style={[
+                      styles.themePill,
+                      isSelected && styles.themePillActive,
+                    ]}
+                    onPress={() => setTheme(opt.key)}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.themePillIcon}>{opt.icon}</Text>
+                    <Text style={[
+                      styles.themePillLabel,
+                      isSelected && styles.themePillLabelActive,
+                    ]}>
+                      {opt.label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+
+          {/* ═══════════════════════════════════════════════════════════════
+              CARD 2: PERFIL PERSONAL
               ═══════════════════════════════════════════════════════════════ */}
           <View style={styles.card}>
             <View style={styles.cardHeader}>
@@ -178,11 +231,11 @@ export default function SettingsScreen() {
 
             <Text style={styles.label}>Nombre</Text>
             <TextInput style={styles.input} value={name} onChangeText={setName}
-              placeholder="Tu nombre" placeholderTextColor="#94A3B8" maxLength={40} />
+              placeholder="Tu nombre" placeholderTextColor={colors.textMuted} maxLength={40} />
 
             <Text style={styles.label}>Edad *</Text>
             <TextInput style={styles.input} value={age} onChangeText={setAge}
-              placeholder="Años" placeholderTextColor="#94A3B8" keyboardType="number-pad" maxLength={3} />
+              placeholder="Años" placeholderTextColor={colors.textMuted} keyboardType="number-pad" maxLength={3} />
 
             <Text style={styles.label}>Sexo biológico *</Text>
             <View style={styles.optionRow}>
@@ -201,13 +254,13 @@ export default function SettingsScreen() {
               <View style={{ flex: 1 }}>
                 <Text style={styles.label}>Peso (kg)</Text>
                 <TextInput style={styles.input} value={weight} onChangeText={setWeight}
-                  placeholder="70" placeholderTextColor="#94A3B8" keyboardType="decimal-pad" maxLength={5} />
+                  placeholder="70" placeholderTextColor={colors.textMuted} keyboardType="decimal-pad" maxLength={5} />
               </View>
               <View style={{ width: 12 }} />
               <View style={{ flex: 1 }}>
                 <Text style={styles.label}>Estatura (cm)</Text>
                 <TextInput style={styles.input} value={height} onChangeText={setHeight}
-                  placeholder="170" placeholderTextColor="#94A3B8" keyboardType="number-pad" maxLength={3} />
+                  placeholder="170" placeholderTextColor={colors.textMuted} keyboardType="number-pad" maxLength={3} />
               </View>
             </View>
 
@@ -243,7 +296,7 @@ export default function SettingsScreen() {
           </View>
 
           {/* ═══════════════════════════════════════════════════════════════
-              CARD 2: CALIBRACI├ôN DE PA
+              CARD 3: CALIBRACIÓN DE PA
               ═══════════════════════════════════════════════════════════════ */}
           <View style={styles.card}>
             <View style={styles.cardHeader}>
@@ -261,7 +314,7 @@ export default function SettingsScreen() {
                     ✅ {calibration.points.length} punto{calibration.points.length > 1 ? 's' : ''} de calibración guardado{calibration.points.length > 1 ? 's' : ''}
                   </Text>
                   <Text style={styles.calStatusSub}>
-                    ├Ültimo: {new Date(calibration.points[calibration.points.length - 1].date).toLocaleDateString('es-ES')}
+                    Último: {new Date(calibration.points[calibration.points.length - 1].date).toLocaleDateString('es-ES')}
                   </Text>
                 </View>
                 <TouchableOpacity style={styles.dangerBtnSmall} onPress={handleClearCalibration}>
@@ -278,14 +331,14 @@ export default function SettingsScreen() {
               <Switch
                 value={preferRegression}
                 onValueChange={togglePreferRegression}
-                trackColor={{ false: '#E2E8F0', true: '#2563EB' }}
-                thumbColor={preferRegression ? '#FFFFFF' : '#94A3B8'}
+                trackColor={{ false: colors.border, true: colors.primary }}
+                thumbColor={preferRegression ? colors.textOnPrimary : colors.textMuted}
               />
             </View>
           </View>
 
           {/* ═══════════════════════════════════════════════════════════════
-              CARD 3: ALERTAS DE BPM
+              CARD 4: ALERTAS DE BPM
               ═══════════════════════════════════════════════════════════════ */}
           <View style={styles.card}>
             <View style={styles.cardHeader}>
@@ -297,17 +350,17 @@ export default function SettingsScreen() {
             </Text>
             <Text style={styles.label}>Alerta BPM alto (por encima de)</Text>
             <TextInput style={styles.input} value={alertHigh} onChangeText={setAlertHigh}
-              keyboardType="number-pad" maxLength={3} placeholderTextColor="#94A3B8" />
+              keyboardType="number-pad" maxLength={3} placeholderTextColor={colors.textMuted} />
             <Text style={styles.label}>Alerta BPM bajo (por debajo de)</Text>
             <TextInput style={styles.input} value={alertLow} onChangeText={setAlertLow}
-              keyboardType="number-pad" maxLength={3} placeholderTextColor="#94A3B8" />
+              keyboardType="number-pad" maxLength={3} placeholderTextColor={colors.textMuted} />
             <TouchableOpacity style={styles.saveBtn} onPress={saveAlerts}>
               <Text style={styles.saveBtnText}>Guardar alertas</Text>
             </TouchableOpacity>
           </View>
 
           {/* ═══════════════════════════════════════════════════════════════
-              CARD 4: VITALPULSE PRO (destacado)
+              CARD 5: VITALPULSE PRO (destacado)
               ═══════════════════════════════════════════════════════════════ */}
           <TouchableOpacity
             style={styles.proCard}
@@ -327,7 +380,7 @@ export default function SettingsScreen() {
           </TouchableOpacity>
 
           {/* ═══════════════════════════════════════════════════════════════
-              CARD 5: EXPORTAR DATOS
+              CARD 6: EXPORTAR DATOS
               ═══════════════════════════════════════════════════════════════ */}
           <View style={styles.card}>
             <View style={styles.cardHeader}>
@@ -348,7 +401,7 @@ export default function SettingsScreen() {
           </View>
 
           {/* ═══════════════════════════════════════════════════════════════
-              CARD 6: GESTI├ôN DE DATOS
+              CARD 7: GESTIÓN DE DATOS
               ═══════════════════════════════════════════════════════════════ */}
           <View style={styles.card}>
             <View style={styles.cardHeader}>
@@ -364,7 +417,7 @@ export default function SettingsScreen() {
           </View>
 
           {/* ═══════════════════════════════════════════════════════════════
-              CARD 7: ⚠️ ZONA DE PELIGRO
+              CARD 8: ⚠️ ZONA DE PELIGRO
               ═══════════════════════════════════════════════════════════════ */}
           <View style={styles.dangerCard}>
             <View style={styles.dangerCardHeader}>
@@ -402,7 +455,7 @@ export default function SettingsScreen() {
           </View>
 
           {/* ═══════════════════════════════════════════════════════════════
-              CARD 8: ACERCA DE
+              CARD 9: ACERCA DE
               ═══════════════════════════════════════════════════════════════ */}
           <View style={styles.card}>
             <View style={styles.cardHeader}>
@@ -411,7 +464,7 @@ export default function SettingsScreen() {
             </View>
             <View style={styles.aboutRow}>
               <Text style={styles.aboutLabel}>Versión</Text>
-              <Text style={styles.aboutValue}>4.0.0</Text>
+              <Text style={styles.aboutValue}>5.0.0</Text>
             </View>
             <View style={styles.aboutRow}>
               <Text style={styles.aboutLabel}>SDK</Text>
@@ -461,31 +514,60 @@ export default function SettingsScreen() {
   );
 }
 
-// ─── Estilos ─────────────────────────────────────────────────────────────────
-const styles = StyleSheet.create({
-  safe:   { flex: 1, backgroundColor: '#FFFFFF' },
+// ─── Styles factory ────────────────────────────────────────────────────────────
+const createStyles = (colors) => StyleSheet.create({
+  safe:   { flex: 1, backgroundColor: colors.bg },
   scroll: { padding: 20, paddingBottom: 16 },
 
   // ─── Logo section ──────────────────────────────────────────────────────────
   logoSection: { alignItems: 'center', marginBottom: 20, marginTop: 8 },
   logo:        { width: 56, height: 56, marginBottom: 10, resizeMode: 'contain' },
-  appTitle:    { color: '#1E293B', fontSize: 26, fontWeight: '700' },
-  appVersion:  { color: '#94A3B8', fontSize: 14, marginTop: 2 },
+  appTitle:    { color: colors.textPrimary, fontSize: 26, fontWeight: '700' },
+  appVersion:  { color: colors.textMuted, fontSize: 14, marginTop: 2 },
 
   // ─── Profile status banner ────────────────────────────────────────────────
   profileStatus:     { borderRadius: 12, padding: 12, marginBottom: 20, borderWidth: 1 },
-  profileStatusOk:   { backgroundColor: '#EFF6FF', borderColor: '#2563EB33' },
-  profileStatusWarn: { backgroundColor: '#FEF3C7', borderColor: '#F59E0B33' },
+  profileStatusOk:   { backgroundColor: colors.primarySubtle, borderColor: colors.primary + '33' },
+  profileStatusWarn: { backgroundColor: colors.warningLight, borderColor: colors.warning + '33' },
   profileStatusText: { fontSize: 13, fontWeight: '600', textAlign: 'center' },
+
+  // ─── Theme toggle ──────────────────────────────────────────────────────────
+  themeRow: {
+    flexDirection: 'row', gap: 10, marginTop: 8,
+  },
+  themePill: {
+    flex: 1,
+    backgroundColor: colors.bg,
+    borderRadius: RADIUS.md,
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
+    gap: 4,
+  },
+  themePillActive: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  themePillIcon: { fontSize: 18 },
+  themePillLabel: {
+    color: colors.textSecondary,
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  themePillLabelActive: {
+    color: colors.textOnPrimary,
+  },
 
   // ─── Card base ────────────────────────────────────────────────────────────
   card: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.bg,
     borderRadius: 16,
     padding: 20,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: colors.border,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
@@ -494,43 +576,43 @@ const styles = StyleSheet.create({
   },
   cardHeader:  { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 8 },
   cardIcon:    { fontSize: 20 },
-  cardTitle:   { color: '#2563EB', fontSize: 15, fontWeight: '700' },
-  cardDesc:    { color: '#64748B', fontSize: 13, lineHeight: 20, marginBottom: 12 },
+  cardTitle:   { color: colors.primary, fontSize: 15, fontWeight: '700' },
+  cardDesc:    { color: colors.textSecondary, fontSize: 13, lineHeight: 20, marginBottom: 12 },
 
   // ─── Form fields ──────────────────────────────────────────────────────────
-  label:       { color: '#2563EB', fontSize: 12, fontWeight: '600', marginBottom: 6, marginTop: 12 },
-  input:       { backgroundColor: '#F1F5F9', borderRadius: 10, padding: 12, color: '#1E293B', fontSize: 16, borderWidth: 1, borderColor: '#E2E8F0' },
+  label:       { color: colors.primary, fontSize: 12, fontWeight: '600', marginBottom: 6, marginTop: 12 },
+  input:       { backgroundColor: colors.bgSecondary, borderRadius: 10, padding: 12, color: colors.textPrimary, fontSize: 16, borderWidth: 1, borderColor: colors.border },
   rowFields:   { flexDirection: 'row', marginTop: 4 },
   optionRow:   { flexDirection: 'row', gap: 10, marginBottom: 4 },
-  optionBtn:   { flex: 1, backgroundColor: '#FFFFFF', borderRadius: 10, padding: 12, alignItems: 'center', borderWidth: 1, borderColor: '#E2E8F0' },
-  optionBtnActive: { backgroundColor: '#2563EB', borderColor: '#2563EB' },
-  optionText:  { color: '#64748B', fontSize: 14 },
-  optionTextActive: { color: '#FFFFFF', fontWeight: '600' },
+  optionBtn:   { flex: 1, backgroundColor: colors.bg, borderRadius: 10, padding: 12, alignItems: 'center', borderWidth: 1, borderColor: colors.border },
+  optionBtnActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+  optionText:  { color: colors.textSecondary, fontSize: 14 },
+  optionTextActive: { color: colors.textOnPrimary, fontWeight: '600' },
   checkRow:    { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, gap: 12 },
-  checkbox:    { width: 22, height: 22, borderRadius: 6, borderWidth: 2, borderColor: '#CBD5E1', justifyContent: 'center', alignItems: 'center' },
-  checkboxActive: { backgroundColor: '#2563EB', borderColor: '#2563EB' },
-  checkmark:   { color: '#FFFFFF', fontSize: 13, fontWeight: '700' },
-  checkLabel:  { color: '#1E293B', fontSize: 14 },
-  saveBtn:     { backgroundColor: '#2563EB', borderRadius: 12, padding: 14, alignItems: 'center', marginTop: 16 },
-  saveBtnText: { color: '#FFFFFF', fontSize: 15, fontWeight: '600' },
+  checkbox:    { width: 22, height: 22, borderRadius: 6, borderWidth: 2, borderColor: colors.border, justifyContent: 'center', alignItems: 'center' },
+  checkboxActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+  checkmark:   { color: colors.textOnPrimary, fontSize: 13, fontWeight: '700' },
+  checkLabel:  { color: colors.textPrimary, fontSize: 14 },
+  saveBtn:     { backgroundColor: colors.primary, borderRadius: 12, padding: 14, alignItems: 'center', marginTop: 16 },
+  saveBtnText: { color: colors.textOnPrimary, fontSize: 15, fontWeight: '600' },
 
   // ─── Calibration ──────────────────────────────────────────────────────────
-  calStatus:   { backgroundColor: '#EFF6FF', borderRadius: 8, padding: 12, marginBottom: 10 },
-  calStatusText: { color: '#2563EB', fontSize: 13, fontWeight: '600' },
-  calStatusSub:  { color: '#64748B', fontSize: 12, marginTop: 2 },
-  calEmptyText:  { color: '#94A3B8', fontSize: 13, fontStyle: 'italic' },
+  calStatus:   { backgroundColor: colors.primarySubtle, borderRadius: 8, padding: 12, marginBottom: 10 },
+  calStatusText: { color: colors.primary, fontSize: 13, fontWeight: '600' },
+  calStatusSub:  { color: colors.textSecondary, fontSize: 12, marginTop: 2 },
+  calEmptyText:  { color: colors.textMuted, fontSize: 13, fontStyle: 'italic' },
   switchRow:   { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 12, marginBottom: 4 },
-  switchLabel: { color: '#1E293B', fontSize: 14, flex: 1, marginRight: 12 },
+  switchLabel: { color: colors.textPrimary, fontSize: 14, flex: 1, marginRight: 12 },
 
   // ─── Pro card (destacado) ─────────────────────────────────────────────────
   proCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.bg,
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,
     borderWidth: 2,
-    borderColor: '#2563EB',
-    shadowColor: '#2563EB',
+    borderColor: colors.primary,
+    shadowColor: colors.primary,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
@@ -539,39 +621,39 @@ const styles = StyleSheet.create({
   proCardContent: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   proEmoji:  { fontSize: 24 },
   proTextWrap: { flex: 1 },
-  proTitle:  { color: '#2563EB', fontSize: 15, fontWeight: '700' },
-  proSub:    { color: '#64748B', fontSize: 12, marginTop: 2 },
-  proArrow:  { color: '#2563EB', fontSize: 18, fontWeight: '600' },
+  proTitle:  { color: colors.primary, fontSize: 15, fontWeight: '700' },
+  proSub:    { color: colors.textSecondary, fontSize: 12, marginTop: 2 },
+  proArrow:  { color: colors.primary, fontSize: 18, fontWeight: '600' },
 
   // ─── Export ───────────────────────────────────────────────────────────────
   exportBtn: {
     flexDirection: 'row', alignItems: 'center',
-    backgroundColor: '#F8F9FA', borderRadius: 12, padding: 14,
-    borderWidth: 1, borderColor: '#E2E8F0', gap: 12,
+    backgroundColor: colors.bgCard, borderRadius: 12, padding: 14,
+    borderWidth: 1, borderColor: colors.border, gap: 12,
   },
   exportBtnIcon: { fontSize: 20 },
-  exportBtnTitle: { color: '#2563EB', fontSize: 14, fontWeight: '600' },
-  exportBtnSub: { color: '#64748B', fontSize: 11, marginTop: 2 },
-  exportBtnArrow: { color: '#2563EB', fontSize: 16, fontWeight: '600' },
+  exportBtnTitle: { color: colors.primary, fontSize: 14, fontWeight: '600' },
+  exportBtnSub: { color: colors.textSecondary, fontSize: 11, marginTop: 2 },
+  exportBtnArrow: { color: colors.primary, fontSize: 16, fontWeight: '600' },
 
   // ─── Privacy badge ────────────────────────────────────────────────────────
   privacyBadge: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
-    backgroundColor: '#F8F9FA', borderRadius: 10, padding: 14,
-    borderWidth: 1, borderColor: '#E2E8F0',
+    backgroundColor: colors.bgCard, borderRadius: 10, padding: 14,
+    borderWidth: 1, borderColor: colors.border,
   },
   privacyBadgeIcon: { fontSize: 20 },
-  privacyBadgeText: { color: '#64748B', fontSize: 13, lineHeight: 20, flex: 1 },
+  privacyBadgeText: { color: colors.textSecondary, fontSize: 13, lineHeight: 20, flex: 1 },
 
   // ─── ⚠️ Zona de peligro ──────────────────────────────────────────────────
   dangerCard: {
-    backgroundColor: '#FEE2E2',
+    backgroundColor: colors.dangerLight,
     borderRadius: 16,
     padding: 20,
     marginBottom: 16,
     borderWidth: 2,
-    borderColor: '#EF4444',
-    shadowColor: '#EF4444',
+    borderColor: colors.danger,
+    shadowColor: colors.danger,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 6,
@@ -579,38 +661,38 @@ const styles = StyleSheet.create({
   },
   dangerCardHeader: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 8 },
   dangerIcon:  { fontSize: 20 },
-  dangerTitle: { color: '#EF4444', fontSize: 15, fontWeight: '700' },
-  dangerDesc:  { color: '#DC2626', fontSize: 13, lineHeight: 20, marginBottom: 16 },
+  dangerTitle: { color: colors.danger, fontSize: 15, fontWeight: '700' },
+  dangerDesc:  { color: colors.dangerDark, fontSize: 13, lineHeight: 20, marginBottom: 16 },
 
   dangerAction: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
-    backgroundColor: '#FFFFFF', borderRadius: 12, padding: 14,
-    marginBottom: 10, borderWidth: 1, borderColor: '#FECACA',
+    backgroundColor: colors.bg, borderRadius: 12, padding: 14,
+    marginBottom: 10, borderWidth: 1, borderColor: colors.dangerLight,
   },
   dangerActionDestructive: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
-    backgroundColor: '#FFFFFF', borderRadius: 12, padding: 16,
-    borderWidth: 2, borderColor: '#EF4444',
+    backgroundColor: colors.bg, borderRadius: 12, padding: 16,
+    borderWidth: 2, borderColor: colors.danger,
   },
   dangerActionIconWrap: { width: 32, alignItems: 'center' },
   dangerActionIcon: { fontSize: 20 },
   dangerActionTextWrap: { flex: 1 },
-  dangerActionTitle: { color: '#EF4444', fontSize: 14, fontWeight: '600' },
-  dangerActionTitleDestructive: { color: '#DC2626', fontSize: 15, fontWeight: '700' },
-  dangerActionSub: { color: '#B91C1C', fontSize: 12, marginTop: 2 },
+  dangerActionTitle: { color: colors.danger, fontSize: 14, fontWeight: '600' },
+  dangerActionTitleDestructive: { color: colors.dangerDark, fontSize: 15, fontWeight: '700' },
+  dangerActionSub: { color: colors.dangerDark, fontSize: 12, marginTop: 2 },
 
-  // ─── Botones danger peque├▒os (para calibraci├│n) ───────────────────────────
-  dangerBtnSmall: { backgroundColor: '#FEE2E2', borderRadius: 10, padding: 12, alignItems: 'center', borderWidth: 1, borderColor: '#FECACA' },
-  dangerBtnSmallText: { color: '#EF4444', fontSize: 14, fontWeight: '600' },
+  // ─── Botones danger pequeños (para calibración) ───────────────────────────
+  dangerBtnSmall: { backgroundColor: colors.dangerLight, borderRadius: 10, padding: 12, alignItems: 'center', borderWidth: 1, borderColor: colors.dangerLight },
+  dangerBtnSmallText: { color: colors.danger, fontSize: 14, fontWeight: '600' },
 
   // ─── Acerca de ────────────────────────────────────────────────────────────
   aboutRow: {
     flexDirection: 'row', justifyContent: 'space-between',
-    paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#F1F5F9',
+    paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: colors.divider,
   },
-  aboutLabel: { color: '#64748B', fontSize: 13 },
-  aboutValue: { color: '#1E293B', fontSize: 13, fontWeight: '600' },
-  aboutDesc: { color: '#64748B', fontSize: 12, lineHeight: 18, marginTop: 12 },
+  aboutLabel: { color: colors.textSecondary, fontSize: 13 },
+  aboutValue: { color: colors.textPrimary, fontSize: 13, fontWeight: '600' },
+  aboutDesc: { color: colors.textSecondary, fontSize: 12, lineHeight: 18, marginTop: 12 },
 
   // ─── Sticky footer (enlaces legales) ──────────────────────────────────────
   footer: {
@@ -619,23 +701,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 14,
     paddingHorizontal: 20,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.bg,
     borderTopWidth: 1,
-    borderTopColor: '#E2E8F0',
+    borderTopColor: colors.border,
   },
   footerLink: {
     paddingVertical: 4,
     paddingHorizontal: 8,
   },
   footerLinkText: {
-    color: '#2563EB',
+    color: colors.primary,
     fontSize: 13,
     fontWeight: '600',
   },
   footerDivider: {
     width: 1,
     height: 16,
-    backgroundColor: '#E2E8F0',
+    backgroundColor: colors.border,
     marginHorizontal: 12,
   },
 });

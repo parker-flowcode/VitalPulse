@@ -18,7 +18,7 @@ import CalibrationScreen from '../screens/CalibrationScreen';
 import TutorialScreen  from '../screens/TutorialScreen';
 import UpgradeScreen   from '../screens/UpgradeScreen';
 import useHealthStore   from '../store/healthstore';
-import { COLORS } from '../theme/designTokens';
+import { useTheme } from '../theme/ThemeContext';
 
 const Tab        = createBottomTabNavigator();
 const HomeStack  = createStackNavigator();
@@ -51,6 +51,7 @@ function HomeStackNavigator() {
 }
 
 function MainTabs() {
+  const { colors } = useTheme();
   return (
     <Tab.Navigator
       screenOptions={({ route }) => {
@@ -59,15 +60,15 @@ function MainTabs() {
         return {
           headerShown: false,
           tabBarStyle: {
-            backgroundColor: COLORS.tabBarBg,
-            borderTopColor: COLORS.tabBarBorder,
+            backgroundColor: colors.tabBarBg,
+            borderTopColor: colors.tabBarBorder,
             borderTopWidth: 1,
             paddingBottom: 6,
             height: 60,
             display: hideTabBar ? 'none' : 'flex',
           },
-          tabBarActiveTintColor: COLORS.tabActive,
-          tabBarInactiveTintColor: COLORS.tabInactive,
+          tabBarActiveTintColor: colors.tabActive,
+          tabBarInactiveTintColor: colors.tabInactive,
           tabBarIcon: ({ focused }) => <TabIcon name={route.name} focused={focused} />,
         };
       }}
@@ -82,6 +83,7 @@ function MainTabs() {
 
 export default function AppNavigator() {
   const { onboardingDone, loadAll } = useHealthStore();
+  const { colors } = useTheme();
   const [loading, setLoading]       = useState(true);
 
   useEffect(() => {
@@ -90,12 +92,12 @@ export default function AppNavigator() {
 
   if (loading) {
     return (
-      <View style={{ flex: 1, backgroundColor: COLORS.bg, justifyContent: 'center', alignItems: 'center' }}>
+      <View style={{ flex: 1, backgroundColor: colors.bg, justifyContent: 'center', alignItems: 'center' }}>
         <Image
           source={require('../../assets/icon.png')}
           style={{ width: 64, height: 64, marginBottom: 16, resizeMode: 'contain' }}
         />
-        <ActivityIndicator size="large" color={COLORS.primary} />
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
