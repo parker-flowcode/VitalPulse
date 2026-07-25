@@ -6,7 +6,7 @@
  * Todos los graficos usan la paleta sky blue (#38BDF8).
  * VictoryAxis tickFormat utiliza fechas, NO numeros de indice.
  */
-import React, { useMemo, useCallback } from 'react';
+import React, { useMemo, useCallback, useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, Dimensions, Alert, TouchableOpacity,
 } from 'react-native';
@@ -112,6 +112,21 @@ function getHrvInterpretation(sdnn) {
   return 'Alta variabilidad — buena recuperacion';
 }
 
+// ─── Period filter helpers ──────────────────────────────────────────────
+const FILTER_OPTIONS = ['Semana', 'Mes', '3 meses', 'Todo'];
+
+function filterByPeriod(history, period) {
+  if (period === 'Todo') return history;
+  const now = Date.now();
+  const msInPeriod = {
+    Semana: 7 * 24 * 60 * 60 * 1000,
+    Mes: 30 * 24 * 60 * 60 * 1000,
+    '3 meses': 90 * 24 * 60 * 60 * 1000,
+  };
+  const cutoff = now - (msInPeriod[period] || 0);
+  return history.filter((h) => new Date(h.timestamp).getTime() >= cutoff);
+}
+
 // ─── Metric Card ────────────────────────────────────────────────────────
 function MetricCard({ label, value, unit, color, icon, c, onPress }) {
   return (
@@ -200,11 +215,18 @@ function ChartCard({ title, subtitle, colors, children }) {
 export default function AnalyticsScreen() {
   const { colors } = useTheme();
   const { history } = useHealthStore();
+  const [selectedFilter, setSelectedFilter] = useState('Todo');
+
+  // Filter by selected period
+  const filteredHistory = useMemo(
+    () => filterByPeriod(history, selectedFilter),
+    [history, selectedFilter]
+  );
 
   // Sort measurements chronologically (oldest first for trend charts)
   const chronological = useMemo(
-    () => [...history].reverse().slice(-40),
-    [history]
+    () => [...filteredHistory].reverse().slice(-40),
+    [filteredHistory]
   );
 
   const hasBpData = useMemo(
@@ -298,18 +320,18 @@ export default function AnalyticsScreen() {
 
   // ─── Summary Metrics ─────────────────────────────────────────────────
   const summaryMetrics = useMemo(() => {
-    const bpms = history.map((h) => h.bpm || 0).filter((b) => b > 0);
+    const bpms = filteredHistory.map((h) => h.bpm || 0).filter((b) => b > 0);
     const avgBpm =
       bpms.length > 0
         ? Math.round(bpms.reduce((a, b) => a + b, 0) / bpms.length)
         : 0;
 
-    const lastBpItem = [...history].reverse().find((h) => h.bp?.systolic);
+    const lastBpItem = [...filteredHistory].reverse().find((h) => h.bp?.systolic);
     const lastBpStr = lastBpItem
       ? lastBpItem.bp.systolic + '/' + lastBpItem.bp.diastolic
       : '--/--';
 
-    const sdnnVals = history
+    const sdnnVals = filteredHistory
       .map((h) => h.sdnn || 0)
       .filter((v) => v > 0);
     const avgSdnn =
@@ -320,27 +342,27 @@ export default function AnalyticsScreen() {
         : 0;
 
     // Latest BPM classification
-    const lastBpmItem = [...history].reverse().find((h) => h.bpm && h.bpm > 0);
+    const lastBpmItem = [...filteredHistory].reverse().find((h) => h.bpm && h.bpm > 0);
     const lastBpm = lastBpmItem ? lastBpmItem.bpm : 0;
     const lastBpmClass = classifyBPM(lastBpm);
 
-    return { avgBpm, lastBpStr, avgSdnn, total: history.length, lastBpm, lastBpmClass };
-  }, [history]);
+    return { avgBpm, lastBpStr, avgSdnn, total: filteredHistory.length, lastBpm, lastBpmClass };
+  }, [filteredHistory]);
 
   // ─── Extra stats for metric card alerts ──────────────────────────────
   const extraStats = useMemo(() => {
-    const bpms = history.map((h) => h.bpm || 0).filter((b) => b > 0);
+    const bpms = filteredHistory.map((h) => h.bpm || 0).filter((b) => b > 0);
     const minBpm = bpms.length > 0 ? Math.min(...bpms) : 0;
     const maxBpm = bpms.length > 0 ? Math.max(...bpms) : 0;
 
     const bpmClassCounts = {};
-    history.filter((h) => h.bpm && h.bpm > 0).forEach((h) => {
+    filteredHistory.filter((h) => h.bpm && h.bpm > 0).forEach((h) => {
       const cls = classifyBPM(h.bpm);
       const label = cls?.label || 'Desconocido';
       bpmClassCounts[label] = (bpmClassCounts[label] || 0) + 1;
     });
 
-    const lastBpItem = [...history].reverse().find((h) => h.bp?.systolic);
+    const lastBpItem = [...filteredHistory].reverse().find((h) => h.bp?.systolic);
     let bpDetail = null;
     if (lastBpItem) {
       const cls = classifyBP(lastBpItem.bp.systolic, lastBpItem.bp.diastolic);
@@ -352,7 +374,7 @@ export default function AnalyticsScreen() {
       };
     }
 
-    const timestamps = history.map((h) => h.timestamp).filter(Boolean).sort();
+    const timestamps = filteredHistory.map((h) => h.timestamp).filter(Boolean).sort();
     const dateRange = timestamps.length > 1
       ? formatDate(timestamps[0]) + ' — ' + formatDate(timestamps[timestamps.length - 1])
       : timestamps.length === 1
@@ -360,7 +382,7 @@ export default function AnalyticsScreen() {
       : 'Sin datos';
 
     return { minBpm, maxBpm, bpmClassCounts, bpDetail, dateRange };
-  }, [history]);
+  }, [filteredHistory]);
 
   // ─── BP Distribution ─────────────────────────────────────────────────
   const bpDistribution = useMemo(() => {
@@ -382,7 +404,7 @@ export default function AnalyticsScreen() {
     };
     const counts = {};
 
-    history
+    filteredHistory
       .filter((h) => h.bp?.systolic && h.bp?.diastolic)
       .forEach((h) => {
         const cls = classifyBP(h.bp.systolic, h.bp.diastolic);
@@ -401,7 +423,7 @@ export default function AnalyticsScreen() {
 
     const maxCount = Math.max(...items.map((l) => l.count), 1);
     return { items, max: maxCount };
-  }, [history]);
+  }, [filteredHistory]);
 
   // ─── Empty state ────────────────────────────────────────────────────
   if (history.length === 0) {
@@ -459,9 +481,40 @@ export default function AnalyticsScreen() {
               Analisis
             </Text>
             <Text style={[styles.headerMeta, { color: colors.textMuted }]}>
-              {history.length} {history.length === 1 ? 'medicion' : 'mediciones'} registradas
+              {filteredHistory.length} de {history.length} {history.length === 1 ? 'medicion' : 'mediciones'}
             </Text>
           </View>
+        </View>
+
+        {/* ── Period Filter Tabs ──────────────────────────────────────── */}
+        <View style={styles.filterRow}>
+          {FILTER_OPTIONS.map((opt) => (
+            <TouchableOpacity
+              key={opt}
+              onPress={() => setSelectedFilter(opt)}
+              style={[
+                styles.filterPill,
+                {
+                  backgroundColor:
+                    selectedFilter === opt ? colors.primary : colors.bgCard,
+                  borderColor:
+                    selectedFilter === opt ? colors.primary : colors.borderLight,
+                },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.filterPillText,
+                  {
+                    color:
+                      selectedFilter === opt ? '#FFFFFF' : colors.textSecondary,
+                  },
+                ]}
+              >
+                {opt}
+              </Text>
+            </TouchableOpacity>
+          ))}
         </View>
 
         {/* ── Summary Grid (2x2) ────────────────────────────────────── */}
@@ -922,7 +975,7 @@ export default function AnalyticsScreen() {
                   {summaryMetrics.lastBpStr} mmHg
                 </Text>
                 {(() => {
-                  const lastBpItem = [...history]
+                  const lastBpItem = [...filteredHistory]
                     .reverse()
                     .find((h) => h.bp?.systolic);
                   if (lastBpItem) {
@@ -997,6 +1050,24 @@ const styles = StyleSheet.create({
   },
   scroll: {
     paddingBottom: 40,
+  },
+
+  /* ── Filter Tabs ─────────────────────────────────────────────────────── */
+  filterRow: {
+    flexDirection: 'row',
+    paddingHorizontal: 20,
+    marginBottom: 16,
+    gap: 8,
+  },
+  filterPill: {
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  filterPillText: {
+    fontSize: 13,
+    fontWeight: '600',
   },
 
   /* ── Empty state ─────────────────────────────────────────────────────── */

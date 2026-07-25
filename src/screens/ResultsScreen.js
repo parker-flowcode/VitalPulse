@@ -1,11 +1,11 @@
 /**
- * ResultsScreen.js — VitalPulse v5.0
+ * ResultsScreen.js — VitalPulse v9.0
  *
- * Pantalla de resultados con diseño minimalista premium blanco y tema dinámico.
- * Jerarquía UX: Alertas -> FC -> PA -> Calidad -> HRV -> Acciones.
- *
- * Responsive: se adapta a pantallas estrechas (<360dp) como Samsung S22.
+ * Glassmorphism compact design with premium sky-blue aesthetic.
+ * Compact <900px total scrollable height.
+ * Responsive: adapts to narrow screens (<360dp).
  */
+
 import React, { useEffect, useMemo } from 'react';
 import {
   View,
@@ -36,33 +36,33 @@ import { showInterstitialAd } from '../services/ads';
 import { SPACING, RADIUS, SHADOWS } from '../theme/designTokens';
 
 export default function ResultsScreen({ navigation, route }) {
-  const { colors } = useTheme();
-  // ─── Responsive: dimensiones de pantalla y área segura ──────────────
+  const { colors, resolvedTheme } = useTheme();
+
+  // ─── Responsive: dimensions and insets ─────────────────────────────────
   const { width: screenWidth } = useWindowDimensions();
   const insets = useSafeAreaInsets();
 
-  // ─── Responsive: valores calculados ─────────────────────────────────
+  // ─── Responsive: computed values ──────────────────────────────────────
   const isNarrow = screenWidth < 360;
-  const bpmFontSize = isNarrow ? 56 : 72;
-  const bpFontSize = isNarrow ? 40 : 48;
-  const cardPadH = isNarrow ? 16 : 24;
-  const cardPadV = isNarrow ? 20 : 28;
-  const alertPadV = isNarrow ? 10 : 14;
-  const alertPadH = isNarrow ? 12 : 16;
-  const hrvValFontSize = isNarrow ? 20 : 24;
+  const bpmFontSize = isNarrow ? 40 : 48;
+  const bpFontSize = isNarrow ? 30 : 36;
+  const gridPadH = isNarrow ? 14 : 16;
+  const gridPadV = isNarrow ? 10 : 12;
+  const alertPadV = isNarrow ? 6 : 8;
+  const alertPadH = isNarrow ? 10 : 12;
+  const hrvValFontSize = isNarrow ? 17 : 20;
 
-  // ─── Responsive: cuadrícula de calidad (2 o 3 columnas) ────────────
-  const gridColumns = isNarrow ? 2 : 3;
-  const gridPadding = 20;
-  const gridGap = 8;
+  // ─── Quality grid: always 2 rows x 3 columns ──────────────────────────
+  const gridPadding = gridPadH;
+  const gridGap = 6;
   const qualityCellWidth = Math.floor(
-    (screenWidth - 2 * gridPadding - 2 * gridGap) / gridColumns,
+    (screenWidth - 2 * gridPadding - 2 * gridGap) / 3,
   );
 
-  // Dynamic styles
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  // ─── Dynamic styles ───────────────────────────────────────────────────
+  const styles = useMemo(() => createStyles(colors, resolvedTheme), [colors, resolvedTheme]);
 
-  // ─── Anuncio intersticial después de cada medición ──────────────────
+  // ─── Interstitial ad after each measurement ───────────────────────────
   useEffect(() => {
     const timer = setTimeout(() => {
       showInterstitialAd();
@@ -70,13 +70,13 @@ export default function ResultsScreen({ navigation, route }) {
     return () => clearTimeout(timer);
   }, []);
 
-  // ─── Estado vacío / error ───────────────────────────────────────────
+  // ─── Empty / error state ──────────────────────────────────────────────
   if (!route?.params?.measurement) {
     return (
       <SafeAreaView style={[styles.safe, { backgroundColor: colors.bgCard }]}>
-        <StatusBar barStyle="dark-content" backgroundColor={colors.bgCard} />
+        <StatusBar barStyle={resolvedTheme === 'dark' ? 'light-content' : 'dark-content'} backgroundColor={colors.bgCard} />
         <View style={styles.center}>
-          <Text style={styles.errorIcon}>{'⚠️'}</Text>
+          <Text style={[styles.errorIcon]}>⚠️</Text>
           <Text style={[styles.errorText, { color: colors.textSecondary }]}>
             No hay datos de medición disponibles.
           </Text>
@@ -91,7 +91,7 @@ export default function ResultsScreen({ navigation, route }) {
     );
   }
 
-  // ─── Extraer datos de la medición ───────────────────────────────────
+  // ─── Extract measurement data ─────────────────────────────────────────
   const { measurement } = route.params;
   const {
     bpm,
@@ -104,14 +104,14 @@ export default function ResultsScreen({ navigation, route }) {
     stability,
   } = measurement;
 
-  // ─── Traducciones UX ────────────────────────────────────────────────
+  // ─── UX translations ──────────────────────────────────────────────────
   const qualityUX = translateSignalQuality(quality);
   const confidenceUX = translateConfidence(confidence);
   const hrvUX = translateHRV(sdnn, rrIntervals?.length);
   const stabilityUX = translateStability(stability);
   const saturatedAlert = translateSaturated(saturated);
 
-  // ─── Validaciones ───────────────────────────────────────────────────
+  // ─── Validations ──────────────────────────────────────────────────────
   const issues = validateMeasurement(measurement);
   const hasCriticalIssue = issues.some((i) => i.type === 'error');
   const hasWarning = issues.some((i) => i.type === 'warning');
@@ -120,13 +120,13 @@ export default function ResultsScreen({ navigation, route }) {
     (rrIntervals?.length || 0) >= 10 &&
     (quality || 0) >= 0.3;
 
-  // ─── Clasificaciones ────────────────────────────────────────────────
+  // ─── Classifications ──────────────────────────────────────────────────
   const bpmClass = classifyBPM(bpm);
   const bpClass = bp ? classifyBP(bp.systolic, bp.diastolic) : null;
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bgCard }]}>
-      <StatusBar barStyle="dark-content" backgroundColor={colors.bgCard} />
+      <StatusBar barStyle={resolvedTheme === 'dark' ? 'light-content' : 'dark-content'} backgroundColor={colors.bgCard} />
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -134,12 +134,12 @@ export default function ResultsScreen({ navigation, route }) {
         <ScrollView
           contentContainerStyle={[
             styles.scroll,
-            { paddingBottom: insets.bottom + 80 },
+            { paddingBottom: Math.max(insets.bottom + 40, 40) },
           ]}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          {/* ─── Nivel 0: Alertas y validaciones ───────────────────── */}
+          {/* ─── Alerts / Issues ───────────────────────────────────── */}
           {issues.map((issue, i) => {
             const alertBg =
               issue.type === 'error'
@@ -177,211 +177,137 @@ export default function ResultsScreen({ navigation, route }) {
             );
           })}
 
-          {/* ─── Nivel 1: Resultado principal — FC ────────────────── */}
+          {/* ─── BPM Card ──────────────────────────────────────────── */}
           <View
             style={[
-              styles.resultCard,
-              SHADOWS.card,
-              { backgroundColor: colors.bg, paddingVertical: cardPadV, paddingHorizontal: cardPadH },
+              styles.glassCard,
+              styles.glassBpmCard,
+              SHADOWS.glow,
             ]}
           >
-            <Text style={[styles.cardLabel, { color: colors.textMuted }]}>Frecuencia cardíaca</Text>
+            <Text style={[styles.cardLabel, { color: colors.textMuted }]}>FRECUENCIA CARDIACA</Text>
             <Text
               style={[
                 styles.bpmValue,
-                { fontSize: bpmFontSize, lineHeight: bpmFontSize * 1.1 },
+                { fontSize: bpmFontSize, lineHeight: 52 },
                 { color: bpmClass.color },
               ]}
             >
               {bpm || '—'}
             </Text>
-            <Text style={[styles.cardUnit, { color: colors.textSecondary }]}>pulsaciones por minuto</Text>
-            <View
-              style={[
-                styles.badgePill,
-                { backgroundColor: bpmClass.color + '18' },
-              ]}
-            >
-              <Text style={[styles.badgePillText, { color: bpmClass.color }]}>
-                {bpmClass.label}
-              </Text>
+            <View style={styles.badgeRow}>
+              <View
+                style={[
+                  styles.badgePill,
+                  { backgroundColor: bpmClass.color + '20' },
+                ]}
+              >
+                <Text style={[styles.badgePillText, { color: bpmClass.color }]}>
+                  {bpmClass.label}
+                </Text>
+              </View>
             </View>
-            <Text style={[styles.rangeText, { color: colors.textMuted }]}>
-              Rango normal en reposo: 60–100 BPM
-            </Text>
           </View>
 
-          {/* ─── Nivel 1: Resultado principal — PA ────────────────── */}
+          {/* ─── BP Card ───────────────────────────────────────────── */}
           {bp && bpClass && (
             <View
               style={[
-                styles.resultCard,
-                SHADOWS.card,
-                { backgroundColor: colors.bg, paddingVertical: cardPadV, paddingHorizontal: cardPadH },
+                styles.glassCard,
+                styles.glassBpCard,
+                SHADOWS.glow,
               ]}
             >
-              <Text style={[styles.cardLabel, { color: colors.textMuted }]}>
-                Presión arterial estimada
-              </Text>
+              <Text style={[styles.cardLabel, { color: colors.textMuted }]}>PRESION ARTERIAL</Text>
               {!bp.isCalibrated && (
-                <View style={[styles.calibrationWarning, { backgroundColor: colors.warningLight }]}>
-                  <Text style={[styles.calibrationWarningText, { color: colors.warning }]}>
-                    {'⚡'} Sin calibración — valores orientativos
+                <View style={[styles.calibrationBadge, { backgroundColor: colors.warningLight }]}>
+                  <Text style={[styles.calibrationBadgeText, { color: colors.warning }]}>
+                    {'⚡'} Sin calibracion — valores orientativos
                   </Text>
                 </View>
               )}
               {bp.isCalibrated && (
-                <View style={[styles.calibrationOk, { backgroundColor: colors.successLight }]}>
-                  <Text style={[styles.calibrationOkText, { color: colors.success }]}>
-                    {'✅'} Calibrado con {bp.calibrationPoints ?? 0} punto
-                    {(bp.calibrationPoints ?? 0) > 1 ? 's' : ''}
+                <View style={[styles.calibrationBadge, { backgroundColor: colors.successLight }]}>
+                  <Text style={[styles.calibrationBadgeText, { color: colors.success }]}>
+                    {'✅'} Calibrado ({bp.calibrationPoints ?? 0})
                   </Text>
                 </View>
               )}
               <Text
                 style={[
                   styles.bpValue,
-                  { fontSize: bpFontSize, lineHeight: bpFontSize * 1.1 },
+                  { fontSize: bpFontSize, lineHeight: 40 },
                   { color: bpClass.color },
                 ]}
               >
                 {bp.systolic}/{bp.diastolic}
               </Text>
-              <Text style={[styles.cardUnit, { color: colors.textSecondary }]}>
-                mmHg (sistólica / diastólica)
-              </Text>
-              <View
-                style={[
-                  styles.badgePill,
-                  { backgroundColor: bpClass.color + '18' },
-                ]}
-              >
-                <Text style={[styles.badgePillText, { color: bpClass.color }]}>
-                  {bpClass.label}
-                </Text>
+              <View style={styles.badgeRow}>
+                <View
+                  style={[
+                    styles.badgePill,
+                    { backgroundColor: bpClass.color + '20' },
+                  ]}
+                >
+                  <Text style={[styles.badgePillText, { color: bpClass.color }]}>
+                    {bpClass.label}
+                  </Text>
+                </View>
               </View>
-              <Text style={[styles.rangeText, { color: colors.textMuted }]}>
-                Óptima: menor a 120/80 mmHg
-              </Text>
             </View>
           )}
 
-          {/* ─── Nivel 2: Calidad de la medición — Grid dinámico ──── */}
-          <View style={[styles.qualityCard, SHADOWS.card, { backgroundColor: colors.bg }]}>
-            <Text style={[styles.cardLabel, { color: colors.textMuted }]}>
-              Calidad de la medición
-            </Text>
-
-            <View
-              style={[
-                styles.qualityGrid,
-                {
-                  gap: gridGap,
-                },
-              ]}
-            >
-              {/* Señal */}
-              <View
-                style={[styles.qualityCell, { width: qualityCellWidth, backgroundColor: colors.bgSecondary, borderColor: colors.border }]}
-              >
-                <Text style={styles.qualityCellIcon}>
-                  {qualityUX.icon || '📶'}
-                </Text>
-                <Text
-                  style={[
-                    styles.qualityCellValue,
-                    { color: qualityUX.color || colors.textPrimary },
-                  ]}
-                  numberOfLines={2}
-                >
+          {/* ─── Quality Grid ──────────────────────────────────────── */}
+          <View style={[styles.glassCard, styles.qualityCard]}>
+            <Text style={[styles.cardLabel, { color: colors.textMuted }]}>CALIDAD DE LA MEDICION</Text>
+            <View style={[styles.qualityGrid, { gap: gridGap }]}>
+              {/* Signal */}
+              <View style={[styles.qualityCell, { width: qualityCellWidth }]}>
+                <Text style={styles.qualityCellIcon}>{qualityUX.icon || '📶'}</Text>
+                <Text style={[styles.qualityCellValue, { color: qualityUX.color || colors.textPrimary }]} numberOfLines={2}>
                   {qualityUX.label}
                 </Text>
-                <Text style={[styles.qualityCellLabel, { color: colors.textMuted }]}>Señal</Text>
+                <Text style={[styles.qualityCellLabel, { color: colors.textMuted }]}>Senal</Text>
               </View>
-
-              {/* Confianza */}
-              <View
-                style={[styles.qualityCell, { width: qualityCellWidth, backgroundColor: colors.bgSecondary, borderColor: colors.border }]}
-              >
-                <Text style={styles.qualityCellIcon}>{'🎯'}</Text>
-                <Text
-                  style={[
-                    styles.qualityCellValue,
-                    { color: confidenceUX.color || colors.textPrimary },
-                  ]}
-                  numberOfLines={2}
-                >
+              {/* Confidence */}
+              <View style={[styles.qualityCell, { width: qualityCellWidth }]}>
+                <Text style={styles.qualityCellIcon}>🎯</Text>
+                <Text style={[styles.qualityCellValue, { color: confidenceUX.color || colors.textPrimary }]} numberOfLines={2}>
                   {confidenceUX.label}
                 </Text>
                 <Text style={[styles.qualityCellLabel, { color: colors.textMuted }]}>Confianza</Text>
               </View>
-
-              {/* Estabilidad */}
-              <View
-                style={[styles.qualityCell, { width: qualityCellWidth, backgroundColor: colors.bgSecondary, borderColor: colors.border }]}
-              >
-                <Text style={styles.qualityCellIcon}>
-                  {'⚖️'}
-                </Text>
-                <Text
-                  style={[
-                    styles.qualityCellValue,
-                    { color: stabilityUX.color || colors.textPrimary },
-                  ]}
-                  numberOfLines={2}
-                >
+              {/* Stability */}
+              <View style={[styles.qualityCell, { width: qualityCellWidth }]}>
+                <Text style={styles.qualityCellIcon}>⚖️</Text>
+                <Text style={[styles.qualityCellValue, { color: stabilityUX.color || colors.textPrimary }]} numberOfLines={2}>
                   {stabilityUX.label}
                 </Text>
                 <Text style={[styles.qualityCellLabel, { color: colors.textMuted }]}>Estabilidad</Text>
               </View>
-
               {/* Frames */}
-              <View
-                style={[styles.qualityCell, { width: qualityCellWidth, backgroundColor: colors.bgSecondary, borderColor: colors.border }]}
-              >
-                <Text style={styles.qualityCellIcon}>
-                  {'📊'}
-                </Text>
-                <Text
-                  style={[styles.qualityCellValue, { color: colors.textPrimary }]}
-                  numberOfLines={2}
-                >
+              <View style={[styles.qualityCell, { width: qualityCellWidth }]}>
+                <Text style={styles.qualityCellIcon}>📊</Text>
+                <Text style={[styles.qualityCellValue, { color: colors.textPrimary }]} numberOfLines={2}>
                   {measurement.signalLength || 0}
                 </Text>
                 <Text style={[styles.qualityCellLabel, { color: colors.textMuted }]}>Frames</Text>
               </View>
-
-              {/* Latidos */}
-              <View
-                style={[styles.qualityCell, { width: qualityCellWidth, backgroundColor: colors.bgSecondary, borderColor: colors.border }]}
-              >
-                <Text style={styles.qualityCellIcon}>
-                  {'❤️'}
-                </Text>
-                <Text
-                  style={[styles.qualityCellValue, { color: colors.textPrimary }]}
-                  numberOfLines={2}
-                >
+              {/* Beats */}
+              <View style={[styles.qualityCell, { width: qualityCellWidth }]}>
+                <Text style={styles.qualityCellIcon}>❤️</Text>
+                <Text style={[styles.qualityCellValue, { color: colors.textPrimary }]} numberOfLines={2}>
                   {rrIntervals?.length || 0}
                 </Text>
                 <Text style={[styles.qualityCellLabel, { color: colors.textMuted }]}>Latidos</Text>
               </View>
-
               {/* Sensor */}
-              <View
-                style={[styles.qualityCell, { width: qualityCellWidth, backgroundColor: colors.bgSecondary, borderColor: colors.border }]}
-              >
-                <Text style={styles.qualityCellIcon}>
-                  {saturatedAlert ? '💡' : '✅'}
-                </Text>
+              <View style={[styles.qualityCell, { width: qualityCellWidth }]}>
+                <Text style={styles.qualityCellIcon}>{saturatedAlert ? '💡' : '✅'}</Text>
                 <Text
                   style={[
                     styles.qualityCellValue,
-                    {
-                      color: saturatedAlert
-                        ? saturatedAlert.color
-                        : colors.success,
-                    },
+                    { color: saturatedAlert ? saturatedAlert.color : colors.success },
                   ]}
                   numberOfLines={2}
                 >
@@ -390,26 +316,20 @@ export default function ResultsScreen({ navigation, route }) {
                 <Text style={[styles.qualityCellLabel, { color: colors.textMuted }]}>Sensor</Text>
               </View>
             </View>
-
             {hasWarning && !hasCriticalIssue && (
               <Text style={[styles.qualityHint, { color: colors.warning }]}>
-                {'💡'} Los resultados son aproximados. Para mejor
-                precisión, recoloca el dedo y vuelve a medir.
+                {'💡'} Resultados aproximados. Recoloca el dedo y vuelve a medir.
               </Text>
             )}
           </View>
 
-          {/* ─── Nivel 3: HRV avanzado ────────────────────────────── */}
+          {/* ─── HRV Card ──────────────────────────────────────────── */}
           {showAdvancedHRV ? (
-            <View style={[styles.hrvCard, SHADOWS.card, { backgroundColor: colors.bg }]}>
-              <Text style={[styles.cardLabel, { color: colors.textMuted }]}>
-                Variabilidad cardíaca (HRV)
-              </Text>
+            <View style={[styles.glassCard, styles.hrvCard]}>
+              <Text style={[styles.cardLabel, { color: colors.textMuted }]}>VARIABILIDAD CARDIACA (HRV)</Text>
               <View style={styles.hrvHeader}>
                 <Text style={styles.hrvIcon}>{hrvUX.icon}</Text>
-                <Text style={[styles.hrvTitle, { color: hrvUX.color }]}>
-                  {hrvUX.label}
-                </Text>
+                <Text style={[styles.hrvTitle, { color: hrvUX.color }]}>{hrvUX.label}</Text>
               </View>
               <Text style={[styles.hrvDescription, { color: colors.textSecondary }]}>
                 {hrvUX.description}
@@ -420,10 +340,7 @@ export default function ResultsScreen({ navigation, route }) {
                     <Text
                       style={[
                         styles.hrvMetricBlockValue,
-                        {
-                          fontSize: hrvValFontSize,
-                          lineHeight: hrvValFontSize * 1.15,
-                        },
+                        { fontSize: hrvValFontSize, lineHeight: hrvValFontSize * 1.2 },
                         { color: hrvUX.color },
                       ]}
                     >
@@ -437,112 +354,85 @@ export default function ResultsScreen({ navigation, route }) {
                     <Text
                       style={[
                         styles.hrvMetricBlockValue,
-                        {
-                          fontSize: hrvValFontSize,
-                          lineHeight: hrvValFontSize * 1.15,
-                        },
+                        { fontSize: hrvValFontSize, lineHeight: hrvValFontSize * 1.2 },
                         { color: hrvUX.color },
                       ]}
                     >
                       {hrvUX.latidos ?? '—'}
                     </Text>
                     <Text style={[styles.hrvMetricBlockUnit, { color: colors.textMuted }]}>latidos</Text>
-                    <Text style={[styles.hrvMetricBlockLabel, { color: colors.textMuted }]}>
-                      Registrados
-                    </Text>
+                    <Text style={[styles.hrvMetricBlockLabel, { color: colors.textMuted }]}>Registrados</Text>
                   </View>
                   <View style={[styles.hrvMetricDivider, { backgroundColor: colors.border }]} />
                   <View style={styles.hrvMetricBlock}>
                     <Text
                       style={[
                         styles.hrvMetricBlockValue,
-                        {
-                          fontSize: hrvValFontSize,
-                          lineHeight: hrvValFontSize * 1.15,
-                        },
+                        { fontSize: hrvValFontSize, lineHeight: hrvValFontSize * 1.2 },
                         { color: hrvUX.color },
                       ]}
                     >
                       {hrvUX.score ?? '—'}
-                      <Text style={[styles.hrvMetricBlockScoreMax, { color: colors.textMuted }]}>
-                        /4
-                      </Text>
+                      <Text style={[styles.hrvMetricBlockScoreMax, { color: colors.textMuted }]}>/4</Text>
                     </Text>
-                    <Text style={[styles.hrvMetricBlockLabel, { color: colors.textMuted }]}>
-                      Puntuación
-                    </Text>
+                    <Text style={[styles.hrvMetricBlockLabel, { color: colors.textMuted }]}>Puntuacion</Text>
                   </View>
                 </View>
               )}
-              <Text style={[styles.rangeText, { color: colors.textMuted }]}>
-                HRV normal: 50–100 ms {'·'} Mayor HRV = mejor salud
-                cardiovascular
-              </Text>
             </View>
           ) : (
-            <View style={[styles.hrvCard, SHADOWS.card, { backgroundColor: colors.bg }]}>
-              <Text style={[styles.cardLabel, { color: colors.textMuted }]}>
-                Variabilidad cardíaca (HRV)
-              </Text>
+            <View style={[styles.glassCard, styles.hrvCard]}>
+              <Text style={[styles.cardLabel, { color: colors.textMuted }]}>VARIABILIDAD CARDIACA (HRV)</Text>
               <View style={styles.hrvEmptyState}>
-                <Text style={styles.hrvEmptyIcon}>
-                  {'⏱️'}
-                </Text>
-                <Text style={[styles.hrvEmptyTitle, { color: colors.textSecondary }]}>
-                  Datos insuficientes
-                </Text>
+                <Text style={styles.hrvEmptyIcon}>⏱️</Text>
+                <Text style={[styles.hrvEmptyTitle, { color: colors.textSecondary }]}>Datos insuficientes</Text>
                 <Text style={[styles.hrvEmptyText, { color: colors.textMuted }]}>
                   {hasCriticalIssue
-                    ? 'La medición fue demasiado corta. Mantén el dedo quieto sobre la cámara durante 60 segundos completos para obtener datos de HRV.'
-                    : 'Se necesitan más latidos para analizar la variabilidad cardíaca. Continúa midiendo regularmente.'}
+                    ? 'La medicion fue demasiado corta. Manten el dedo quieto sobre la camara durante 60 segundos completos.'
+                    : 'Se necesitan mas latidos para analizar la variabilidad cardiaca.'}
                 </Text>
               </View>
             </View>
           )}
 
-          {/* ─── Acciones ──────────────────────────────────────────── */}
+          {/* ─── Actions: Share & Calibrate ─────────────────────────── */}
           <TouchableOpacity
-            style={[styles.shareBtn, { backgroundColor: colors.primarySubtle }]}
+            style={[styles.actionBtn, styles.shareBtn, { backgroundColor: colors.primarySubtle }]}
             onPress={() => shareMeasurementSummary(measurement)}
+            activeOpacity={0.7}
           >
-            <Text style={styles.shareBtnIcon}>{'📤'}</Text>
-            <Text style={[styles.shareBtnText, { color: colors.primary }]}>
-              Compartir resultado
-            </Text>
+            <Text style={styles.shareBtnIcon}>📤</Text>
+            <Text style={[styles.actionBtnText, { color: colors.primary }]}>Compartir resultado</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.calibrateBtn, { backgroundColor: colors.bg, borderColor: colors.primary }]}
-            onPress={() =>
-              navigation.navigate('Calibration', { measurement })
-            }
+            style={[styles.actionBtn, styles.calibrateBtn, { backgroundColor: colors.glassBg, borderColor: colors.primary }]}
+            onPress={() => navigation.navigate('Calibration', { measurement })}
+            activeOpacity={0.7}
           >
-            <Text style={styles.calibrateBtnIcon}>{'📏'}</Text>
-            <Text style={[styles.calibrateBtnText, { color: colors.primary }]}>
-              Tengo un tensiómetro — calibrar para mayor
-              precisión
-            </Text>
+            <Text style={styles.calibrateBtnIcon}>📏</Text>
+            <Text style={[styles.actionBtnText, { color: colors.primary }]}>Calibrar con tensiometro</Text>
           </TouchableOpacity>
 
-          {/* Disclaimer legal */}
+          {/* ─── Legal ─────────────────────────────────────────────── */}
           <LegalDisclaimer />
 
-          {/* Banner ad */}
+          {/* ─── Banner Ad ─────────────────────────────────────────── */}
           <BannerAd />
 
-          {/* Navegación principal */}
+          {/* ─── Bottom Buttons Row ────────────────────────────────── */}
           <View style={styles.actionsRow}>
             <TouchableOpacity
               style={[styles.primaryBtn, { backgroundColor: colors.primary }]}
               onPress={() => navigation.push('Measure')}
+              activeOpacity={0.8}
             >
-              <Text style={[styles.primaryBtnText, { color: colors.textOnPrimary }]}>
-                Nueva medición
-              </Text>
+              <Text style={[styles.primaryBtnText, { color: colors.textOnPrimary }]}>Nueva medicion</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.secondaryBtn, { backgroundColor: colors.bg, borderColor: colors.primary }]}
+              style={[styles.secondaryBtn, { backgroundColor: colors.glassBg, borderColor: colors.primary }]}
               onPress={() => navigation.navigate('HomeMain')}
+              activeOpacity={0.8}
             >
               <Text style={[styles.secondaryBtnText, { color: colors.primary }]}>Inicio</Text>
             </TouchableOpacity>
@@ -554,362 +444,325 @@ export default function ResultsScreen({ navigation, route }) {
 }
 
 // ─── Styles factory ────────────────────────────────────────────────────────────
-const createStyles = (colors) => StyleSheet.create({
-  // ─── Contenedores principales ──────────────────────────────────────
-  safe: {
-    flex: 1,
-    backgroundColor: colors.bgCard,
-  },
-  scroll: {
-    padding: 20,
-  },
-  center: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 24,
-  },
+const createStyles = (colors, resolvedTheme) =>
+  StyleSheet.create({
+    // ─── Containers ─────────────────────────────────────────────────
+    safe: {
+      flex: 1,
+      backgroundColor: colors.bgCard,
+    },
+    scroll: {
+      padding: 16,
+    },
+    center: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: 24,
+    },
 
-  // ─── Estado vacío / error ──────────────────────────────────────────
-  errorIcon: {
-    fontSize: 40,
-    marginBottom: 16,
-  },
-  errorText: {
-    fontSize: 16,
-    color: colors.textSecondary,
-    marginBottom: 24,
-    textAlign: 'center',
-    lineHeight: 24,
-  },
+    // ─── Empty / Error ──────────────────────────────────────────────
+    errorIcon: {
+      fontSize: 36,
+      marginBottom: 14,
+    },
+    errorText: {
+      fontSize: 15,
+      color: colors.textSecondary,
+      marginBottom: 20,
+      textAlign: 'center',
+      lineHeight: 22,
+    },
 
-  // ─── Alertas / Issues ──────────────────────────────────────────────
-  alertCard: {
-    borderRadius: RADIUS.md,
-    marginBottom: 12,
-    borderLeftWidth: 4,
-  },
-  alertRow: {
-    flexDirection: 'row',
-    gap: 10,
-    alignItems: 'flex-start',
-  },
-  alertIcon: {
-    fontSize: 18,
-    marginTop: 1,
-  },
-  alertTextWrap: {
-    flex: 1,
-  },
-  alertTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: colors.textPrimary,
-    marginBottom: 4,
-  },
-  alertMessage: {
-    fontSize: 13,
-    lineHeight: 20,
-    color: colors.textSecondary,
-  },
+    // ─── Glassmorphism card base ────────────────────────────────────
+    glassCard: {
+      backgroundColor: colors.glassBg,
+      borderRadius: RADIUS.lg,
+      borderWidth: 1,
+      borderColor: colors.glassBorder,
+      marginBottom: 12,
+    },
 
-  // ─── Tarjetas de resultado ─────────────────────────────────────────
-  resultCard: {
-    backgroundColor: colors.bg,
-    borderRadius: RADIUS.xl,
-    marginBottom: 16,
-    alignItems: 'center',
-  },
-  cardLabel: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: colors.textMuted,
-    letterSpacing: 1.2,
-    textTransform: 'uppercase',
-    marginBottom: 16,
-  },
-  cardUnit: {
-    fontSize: 13,
-    color: colors.textSecondary,
-    marginTop: 4,
-    marginBottom: 16,
-  },
-  rangeText: {
-    fontSize: 12,
-    color: colors.textMuted,
-    textAlign: 'center',
-    marginTop: 4,
-    lineHeight: 18,
-  },
+    // ─── BPM Card ───────────────────────────────────────────────────
+    glassBpmCard: {
+      paddingVertical: 16,
+      paddingHorizontal: 20,
+      alignItems: 'center',
+    },
+    bpmValue: {
+      fontWeight: '800',
+      fontVariant: ['tabular-nums'],
+      marginBottom: 0,
+    },
 
-  // ─── BPM — valor grande (fontSize dinámico inline) ─────────────────
-  bpmValue: {
-    fontWeight: '800',
-    fontVariant: ['tabular-nums'],
-  },
+    // ─── BP Card ────────────────────────────────────────────────────
+    glassBpCard: {
+      paddingVertical: 16,
+      paddingHorizontal: 20,
+      alignItems: 'center',
+    },
+    bpValue: {
+      fontWeight: '800',
+      fontVariant: ['tabular-nums'],
+    },
 
-  // ─── PA — valor grande (fontSize dinámico inline) ──────────────────
-  bpValue: {
-    fontWeight: '800',
-    fontVariant: ['tabular-nums'],
-  },
+    // ─── Card label ─────────────────────────────────────────────────
+    cardLabel: {
+      fontSize: 9,
+      fontWeight: '700',
+      color: colors.textMuted,
+      letterSpacing: 1.5,
+      textTransform: 'uppercase',
+      marginBottom: 8,
+    },
 
-  // ─── Badge tipo pill ───────────────────────────────────────────────
-  badgePill: {
-    borderRadius: RADIUS.full,
-    paddingHorizontal: 20,
-    paddingVertical: 6,
-    marginBottom: 10,
-  },
-  badgePillText: {
-    fontSize: 14,
-    fontWeight: '700',
-    letterSpacing: 0.3,
-  },
+    // ─── Badge row + pill ───────────────────────────────────────────
+    badgeRow: {
+      flexDirection: 'row',
+      marginTop: 8,
+    },
+    badgePill: {
+      borderRadius: RADIUS.full,
+      paddingHorizontal: 14,
+      paddingVertical: 4,
+    },
+    badgePillText: {
+      fontSize: 11,
+      fontWeight: '700',
+      letterSpacing: 0.3,
+    },
 
-  // ─── Calibración ───────────────────────────────────────────────────
-  calibrationWarning: {
-    borderRadius: RADIUS.sm,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    marginBottom: 16,
-    width: '100%',
-  },
-  calibrationWarningText: {
-    fontSize: 12,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-  calibrationOk: {
-    borderRadius: RADIUS.sm,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    marginBottom: 16,
-    width: '100%',
-  },
-  calibrationOkText: {
-    fontSize: 12,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
+    // ─── Calibration banner ─────────────────────────────────────────
+    calibrationBadge: {
+      borderRadius: RADIUS.sm,
+      paddingVertical: 6,
+      paddingHorizontal: 10,
+      marginBottom: 10,
+      width: '100%',
+    },
+    calibrationBadgeText: {
+      fontSize: 10,
+      fontWeight: '600',
+      textAlign: 'center',
+    },
 
-  // ─── Calidad de la medición ────────────────────────────────────────
-  qualityCard: {
-    backgroundColor: colors.bg,
-    borderRadius: RADIUS.lg,
-    paddingVertical: 20,
-    paddingHorizontal: 20,
-    marginBottom: 16,
-  },
-  qualityGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginTop: 4,
-  },
-  qualityCell: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 4,
-    backgroundColor: colors.bgSecondary,
-    borderRadius: RADIUS.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  qualityCellIcon: {
-    fontSize: 18,
-    marginBottom: 4,
-    textAlign: 'center',
-  },
-  qualityCellValue: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: colors.textPrimary,
-    textAlign: 'center',
-  },
-  qualityCellLabel: {
-    fontSize: 9,
-    fontWeight: '600',
-    color: colors.textMuted,
-    marginTop: 2,
-    textTransform: 'uppercase',
-    letterSpacing: 0.6,
-    textAlign: 'center',
-  },
-  qualityHint: {
-    fontSize: 12,
-    textAlign: 'center',
-    marginTop: 14,
-    lineHeight: 18,
-  },
+    // ─── Quality Card ───────────────────────────────────────────────
+    qualityCard: {
+      paddingVertical: 12,
+      paddingHorizontal: 16,
+    },
+    qualityGrid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+    },
+    qualityCell: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: 8,
+      paddingHorizontal: 4,
+      backgroundColor: colors.bgSecondary,
+      borderRadius: RADIUS.sm,
+    },
+    qualityCellIcon: {
+      fontSize: 16,
+      marginBottom: 2,
+      textAlign: 'center',
+    },
+    qualityCellValue: {
+      fontSize: 11,
+      fontWeight: '700',
+      color: colors.textPrimary,
+      textAlign: 'center',
+    },
+    qualityCellLabel: {
+      fontSize: 8,
+      fontWeight: '600',
+      color: colors.textMuted,
+      marginTop: 1,
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
+      textAlign: 'center',
+    },
+    qualityHint: {
+      fontSize: 10,
+      textAlign: 'center',
+      marginTop: 8,
+      lineHeight: 14,
+    },
 
-  // ─── HRV ───────────────────────────────────────────────────────────
-  hrvCard: {
-    backgroundColor: colors.bg,
-    borderRadius: RADIUS.lg,
-    paddingVertical: 20,
-    paddingHorizontal: 20,
-    marginBottom: 16,
-  },
-  hrvHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 10,
-  },
-  hrvIcon: {
-    fontSize: 24,
-  },
-  hrvTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-  },
-  hrvDescription: {
-    fontSize: 13,
-    lineHeight: 20,
-    color: colors.textSecondary,
-    marginBottom: 16,
-  },
-  hrvMetricsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 16,
-    backgroundColor: colors.bgSecondary,
-    borderRadius: RADIUS.md,
-    paddingVertical: 14,
-    paddingHorizontal: 8,
-  },
-  hrvMetricBlock: {
-    flex: 1,
-    alignItems: 'center',
-    minWidth: 80,
-  },
-  hrvMetricBlockValue: {
-    fontWeight: '700',
-    fontVariant: ['tabular-nums'],
-  },
-  hrvMetricBlockScoreMax: {
-    fontSize: 14,
-    fontWeight: '400',
-    color: colors.textMuted,
-  },
-  hrvMetricBlockUnit: {
-    fontSize: 11,
-    color: colors.textMuted,
-    marginTop: 1,
-    fontWeight: '500',
-    textTransform: 'lowercase',
-  },
-  hrvMetricBlockLabel: {
-    fontSize: 10,
-    fontWeight: '600',
-    color: colors.textMuted,
-    marginTop: 4,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  hrvMetricDivider: {
-    width: 1,
-    height: 36,
-    backgroundColor: colors.border,
-  },
-  hrvEmptyState: {
-    alignItems: 'center',
-    paddingVertical: 20,
-  },
-  hrvEmptyIcon: {
-    fontSize: 36,
-    marginBottom: 12,
-  },
-  hrvEmptyTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: colors.textSecondary,
-    marginBottom: 8,
-  },
-  hrvEmptyText: {
-    fontSize: 13,
-    color: colors.textMuted,
-    textAlign: 'center',
-    lineHeight: 20,
-    paddingHorizontal: 8,
-  },
+    // ─── HRV Card ───────────────────────────────────────────────────
+    hrvCard: {
+      paddingVertical: 14,
+      paddingHorizontal: 16,
+    },
+    hrvHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      marginBottom: 6,
+    },
+    hrvIcon: {
+      fontSize: 20,
+    },
+    hrvTitle: {
+      fontSize: 15,
+      fontWeight: '700',
+    },
+    hrvDescription: {
+      fontSize: 12,
+      lineHeight: 18,
+      color: colors.textSecondary,
+      marginBottom: 10,
+    },
+    hrvMetricsRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: 0,
+      backgroundColor: colors.bgSecondary,
+      borderRadius: RADIUS.sm,
+      paddingVertical: 10,
+      paddingHorizontal: 6,
+    },
+    hrvMetricBlock: {
+      flex: 1,
+      alignItems: 'center',
+      minWidth: 70,
+    },
+    hrvMetricBlockValue: {
+      fontWeight: '700',
+      fontVariant: ['tabular-nums'],
+    },
+    hrvMetricBlockScoreMax: {
+      fontSize: 12,
+      fontWeight: '400',
+      color: colors.textMuted,
+    },
+    hrvMetricBlockUnit: {
+      fontSize: 10,
+      color: colors.textMuted,
+      marginTop: 0,
+      fontWeight: '500',
+      textTransform: 'lowercase',
+    },
+    hrvMetricBlockLabel: {
+      fontSize: 9,
+      fontWeight: '600',
+      color: colors.textMuted,
+      marginTop: 2,
+      textTransform: 'uppercase',
+      letterSpacing: 0.4,
+    },
+    hrvMetricDivider: {
+      width: 1,
+      height: 30,
+      backgroundColor: colors.border,
+    },
+    hrvEmptyState: {
+      alignItems: 'center',
+      paddingVertical: 12,
+    },
+    hrvEmptyIcon: {
+      fontSize: 28,
+      marginBottom: 8,
+    },
+    hrvEmptyTitle: {
+      fontSize: 14,
+      fontWeight: '700',
+      color: colors.textSecondary,
+      marginBottom: 4,
+    },
+    hrvEmptyText: {
+      fontSize: 11,
+      color: colors.textMuted,
+      textAlign: 'center',
+      lineHeight: 16,
+      paddingHorizontal: 6,
+    },
 
-  // ─── Botones de acción ─────────────────────────────────────────────
-  shareBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.primarySubtle,
-    borderRadius: RADIUS.md,
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    marginBottom: 12,
-    gap: 8,
-  },
-  shareBtnIcon: {
-    fontSize: 16,
-  },
-  shareBtnText: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: colors.primary,
-  },
-  calibrateBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.bg,
-    borderRadius: RADIUS.md,
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: colors.primary,
-    gap: 8,
-  },
-  calibrateBtnIcon: {
-    fontSize: 16,
-  },
-  calibrateBtnText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.primary,
-    textAlign: 'center',
-    flexShrink: 1,
-  },
+    // ─── Alerts ─────────────────────────────────────────────────────
+    alertCard: {
+      borderRadius: RADIUS.sm,
+      marginBottom: 8,
+      borderLeftWidth: 3,
+    },
+    alertRow: {
+      flexDirection: 'row',
+      gap: 8,
+      alignItems: 'flex-start',
+    },
+    alertIcon: {
+      fontSize: 14,
+      marginTop: 0,
+    },
+    alertTextWrap: {
+      flex: 1,
+    },
+    alertTitle: {
+      fontSize: 12,
+      fontWeight: '700',
+      color: colors.textPrimary,
+      marginBottom: 2,
+    },
+    alertMessage: {
+      fontSize: 11,
+      lineHeight: 16,
+      color: colors.textSecondary,
+    },
 
-  // ─── Navegación ────────────────────────────────────────────────────
-  actionsRow: {
-    flexDirection: 'row',
-    gap: 12,
-    marginTop: 4,
-  },
-  primaryBtn: {
-    flex: 1,
-    backgroundColor: colors.primary,
-    borderRadius: RADIUS.md,
-    paddingVertical: 16,
-    alignItems: 'center',
-  },
-  primaryBtnText: {
-    color: colors.textOnPrimary,
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  secondaryBtn: {
-    flex: 1,
-    backgroundColor: colors.bg,
-    borderRadius: RADIUS.md,
-    paddingVertical: 16,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.primary,
-  },
-  secondaryBtnText: {
-    color: colors.primary,
-    fontSize: 15,
-    fontWeight: '600',
-  },
-});
+    // ─── Action buttons ─────────────────────────────────────────────
+    actionBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderRadius: RADIUS.md,
+      paddingVertical: 10,
+      paddingHorizontal: 16,
+      marginBottom: 8,
+      gap: 6,
+    },
+    actionBtnText: {
+      fontSize: 13,
+      fontWeight: '600',
+    },
+    shareBtn: {},
+    shareBtnIcon: {
+      fontSize: 14,
+    },
+    calibrateBtn: {
+      borderWidth: 1,
+    },
+    calibrateBtnIcon: {
+      fontSize: 14,
+    },
+
+    // ─── Navigation buttons row ─────────────────────────────────────
+    actionsRow: {
+      flexDirection: 'row',
+      gap: 10,
+      marginTop: 4,
+    },
+    primaryBtn: {
+      flex: 1,
+      backgroundColor: colors.primary,
+      borderRadius: RADIUS.md,
+      paddingVertical: 12,
+      alignItems: 'center',
+    },
+    primaryBtnText: {
+      color: colors.textOnPrimary,
+      fontSize: 13,
+      fontWeight: '700',
+    },
+    secondaryBtn: {
+      flex: 1,
+      borderRadius: RADIUS.md,
+      paddingVertical: 12,
+      alignItems: 'center',
+      borderWidth: 1,
+    },
+    secondaryBtnText: {
+      fontSize: 13,
+      fontWeight: '600',
+    },
+  });

@@ -1,8 +1,9 @@
 /**
- * HomeScreen.js — VitalPulse v5.0 Premium Redesign
+ * HomeScreen.js — VitalPulse v9.0 Glassmorphism Compact Redesign
  *
- * Pantalla principal con logo, tarjetas premium, clasificaciones claras
- * y diseño oscuro optimizado para monitoreo cardiovascular.
+ * Compact glassmorphism home screen. All sections are aggressively
+ * sized to fit <650 px total so most phones see everything without
+ * scrolling. Uses { useTheme } for all colors.
  */
 import React, { useState, useCallback } from 'react';
 import {
@@ -107,27 +108,26 @@ export default function HomeScreen({ navigation }) {
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
       >
-        {/* ───── Hero Section: Logo + Branding ───── */}
-        <View style={styles.heroSection}>
-          {/* Logo: 60x60, centered, no background */}
-          <View style={styles.logoWrapper}>
+        {/* ───── Hero Section (~90px): Logo + Branding ───── */}
+        <View style={styles.heroGlass}>
+          <View style={styles.heroRow}>
             {!logoError ? (
               <Image
                 source={require('../../assets/icon.png')}
-                style={styles.logo}
+                style={styles.heroLogo}
                 resizeMode="contain"
                 onError={() => setLogoError(true)}
               />
             ) : (
-              <View style={styles.logoFallback}>
-                <Text style={styles.logoFallbackText}>VP</Text>
+              <View style={styles.heroLogoFallback}>
+                <Text style={styles.heroLogoFallbackText}>VP</Text>
               </View>
             )}
+            <View style={styles.heroTextCol}>
+              <Text style={styles.heroTitle}>VitalPulse</Text>
+              <Text style={styles.heroSub}>Monitor cardiovascular personal</Text>
+            </View>
           </View>
-          {/* Title: sky blue gradient-like with textShadow */}
-          <Text style={styles.title}>VitalPulse</Text>
-          {/* Subtitle in muted gray */}
-          <Text style={styles.subtitle}>Monitor cardiovascular personal</Text>
         </View>
 
         {/* ───── Remaining pill — always visible ───── */}
@@ -139,23 +139,19 @@ export default function HomeScreen({ navigation }) {
           </Text>
         </View>
 
-        {/* ───── CTA: Premium measurement card ───── */}
+        {/* ───── CTA: Measurement card (~120px) ───── */}
         <TouchableOpacity
-          style={styles.measureCard}
+          style={styles.measureGlass}
           onPress={handleStartMeasurement}
           activeOpacity={0.85}
         >
-          {/* Sky blue left accent — thicker for premium feel */}
+          {/* Left sky blue accent — 3px */}
           <View style={styles.measureAccent} />
           <View style={styles.measureContent}>
-            {/* Heart icon */}
-            <View style={styles.measureIconContainer}>
-              <Text style={styles.measureIcon}>{'💙'}</Text>
-            </View>
+            <Text style={styles.measureIcon}>{'💙'}</Text>
             <Text style={styles.measureTitle}>Iniciar Medicion</Text>
             <Text style={styles.measureSub}>~60 seg · Camara trasera</Text>
           </View>
-          {/* Subtle chevron */}
           <View style={styles.measureChevron}>
             <Text style={styles.chevronText}>{'›'}</Text>
           </View>
@@ -183,16 +179,16 @@ export default function HomeScreen({ navigation }) {
           </View>
         )}
 
-        {/* ───── Last measurement card ───── */}
+        {/* ───── Last measurement card (~130px) ───── */}
         {last ? (
-          <View style={styles.lastCard}>
+          <View style={styles.lastGlass}>
             {/* Card header */}
-            <View style={styles.lastCardHeader}>
-              <View style={styles.lastCardLabelRow}>
-                <View style={styles.lastCardDot} />
-                <Text style={styles.lastCardLabel}>Ultima medicion</Text>
+            <View style={styles.lastHeader}>
+              <View style={styles.lastLabelRow}>
+                <View style={styles.lastDot} />
+                <Text style={styles.lastLabel}>Ultima medicion</Text>
               </View>
-              <Text style={styles.lastCardDate}>
+              <Text style={styles.lastDate}>
                 {new Date(last.timestamp).toLocaleString('es-ES', {
                   day: '2-digit',
                   month: 'short',
@@ -202,37 +198,32 @@ export default function HomeScreen({ navigation }) {
               </Text>
             </View>
 
-            {/* Metrics row: BPM | BP */}
+            {/* Metrics row: BPM + BP side by side, no divider */}
             <View style={styles.metricsRow}>
               {/* ── BPM ── */}
-              <View style={styles.metric}>
-                <Text style={styles.metricUnitLabel}>Frecuencia Cardiaca</Text>
+              <View style={styles.metricBlock}>
                 <Text style={[styles.metricValue, { color: classifyBPM(last.bpm).color }]}>
                   {last.bpm}
                 </Text>
                 <Text style={styles.metricUnit}>BPM</Text>
                 <View
                   style={[
-                    styles.classificationBadge,
+                    styles.classBadge,
                     { backgroundColor: classifyBPM(last.bpm).color + (isDark ? '25' : '15') },
                   ]}
                 >
                   <View
-                    style={[styles.classificationDot, { backgroundColor: classifyBPM(last.bpm).color }]}
+                    style={[styles.classDot, { backgroundColor: classifyBPM(last.bpm).color }]}
                   />
-                  <Text style={[styles.classificationText, { color: classifyBPM(last.bpm).color }]}>
+                  <Text style={[styles.classText, { color: classifyBPM(last.bpm).color }]}>
                     {classifyBPM(last.bpm).label}
                   </Text>
                 </View>
               </View>
 
-              {/* Divider */}
-              {last.bp && <View style={styles.metricDivider} />}
-
               {/* ── BP ── */}
               {last.bp && (
-                <View style={styles.metric}>
-                  <Text style={styles.metricUnitLabel}>Presion Arterial</Text>
+                <View style={styles.metricBlock}>
                   <Text
                     style={[
                       styles.metricValue,
@@ -245,7 +236,7 @@ export default function HomeScreen({ navigation }) {
                   <Text style={styles.metricUnit}>mmHg</Text>
                   <View
                     style={[
-                      styles.classificationBadge,
+                      styles.classBadge,
                       {
                         backgroundColor:
                           classifyBP(last.bp.systolic, last.bp.diastolic).color + (isDark ? '25' : '15'),
@@ -254,7 +245,7 @@ export default function HomeScreen({ navigation }) {
                   >
                     <View
                       style={[
-                        styles.classificationDot,
+                        styles.classDot,
                         {
                           backgroundColor: classifyBP(last.bp.systolic, last.bp.diastolic).color,
                         },
@@ -262,7 +253,7 @@ export default function HomeScreen({ navigation }) {
                     />
                     <Text
                       style={[
-                        styles.classificationText,
+                        styles.classText,
                         { color: classifyBP(last.bp.systolic, last.bp.diastolic).color },
                       ]}
                     >
@@ -275,8 +266,8 @@ export default function HomeScreen({ navigation }) {
           </View>
         ) : (
           /* ───── Empty state ───── */
-          <View style={styles.emptyCard}>
-            <View style={styles.emptyIconWrapper}>
+          <View style={styles.emptyGlass}>
+            <View style={styles.emptyIconWrap}>
               <Text style={styles.emptyIcon}>{'❤️'}</Text>
             </View>
             <Text style={styles.emptyTitle}>Sin mediciones</Text>
@@ -294,27 +285,18 @@ export default function HomeScreen({ navigation }) {
           </View>
         )}
 
-        {/* ───── Stats row: 3 compact cards ───── */}
+        {/* ───── Stats row (~75px): 3 compact glass cards ───── */}
         {history.length > 0 && (
           <View style={styles.statsRow}>
-            <View style={styles.statCard}>
-              <View style={styles.statIconRow}>
-                <Text style={styles.statIcon}>{'📋'}</Text>
-              </View>
+            <View style={styles.statGlass}>
               <Text style={styles.statValue}>{history.length}</Text>
               <Text style={styles.statLabel}>Mediciones</Text>
             </View>
-            <View style={styles.statCard}>
-              <View style={styles.statIconRow}>
-                <Text style={styles.statIcon}>{'💓'}</Text>
-              </View>
+            <View style={styles.statGlass}>
               <Text style={styles.statValue}>{avgBPM}</Text>
               <Text style={styles.statLabel}>BPM medio</Text>
             </View>
-            <View style={styles.statCard}>
-              <View style={styles.statIconRow}>
-                <Text style={styles.statIcon}>{'📅'}</Text>
-              </View>
+            <View style={styles.statGlass}>
               <Text style={styles.statValue}>{todayCount}</Text>
               <Text style={styles.statLabel}>Hoy</Text>
             </View>
@@ -327,9 +309,7 @@ export default function HomeScreen({ navigation }) {
           onPress={() => navigation.navigate('Tutorial')}
           activeOpacity={0.7}
         >
-          <View style={styles.tutorialIconWrapper}>
-            <Text style={styles.tutorialIcon}>{'🎮'}</Text>
-          </View>
+          <Text style={styles.tutorialIcon}>{'🎮'}</Text>
           <Text style={styles.tutorialBtnText}>Modo Tutorial (sin camara)</Text>
           <Text style={styles.tutorialChevron}>{'›'}</Text>
         </TouchableOpacity>
@@ -350,7 +330,7 @@ export default function HomeScreen({ navigation }) {
   );
 }
 
-// ─── Dynamic styles factory ─────────────────────────────────────────────────────
+// ─── Dynamic styles factory — glassmorphism compact ───────────────────────────
 function createStyles(colors, isDark) {
   return StyleSheet.create({
     safe: {
@@ -358,109 +338,113 @@ function createStyles(colors, isDark) {
       backgroundColor: colors.bg,
     },
     scroll: {
-      padding: 20,
-      paddingBottom: 40,
+      padding: 16,
+      paddingBottom: 32,
     },
 
-    // ── Hero Section ──
-    heroSection: {
-      alignItems: 'center',
-      marginTop: 8,
-      marginBottom: 20,
-    },
-    logoWrapper: {
-      width: 72,
-      height: 72,
-      borderRadius: 20,
-      alignItems: 'center',
-      justifyContent: 'center',
-      marginBottom: 16,
-      // Premium subtle glow
+    // ── Hero Section (~90px) ──
+    heroGlass: {
+      backgroundColor: colors.glassBg,
+      borderRadius: 16,
+      marginBottom: 14,
+      paddingVertical: 14,
+      paddingHorizontal: 18,
+      borderWidth: 1,
+      borderColor: colors.glassBorder,
       ...Platform.select({
         ios: {
-          shadowColor: colors.primary,
+          shadowColor: '#000',
           shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.3,
-          shadowRadius: 12,
+          shadowOpacity: 0.08,
+          shadowRadius: 16,
         },
         android: {
-          elevation: 6,
+          elevation: 3,
         },
       }),
     },
-    logo: {
-      width: 60,
-      height: 60,
-      borderRadius: 16,
+    heroRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
     },
-    logoFallback: {
-      width: 60,
-      height: 60,
-      borderRadius: 16,
+    heroLogo: {
+      width: 40,
+      height: 40,
+      borderRadius: 12,
+    },
+    heroLogoFallback: {
+      width: 40,
+      height: 40,
+      borderRadius: 12,
       backgroundColor: colors.primary + '20',
       alignItems: 'center',
       justifyContent: 'center',
     },
-    logoFallbackText: {
-      fontSize: 22,
+    heroLogoFallbackText: {
+      fontSize: 16,
       fontWeight: '800',
       color: colors.primary,
     },
-    title: {
-      fontSize: 32,
-      fontWeight: '800',
+    heroTextCol: {
+      marginLeft: 14,
+      flex: 1,
+    },
+    heroTitle: {
+      fontSize: 22,
+      fontWeight: '700',
       color: '#38BDF8',
-      letterSpacing: -0.5,
-      marginBottom: 6,
-      // Text shadow for premium feel
+      letterSpacing: -0.4,
       ...Platform.select({
         ios: {
-          textShadowColor: 'rgba(56, 189, 248, 0.3)',
+          textShadowColor: 'rgba(56, 189, 248, 0.25)',
           textShadowOffset: { width: 0, height: 2 },
-          textShadowRadius: 8,
+          textShadowRadius: 6,
         },
         android: {
-          textShadowColor: 'rgba(56, 189, 248, 0.3)',
+          textShadowColor: 'rgba(56, 189, 248, 0.25)',
           textShadowOffset: { width: 0, height: 2 },
-          textShadowRadius: 8,
+          textShadowRadius: 6,
         },
       }),
     },
-    subtitle: {
-      fontSize: 14,
+    heroSub: {
+      fontSize: 12,
       fontWeight: '500',
       color: colors.textMuted,
-      letterSpacing: 0.4,
+      letterSpacing: 0.3,
+      marginTop: 1,
     },
 
     // ── Remaining pill ──
     remainingPill: {
       alignSelf: 'center',
       backgroundColor: colors.primarySubtle,
-      paddingVertical: 8,
-      paddingHorizontal: 20,
+      paddingVertical: 6,
+      paddingHorizontal: 14,
       borderRadius: 20,
-      marginBottom: 20,
+      marginBottom: 14,
       borderWidth: 1,
       borderColor: colors.primary + (isDark ? '20' : '15'),
     },
     remainingText: {
       color: colors.primary,
-      fontSize: 13,
+      fontSize: 11,
       fontWeight: '700',
       letterSpacing: 0.2,
     },
 
-    // ── CTA Measurement Card ──
-    measureCard: {
-      backgroundColor: colors.bgElevated,
+    // ── CTA Measurement Card (~120px) ──
+    measureGlass: {
+      backgroundColor: colors.glassBg,
       borderRadius: 20,
       marginBottom: 14,
       flexDirection: 'row',
       overflow: 'hidden',
+      borderWidth: 1,
+      borderColor: colors.glassBorder,
       ...Platform.select({
         ios: {
-          shadowColor: colors.primary,
+          shadowColor: '#38BDF8',
           shadowOffset: { width: 0, height: 4 },
           shadowOpacity: 0.15,
           shadowRadius: 14,
@@ -471,7 +455,7 @@ function createStyles(colors, isDark) {
       }),
     },
     measureAccent: {
-      width: 6,
+      width: 3,
       backgroundColor: '#38BDF8',
       borderTopLeftRadius: 20,
       borderBottomLeftRadius: 20,
@@ -479,39 +463,32 @@ function createStyles(colors, isDark) {
     measureContent: {
       flex: 1,
       alignItems: 'center',
-      paddingVertical: 26,
-      paddingHorizontal: 16,
-    },
-    measureIconContainer: {
-      width: 52,
-      height: 52,
-      borderRadius: 26,
-      backgroundColor: colors.primary + (isDark ? '15' : '10'),
-      alignItems: 'center',
       justifyContent: 'center',
-      marginBottom: 12,
+      paddingVertical: 16,
+      paddingHorizontal: 12,
     },
     measureIcon: {
-      fontSize: 28,
+      fontSize: 22,
+      marginBottom: 4,
     },
     measureTitle: {
-      fontSize: 20,
+      fontSize: 18,
       fontWeight: '700',
       color: colors.textPrimary,
       letterSpacing: -0.3,
-      marginBottom: 4,
+      marginBottom: 2,
     },
     measureSub: {
-      fontSize: 13,
+      fontSize: 11,
       color: colors.textMuted,
       fontWeight: '500',
     },
     measureChevron: {
       justifyContent: 'center',
-      paddingRight: 16,
+      paddingRight: 12,
     },
     chevronText: {
-      fontSize: 24,
+      fontSize: 20,
       color: colors.textMuted,
       fontWeight: '300',
     },
@@ -519,232 +496,225 @@ function createStyles(colors, isDark) {
     // ── Limit reached buttons ──
     limitRow: {
       flexDirection: 'row',
-      gap: 12,
-      marginBottom: 18,
+      gap: 10,
+      marginBottom: 14,
     },
     watchAdBtn: {
       flex: 1,
       backgroundColor: isDark ? '#422006' : colors.warningLight,
-      borderRadius: 16,
-      paddingVertical: 14,
+      borderRadius: 14,
+      paddingVertical: 12,
       alignItems: 'center',
       justifyContent: 'center',
       borderWidth: 1,
       borderColor: colors.warning + '30',
       flexDirection: 'row',
-      gap: 6,
+      gap: 5,
     },
     watchAdEmoji: {
-      fontSize: 16,
+      fontSize: 14,
     },
     watchAdBtnText: {
       color: isDark ? '#FDE68A' : '#92400E',
-      fontSize: 13,
+      fontSize: 12,
       fontWeight: '700',
     },
     proBtn: {
       flex: 1,
       backgroundColor: colors.primary,
-      borderRadius: 16,
-      paddingVertical: 14,
+      borderRadius: 14,
+      paddingVertical: 12,
       alignItems: 'center',
       justifyContent: 'center',
       flexDirection: 'row',
-      gap: 6,
+      gap: 5,
     },
     proBtnEmoji: {
-      fontSize: 16,
+      fontSize: 14,
     },
     proBtnText: {
       color: colors.textOnPrimary,
-      fontSize: 13,
+      fontSize: 12,
       fontWeight: '800',
     },
 
-    // ── Last measurement card ──
-    lastCard: {
-      backgroundColor: colors.bgElevated,
+    // ── Last measurement card (~130px) ──
+    lastGlass: {
+      backgroundColor: colors.glassBg,
       borderRadius: 20,
-      padding: 20,
-      marginBottom: 18,
+      padding: 14,
+      marginBottom: 14,
+      borderWidth: 1,
+      borderColor: colors.glassBorder,
       ...Platform.select({
         ios: {
           shadowColor: '#000',
-          shadowOffset: { width: 0, height: 3 },
+          shadowOffset: { width: 0, height: 6 },
+          shadowOpacity: 0.1,
+          shadowRadius: 20,
+        },
+        android: {
+          elevation: 4,
+        },
+      }),
+    },
+    lastHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 10,
+    },
+    lastLabelRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+    },
+    lastDot: {
+      width: 6,
+      height: 6,
+      borderRadius: 3,
+      backgroundColor: colors.success,
+    },
+    lastLabel: {
+      fontSize: 10,
+      fontWeight: '700',
+      color: colors.textMuted,
+      letterSpacing: 0.6,
+      textTransform: 'uppercase',
+    },
+    lastDate: {
+      fontSize: 10,
+      color: colors.textSecondary,
+      fontWeight: '500',
+    },
+    metricsRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-around',
+      alignItems: 'flex-start',
+      gap: 8,
+    },
+    metricBlock: {
+      alignItems: 'center',
+      flex: 1,
+    },
+    metricValue: {
+      fontSize: 28,
+      fontWeight: '800',
+      color: colors.textPrimary,
+      fontVariant: ['tabular-nums'],
+      letterSpacing: -0.8,
+      lineHeight: 32,
+    },
+    bpValue: {
+      fontSize: 22,
+      letterSpacing: -0.4,
+      lineHeight: 26,
+    },
+    metricUnit: {
+      fontSize: 10,
+      color: colors.textMuted,
+      fontWeight: '600',
+      letterSpacing: 0.3,
+      marginTop: 1,
+    },
+    classBadge: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      paddingHorizontal: 8,
+      paddingVertical: 3,
+      borderRadius: 10,
+      marginTop: 6,
+    },
+    classDot: {
+      width: 5,
+      height: 5,
+      borderRadius: 2.5,
+    },
+    classText: {
+      fontSize: 9,
+      fontWeight: '800',
+      letterSpacing: 0.2,
+    },
+
+    // ── Empty state ──
+    emptyGlass: {
+      backgroundColor: colors.glassBg,
+      borderRadius: 20,
+      padding: 24,
+      alignItems: 'center',
+      marginBottom: 14,
+      borderWidth: 1,
+      borderColor: colors.glassBorder,
+      ...Platform.select({
+        ios: {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 4 },
           shadowOpacity: 0.08,
-          shadowRadius: 12,
+          shadowRadius: 16,
         },
         android: {
           elevation: 3,
         },
       }),
     },
-    lastCardHeader: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      marginBottom: 18,
-    },
-    lastCardLabelRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 8,
-    },
-    lastCardDot: {
-      width: 8,
-      height: 8,
-      borderRadius: 4,
-      backgroundColor: colors.success,
-    },
-    lastCardLabel: {
-      fontSize: 11,
-      fontWeight: '700',
-      color: colors.textMuted,
-      letterSpacing: 0.8,
-      textTransform: 'uppercase',
-    },
-    lastCardDate: {
-      fontSize: 12,
-      color: colors.textSecondary,
-      fontWeight: '500',
-    },
-    metricsRow: {
-      flexDirection: 'row',
-      justifyContent: 'center',
-      alignItems: 'flex-start',
-    },
-    metric: {
-      alignItems: 'center',
-      flex: 1,
-    },
-    metricUnitLabel: {
-      fontSize: 10,
-      fontWeight: '600',
-      color: colors.textMuted,
-      letterSpacing: 0.5,
-      textTransform: 'uppercase',
-      marginBottom: 8,
-    },
-    metricDivider: {
-      width: 1,
-      height: 100,
-      backgroundColor: colors.border,
-      marginHorizontal: 12,
-      alignSelf: 'center',
-    },
-    metricValue: {
-      fontSize: 42,
-      fontWeight: '800',
-      color: colors.textPrimary,
-      fontVariant: ['tabular-nums'],
-      letterSpacing: -1,
-      lineHeight: 48,
-    },
-    bpValue: {
-      fontSize: 34,
-      letterSpacing: -0.5,
-    },
-    metricUnit: {
-      fontSize: 12,
-      color: colors.textMuted,
-      marginTop: 2,
-      fontWeight: '600',
-      letterSpacing: 0.3,
-    },
-    classificationBadge: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 5,
-      paddingHorizontal: 12,
-      paddingVertical: 5,
-      borderRadius: 12,
-      marginTop: 10,
-    },
-    classificationDot: {
-      width: 7,
-      height: 7,
-      borderRadius: 3.5,
-    },
-    classificationText: {
-      fontSize: 11,
-      fontWeight: '800',
-      letterSpacing: 0.2,
-    },
-
-    // ── Empty state ──
-    emptyCard: {
-      backgroundColor: colors.bgElevated,
-      borderRadius: 20,
-      padding: 36,
-      alignItems: 'center',
-      marginBottom: 18,
-      borderWidth: 1,
-      borderColor: colors.border,
-      ...Platform.select({
-        ios: {
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.06,
-          shadowRadius: 8,
-        },
-        android: {
-          elevation: 2,
-        },
-      }),
-    },
-    emptyIconWrapper: {
-      width: 64,
-      height: 64,
-      borderRadius: 32,
+    emptyIconWrap: {
+      width: 48,
+      height: 48,
+      borderRadius: 24,
       backgroundColor: colors.primary + (isDark ? '15' : '8'),
       alignItems: 'center',
       justifyContent: 'center',
-      marginBottom: 18,
+      marginBottom: 12,
     },
     emptyIcon: {
-      fontSize: 30,
+      fontSize: 22,
     },
     emptyTitle: {
-      fontSize: 18,
+      fontSize: 16,
       fontWeight: '700',
       color: colors.textPrimary,
-      marginBottom: 10,
+      marginBottom: 6,
       letterSpacing: -0.3,
     },
     emptySub: {
-      fontSize: 14,
+      fontSize: 12,
       color: colors.textSecondary,
       textAlign: 'center',
-      lineHeight: 22,
-      marginBottom: 22,
-      paddingHorizontal: 12,
+      lineHeight: 18,
+      marginBottom: 14,
+      paddingHorizontal: 8,
     },
     emptyCta: {
       backgroundColor: colors.primary,
-      borderRadius: 14,
-      paddingVertical: 14,
-      paddingHorizontal: 32,
+      borderRadius: 12,
+      paddingVertical: 10,
+      paddingHorizontal: 24,
     },
     emptyCtaText: {
       color: colors.textOnPrimary,
-      fontSize: 15,
+      fontSize: 13,
       fontWeight: '700',
       letterSpacing: 0.2,
     },
 
-    // ── Stats row ──
+    // ── Stats row (~75px) ──
     statsRow: {
       flexDirection: 'row',
       justifyContent: 'space-between',
-      marginBottom: 18,
-      gap: 12,
+      marginBottom: 14,
+      gap: 10,
     },
-    statCard: {
+    statGlass: {
       flex: 1,
-      backgroundColor: colors.bgElevated,
-      borderRadius: 16,
-      padding: 16,
+      backgroundColor: colors.glassBg,
+      borderRadius: 14,
+      paddingVertical: 10,
+      paddingHorizontal: 8,
       alignItems: 'center',
+      justifyContent: 'center',
+      borderWidth: 1,
+      borderColor: colors.glassBorder,
       ...Platform.select({
         ios: {
           shadowColor: '#000',
@@ -757,32 +727,20 @@ function createStyles(colors, isDark) {
         },
       }),
     },
-    statIconRow: {
-      width: 32,
-      height: 32,
-      borderRadius: 10,
-      backgroundColor: colors.primary + (isDark ? '12' : '8'),
-      alignItems: 'center',
-      justifyContent: 'center',
-      marginBottom: 8,
-    },
-    statIcon: {
-      fontSize: 14,
-    },
     statValue: {
-      fontSize: 22,
+      fontSize: 18,
       fontWeight: '800',
       color: colors.primary,
       fontVariant: ['tabular-nums'],
       letterSpacing: -0.3,
     },
     statLabel: {
-      fontSize: 10,
+      fontSize: 9,
       fontWeight: '700',
       color: colors.textMuted,
-      marginTop: 4,
+      marginTop: 2,
       textTransform: 'uppercase',
-      letterSpacing: 0.6,
+      letterSpacing: 0.5,
     },
 
     // ── Tutorial button ──
@@ -790,12 +748,14 @@ function createStyles(colors, isDark) {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
-      paddingVertical: 14,
-      paddingHorizontal: 20,
-      marginBottom: 14,
-      backgroundColor: colors.bgElevated,
+      paddingVertical: 10,
+      paddingHorizontal: 16,
+      marginBottom: 12,
+      backgroundColor: colors.glassBg,
       borderRadius: 14,
-      gap: 10,
+      gap: 8,
+      borderWidth: 1,
+      borderColor: colors.glassBorder,
       ...Platform.select({
         ios: {
           shadowColor: '#000',
@@ -808,25 +768,17 @@ function createStyles(colors, isDark) {
         },
       }),
     },
-    tutorialIconWrapper: {
-      width: 28,
-      height: 28,
-      borderRadius: 8,
-      backgroundColor: colors.secondary + (isDark ? '15' : '10'),
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
     tutorialIcon: {
       fontSize: 14,
     },
     tutorialBtnText: {
       color: colors.textSecondary,
-      fontSize: 13,
+      fontSize: 12,
       fontWeight: '600',
       flex: 1,
     },
     tutorialChevron: {
-      fontSize: 20,
+      fontSize: 18,
       color: colors.textMuted,
       fontWeight: '300',
     },

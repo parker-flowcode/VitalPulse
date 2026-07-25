@@ -51,6 +51,9 @@ export const lightColors = {
   tabBarBorder:     '#E2E8F0',
   tabActive:        '#38BDF8',
   tabInactive:      '#94A3B8',
+
+  glassBg:          'rgba(255, 255, 255, 0.85)',
+  glassBorder:      'rgba(255, 255, 255, 0.3)',
 };
 
 // ─── Paleta Oscuro ───────────────────────────────────────────────────────────
@@ -99,6 +102,9 @@ export const darkColors = {
   tabBarBorder:     '#334155',
   tabActive:        '#38BDF8',
   tabInactive:      '#64748B',
+
+  glassBg:          'rgba(30, 41, 59, 0.85)',
+  glassBorder:      'rgba(255, 255, 255, 0.08)',
 };
 
 // ─── Espaciado ───────────────────────────────────────────────────────────────
@@ -112,6 +118,8 @@ export const SHADOWS = {
   card:    { shadowColor: '#000', shadowOffset: { w:0, h:2 }, shadowOpacity: 0.06, shadowRadius: 8,  elevation: 2 },
   elevated:{ shadowColor: '#000', shadowOffset: { w:0, h:4 }, shadowOpacity: 0.10, shadowRadius: 12, elevation: 4 },
   none:    { shadowColor: 'transparent', shadowOffset: { w:0, h:0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0 },
+  glass:   { shadowColor: '#000', shadowOffset: { w:0, h:8 }, shadowOpacity: 0.12, shadowRadius: 24, elevation: 6 },
+  glow:    { shadowColor: '#38BDF8', shadowOffset: { w:0, h:0 }, shadowOpacity: 0.15, shadowRadius: 16, elevation: 3 },
 };
 
 // ─── Tipografia (usa COLORS dinamicamente) ───────────────────────────────────
