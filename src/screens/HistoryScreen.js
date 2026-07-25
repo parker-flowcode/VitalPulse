@@ -20,6 +20,37 @@ import { SPACING, RADIUS, SHADOWS } from '../theme/designTokens';
 
 const SWIPE_THRESHOLD = -80;
 const SECTION_ORDER = ['Hoy', 'Ayer', 'Esta semana', 'Este mes', 'Anteriores'];
+function getBpmDescription(label) {
+  const map = {
+    'Normal': 'Ritmo cardiaco normal en reposo (60-100 BPM).',
+    'Bradicardia': 'Frecuencia cardiaca baja (50-59 BPM). Comun en atletas.',
+    'Bradicardia severa': 'Frecuencia peligrosamente baja (<50 BPM). Consulte a un medico.',
+    'Taquicardia leve': 'Frecuencia ligeramente elevada (100-110 BPM).',
+    'Taquicardia': 'Frecuencia cardiaca elevada (110-130 BPM). Monitoree.',
+    'Taquicardia severa': 'Frecuencia muy elevada (>130 BPM). Consulte a un medico.',
+  };
+  return map[label] || '';
+}
+
+function getBpDescription(label) {
+  const map = {
+    'Optima': 'Presion arterial optima. Mantenga este nivel.',
+    'Normal': 'Presion arterial normal. Continue con habitos saludables.',
+    'Normal-Alta': 'Presion ligeramente elevada. Monitoree regularmente.',
+    'HTA Grado 1': 'Hipertension grado 1. Consulte a su medico.',
+    'HTA Grado 2': 'Hipertension grado 2. Requiere atencion medica.',
+    'HTA Grado 3': 'Hipertension grado 3. Busque atencion medica urgente.',
+  };
+  return map[label] || '';
+}
+
+function getHrvInterpretation(sdnn) {
+  if (sdnn <= 0) return 'Sin datos';
+  if (sdnn < 30) return 'Baja variabilidad — posible estres o fatiga';
+  if (sdnn < 60) return 'Variabilidad moderada — estado regular';
+  return 'Alta variabilidad — buena recuperacion';
+}
+
 const BPM_CLASS_ORDER = {
   'Bradicardia severa': 0,
   'Bradicardia': 1,
@@ -51,12 +82,12 @@ function getDateGroup(timestamp) {
   return 'Anteriores';
 }
 
-function SwipeableItem({ item, onDelete, colors }) {
+function SwipeableItem({ item, onDelete, colors, onPress }) {
   const translateX = useRef(new Animated.Value(0)).current;
   const isSwipedOpen = useRef(false);
 
   const panResponder = useMemo(() => PanResponder.create({
-    onStartShouldSetPanResponder: () => true,
+    onStartShouldSetPanResponder: () => false,
     onMoveShouldSetPanResponder: (_, gs) =>
       Math.abs(gs.dx) > 10 && Math.abs(gs.dx) > Math.abs(gs.dy),
     onPanResponderGrant: () => {},
@@ -172,6 +203,17 @@ function SwipeableItem({ item, onDelete, colors }) {
         ]}
         {...panResponder.panHandlers}
       >
+        <TouchableOpacity
+          onPress={() => {
+            if (isSwipedOpen.current) {
+              resetPosition();
+            } else {
+              onPress && onPress(item);
+            }
+          }}
+          activeOpacity={0.7}
+          style={{ flexDirection: 'row', flex: 1 }}
+        >
         {/* Sky blue left accent bar */}
         <View style={styles.accentBarWrap}>
           <View
@@ -276,6 +318,7 @@ function SwipeableItem({ item, onDelete, colors }) {
             </View>
           </View>
         </View>
+        </TouchableOpacity>
       </Animated.View>
     </View>
   );
@@ -349,6 +392,41 @@ export default function HistoryScreen() {
     },
     [deleteMeasurement]
   );
+
+  const handleItemPress = useCallback((item) => {
+    const bpm = item.bpm || 0;
+    const bpmClass = classifyBPM(bpm);
+    const hasBp = item.bp?.systolic && item.bp?.diastolic;
+    const bpClass = hasBp ? classifyBP(item.bp.systolic, item.bp.diastolic) : null;
+
+    const fullDate = new Date(item.timestamp).toLocaleDateString('es-ES', {
+      weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+    });
+    const fullTime = new Date(item.timestamp).toLocaleTimeString('es-ES', {
+      hour: '2-digit', minute: '2-digit',
+    });
+
+    let msg = '📅 ' + fullDate + ' a las ' + fullTime + '\n\n';
+
+    msg += '❤️ Frecuencia Cardiaca: ' + bpm + ' BPM\n';
+    msg += '   Clasificacion: ' + (bpmClass?.label || '--') + '\n';
+    msg += '   ' + getBpmDescription(bpmClass?.label || '') + '\n\n';
+
+    if (hasBp) {
+      msg += '🩸 Presion Arterial: ' + item.bp.systolic + '/' + item.bp.diastolic + ' mmHg\n';
+      msg += '   Clasificacion: ' + (bpClass?.label || '--') + '\n';
+      msg += '   ' + getBpDescription(bpClass?.label || '') + '\n\n';
+    }
+
+    if (item.sdnn && item.sdnn > 0) {
+      msg += '📊 HRV (SDNN): ' + (Math.round(item.sdnn * 10) / 10) + ' ms\n';
+      msg += '   ' + getHrvInterpretation(item.sdnn) + '\n\n';
+    }
+
+    msg += '✅ Calidad: ' + (item.quality || 'Buena');
+
+    Alert.alert('Detalle de Medicion', msg);
+  }, []);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -450,7 +528,7 @@ export default function HistoryScreen() {
           sections={sections}
           keyExtractor={(item) => item.id || item.timestamp}
           renderItem={({ item }) => (
-            <SwipeableItem item={item} onDelete={handleDeleteItem} colors={colors} />
+            <SwipeableItem item={item} onDelete={handleDeleteItem} onPress={handleItemPress} colors={colors} />
           )}
           renderSectionHeader={({ section }) => (
             <View style={[styles.sectionHeader]}>

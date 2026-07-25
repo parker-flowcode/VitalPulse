@@ -534,7 +534,7 @@ export default function ResultsScreen({ navigation, route }) {
           <View style={styles.actionsRow}>
             <TouchableOpacity
               style={[styles.primaryBtn, { backgroundColor: colors.primary }]}
-              onPress={() => navigation.navigate('Measure')}
+              onPress={() => navigation.push('Measure')}
             >
               <Text style={[styles.primaryBtnText, { color: colors.textOnPrimary }]}>
                 Nueva medición

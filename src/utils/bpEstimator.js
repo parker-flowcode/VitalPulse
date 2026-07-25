@@ -20,7 +20,7 @@ const MODEL = {
   systolic: {
     intercept:        95.0,
     bpmCoeff:          0.25,   // BPM más alto → PA más alta
-    pttCoeff:         -0.012,  // PTT más corto → arterias más rígidas → PA más alta
+    pttCoeff:         -0.06,   // PTT más corto → arterias más rígidas → PA más alta
     slopeCoeff:        2.2,    // Pendiente rápida → buena contractilidad
     aiCoeff:          22.0,    // AI positivo → HTA
     pwCoeff:          -0.08,   // Pulso ancho → PA más baja
@@ -34,7 +34,7 @@ const MODEL = {
   diastolic: {
     intercept:        62.0,
     bpmCoeff:          0.12,
-    pttCoeff:         -0.007,
+    pttCoeff:         -0.04,
     slopeCoeff:        1.1,
     aiCoeff:          12.0,
     pwCoeff:          -0.04,
@@ -111,8 +111,8 @@ export function estimateBP(morphology = {}, bpm, userProfile = null, sdnn = 0) {
   );
 
   return {
-    systolic:     Math.max(85, Math.min(195, systolic)),
-    diastolic:    Math.max(50, Math.min(125, diastolic)),
+    systolic:     Math.max(75, Math.min(220, systolic)),
+    diastolic:    Math.max(40, Math.min(140, diastolic)),
     isCalibrated: false,
   };
 }
@@ -170,7 +170,9 @@ export function estimateBPCalibrated(morphology = {}, bpm, calibration, userProf
         pt.bpm || bpm,
         ptt,
         risingSlope,
+        augmentationIndex,
         pulseWidth,
+        dicroticNotch,
         sdnnVal,
         age,
         sex,
@@ -240,7 +242,7 @@ export function estimateBPCalibrated(morphology = {}, bpm, calibration, userProf
     const yDia = points.map(p => p.realDiastolic);
 
     // Ridge regularization (lambda)
-    const lambda = 0.01;
+    const lambda = 0.1;
     const XT = transpose(X);
     const XTX = multiply(XT, X);
     // añadir lambda a la diagonal (excepto al bias)
@@ -274,14 +276,14 @@ export function estimateBPCalibrated(morphology = {}, bpm, calibration, userProf
       return weight / ((height / 100) ** 2);
     })(userProfile.weight, userProfile.height);
     const activity = userProfile.isActive ? 1 : 0;
-    const currentVec = [1, bpm, ptt, risingSlope, pulseWidth, sdnn, age, sex, bmi, activity];
+    const currentVec = [1, bpm, ptt, risingSlope, augmentationIndex, pulseWidth, dicroticNotch, sdnn, age, sex, bmi, activity];
 
     const systolicPred = predict(coeffSys, currentVec);
     const diastolicPred = predict(coeffDia, currentVec);
 
     // Clampear a rangos fisiológicos
-    const systolicClamped = Math.max(85, Math.min(195, Math.round(systolicPred)));
-    const diastolicClamped = Math.max(50, Math.min(125, Math.round(diastolicPred)));
+    const systolicClamped = Math.max(75, Math.min(220, Math.round(systolicPred)));
+    const diastolicClamped = Math.max(40, Math.min(140, Math.round(diastolicPred)));
 
     return {
       systolic: systolicClamped,
@@ -320,8 +322,8 @@ export function estimateBPCalibrated(morphology = {}, bpm, calibration, userProf
   const clampedDia = Math.max(-25, Math.min(25, diaOffset));
 
   return {
-    systolic: Math.max(85, Math.min(195, Math.round(base.systolic + clampedSys))),
-    diastolic: Math.max(50, Math.min(125, Math.round(base.diastolic + clampedDia))),
+    systolic: Math.max(75, Math.min(220, Math.round(base.systolic + clampedSys))),
+    diastolic: Math.max(40, Math.min(140, Math.round(base.diastolic + clampedDia))),
     isCalibrated: true,
     calibrationMethod: 'offset',
     calibrationPoints: points.length,

@@ -8,7 +8,7 @@
  */
 import React, { useMemo, useCallback } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, Dimensions,
+  View, Text, StyleSheet, ScrollView, Dimensions, Alert, TouchableOpacity,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
@@ -16,6 +16,8 @@ import {
   VictoryLine,
   VictoryAxis,
   VictoryScatter,
+  VictoryTooltip,
+  VictoryVoronoiContainer,
 } from 'victory-native';
 import { useTheme } from '../theme/ThemeContext';
 import useHealthStore from '../store/healthstore';
@@ -91,10 +93,31 @@ function formatDate(timestamp) {
   }
 }
 
+function getBpDescription(label) {
+  const map = {
+    'Optima': 'Presion arterial optima. Mantenga este nivel.',
+    'Normal': 'Presion arterial normal. Continue con habitos saludables.',
+    'Normal-Alta': 'Presion ligeramente elevada. Monitoree regularmente.',
+    'HTA Grado 1': 'Hipertension grado 1. Consulte a su medico.',
+    'HTA Grado 2': 'Hipertension grado 2. Requiere atencion medica.',
+    'HTA Grado 3': 'Hipertension grado 3. Busque atencion medica urgente.',
+  };
+  return map[label] || '';
+}
+
+function getHrvInterpretation(sdnn) {
+  if (sdnn <= 0) return 'Sin datos';
+  if (sdnn < 30) return 'Baja variabilidad — posible estres o fatiga';
+  if (sdnn < 60) return 'Variabilidad moderada — estado regular';
+  return 'Alta variabilidad — buena recuperacion';
+}
+
 // ─── Metric Card ────────────────────────────────────────────────────────
-function MetricCard({ label, value, unit, color, icon, c }) {
+function MetricCard({ label, value, unit, color, icon, c, onPress }) {
   return (
-    <View
+    <TouchableOpacity
+      onPress={onPress}
+      activeOpacity={0.7}
       style={[
         styles.metricCard,
         SHADOWS.card,
@@ -138,7 +161,7 @@ function MetricCard({ label, value, unit, color, icon, c }) {
           {label}
         </Text>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 }
 
@@ -304,6 +327,41 @@ export default function AnalyticsScreen() {
     return { avgBpm, lastBpStr, avgSdnn, total: history.length, lastBpm, lastBpmClass };
   }, [history]);
 
+  // ─── Extra stats for metric card alerts ──────────────────────────────
+  const extraStats = useMemo(() => {
+    const bpms = history.map((h) => h.bpm || 0).filter((b) => b > 0);
+    const minBpm = bpms.length > 0 ? Math.min(...bpms) : 0;
+    const maxBpm = bpms.length > 0 ? Math.max(...bpms) : 0;
+
+    const bpmClassCounts = {};
+    history.filter((h) => h.bpm && h.bpm > 0).forEach((h) => {
+      const cls = classifyBPM(h.bpm);
+      const label = cls?.label || 'Desconocido';
+      bpmClassCounts[label] = (bpmClassCounts[label] || 0) + 1;
+    });
+
+    const lastBpItem = [...history].reverse().find((h) => h.bp?.systolic);
+    let bpDetail = null;
+    if (lastBpItem) {
+      const cls = classifyBP(lastBpItem.bp.systolic, lastBpItem.bp.diastolic);
+      bpDetail = {
+        sys: lastBpItem.bp.systolic,
+        dia: lastBpItem.bp.diastolic,
+        classification: cls.label,
+        timestamp: lastBpItem.timestamp,
+      };
+    }
+
+    const timestamps = history.map((h) => h.timestamp).filter(Boolean).sort();
+    const dateRange = timestamps.length > 1
+      ? formatDate(timestamps[0]) + ' — ' + formatDate(timestamps[timestamps.length - 1])
+      : timestamps.length === 1
+      ? formatDate(timestamps[0])
+      : 'Sin datos';
+
+    return { minBpm, maxBpm, bpmClassCounts, bpDetail, dateRange };
+  }, [history]);
+
   // ─── BP Distribution ─────────────────────────────────────────────────
   const bpDistribution = useMemo(() => {
     const categoryOrder = [
@@ -415,6 +473,18 @@ export default function AnalyticsScreen() {
             color={bpmLineColor}
             icon="❤️"
             c={colors}
+            onPress={() => {
+              const classList = Object.entries(extraStats.bpmClassCounts)
+                .map(([lbl, cnt]) => '  • ' + lbl + ': ' + cnt)
+                .join('\n');
+              Alert.alert(
+                'Promedio BPM',
+                'Promedio: ' + summaryMetrics.avgBpm + ' BPM\n' +
+                'Minimo: ' + extraStats.minBpm + ' BPM | Maximo: ' + extraStats.maxBpm + ' BPM\n' +
+                'Ultima: ' + summaryMetrics.lastBpm + ' BPM (' + (summaryMetrics.lastBpmClass?.label || '--') + ')\n\n' +
+                'Clasificaciones:\n' + classList
+              );
+            }}
           />
           <MetricCard
             label="Ultima PA"
@@ -423,6 +493,19 @@ export default function AnalyticsScreen() {
             color={sysLineColor}
             icon="🩸"
             c={colors}
+            onPress={() => {
+              if (!extraStats.bpDetail) {
+                Alert.alert('Ultima PA', 'No hay mediciones de presion arterial registradas.');
+                return;
+              }
+              Alert.alert(
+                'Ultima PA',
+                'Lectura: ' + extraStats.bpDetail.sys + '/' + extraStats.bpDetail.dia + ' mmHg\n' +
+                'Clasificacion: ' + extraStats.bpDetail.classification + '\n' +
+                getBpDescription(extraStats.bpDetail.classification) + '\n\n' +
+                'Fecha: ' + formatDate(extraStats.bpDetail.timestamp)
+              );
+            }}
           />
           <MetricCard
             label="HRV Promedio"
@@ -435,6 +518,14 @@ export default function AnalyticsScreen() {
             color={hrvLineColor}
             icon="📊"
             c={colors}
+            onPress={() => {
+              Alert.alert(
+                'HRV Promedio',
+                'SDNN Promedio: ' + (summaryMetrics.avgSdnn > 0 ? summaryMetrics.avgSdnn.toFixed(1) : '--') + ' ms\n' +
+                'Interpretacion: ' + getHrvInterpretation(summaryMetrics.avgSdnn) + '\n\n' +
+                'El SDNN mide la variabilidad del ritmo cardiaco.\nValores altos indican buena recuperacion y salud cardiovascular.'
+              );
+            }}
           />
           <MetricCard
             label="Total Mediciones"
@@ -442,6 +533,18 @@ export default function AnalyticsScreen() {
             color={colors.textPrimary}
             icon="📋"
             c={colors}
+            onPress={() => {
+              Alert.alert(
+                'Total Mediciones',
+                'Total: ' + summaryMetrics.total + ' mediciones\n' +
+                'Rango de fechas: ' + extraStats.dateRange + '\n\n' +
+                (summaryMetrics.total > 0
+                  ? summaryMetrics.total === 1
+                    ? 'Realiza mas mediciones para obtener tendencias.'
+                    : 'Mantener un registro regular ayuda a identificar patrones en tu salud cardiovascular.'
+                  : 'Comienza a registrar mediciones para ver tu historial.')
+              );
+            }}
           />
         </View>
 
@@ -461,6 +564,19 @@ export default function AnalyticsScreen() {
               height={CHART_HEIGHT}
               padding={{ top: 10, bottom: 38, left: 44, right: 14 }}
               scale={{ x: 'time' }}
+              containerComponent={
+                <VictoryVoronoiContainer
+                  labels={({ datum }) => formatDate(datum.ts) + ': ' + datum.y + ' BPM'}
+                  labelComponent={
+                    <VictoryTooltip
+                      style={{ fill: 'white', fontSize: 12, fontWeight: '500' }}
+                      flyoutStyle={{ fill: '#1E293B', stroke: SKY_BLUE, strokeWidth: 1.5 }}
+                      pointerLength={8}
+                      cornerRadius={6}
+                    />
+                  }
+                />
+              }
             >
               <VictoryAxis
                 style={axisStyle}
@@ -508,6 +624,19 @@ export default function AnalyticsScreen() {
               height={CHART_HEIGHT}
               padding={{ top: 10, bottom: 38, left: 44, right: 14 }}
               scale={{ x: 'time' }}
+              containerComponent={
+                <VictoryVoronoiContainer
+                  labels={({ datum }) => formatDate(datum.ts) + ': ' + datum.y + ' mmHg'}
+                  labelComponent={
+                    <VictoryTooltip
+                      style={{ fill: 'white', fontSize: 12, fontWeight: '500' }}
+                      flyoutStyle={{ fill: '#1E293B', stroke: SKY_BLUE, strokeWidth: 1.5 }}
+                      pointerLength={8}
+                      cornerRadius={6}
+                    />
+                  }
+                />
+              }
             >
               <VictoryAxis
                 style={axisStyle}
@@ -604,6 +733,19 @@ export default function AnalyticsScreen() {
               height={CHART_HEIGHT}
               padding={{ top: 10, bottom: 38, left: 44, right: 14 }}
               scale={{ x: 'time' }}
+              containerComponent={
+                <VictoryVoronoiContainer
+                  labels={({ datum }) => formatDate(datum.ts) + ': ' + datum.y + ' ms'}
+                  labelComponent={
+                    <VictoryTooltip
+                      style={{ fill: 'white', fontSize: 12, fontWeight: '500' }}
+                      flyoutStyle={{ fill: '#1E293B', stroke: HRV_GREEN, strokeWidth: 1.5 }}
+                      pointerLength={8}
+                      cornerRadius={6}
+                    />
+                  }
+                />
+              }
             >
               <VictoryAxis
                 style={axisStyle}

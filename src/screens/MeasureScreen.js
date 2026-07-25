@@ -78,6 +78,7 @@ export default function MeasureScreen({ navigation }) {
   const lastChartUpdateRef     = useRef(0);
   const lastBPMCheckRef        = useRef(0);
   const lastAutoCancelRef      = useRef(0);
+  const captureStartRef        = useRef(null);
 
   const isCapturingSV = useSharedValue(false);
 
@@ -331,6 +332,7 @@ export default function MeasureScreen({ navigation }) {
       setPhase('measuring');
 
       setTimeout(() => {
+        captureStartRef.current = Date.now();
         isCapturingRef.current = true;
         isCapturingSV.value    = true;
         startAccelerometer();
@@ -386,14 +388,26 @@ export default function MeasureScreen({ navigation }) {
         return;
       }
 
-      const realFPS = Math.max(10, Math.round(values.length / MEASURE_DURATION));
-      const result  = processPPGSignal(values, realFPS || 19);
+      const trueDuration = captureStartRef.current ? (Date.now() - captureStartRef.current) / 1000 : MEASURE_DURATION;
+      const realFPS = Math.max(10, Math.round(values.length / trueDuration));
+      const result  = processPPGSignal(values, realFPS || 19, trueDuration);
 
       if (!result.ready || result.bpm < 40 || result.bpm > 200) {
         setPhase('idle');
         Alert.alert(
           'Lectura no valida',
           `BPM: ${result.bpm || 0}\n\nCubre bien la camara y el flash\nNo aprietes demasiado el dedo\nManten el movil quieto`,
+          [{ text: 'Reintentar', onPress: resetToIdle }]
+        );
+        return;
+      }
+
+      // Post-measurement SNR check: reject if both SNR and quality are too low
+      if (result.snr < 5 && result.quality < 0.3) {
+        setPhase('idle');
+        Alert.alert(
+          'Señal demasiado ruidosa',
+          `SNR: ${result.snr.toFixed(1)} dB, Calidad: ${(result.quality * 100).toFixed(0)}%\n\nCubre bien la cámara y el flash\nAjusta la presión del dedo\nMantén el móvil quieto`,
           [{ text: 'Reintentar', onPress: resetToIdle }]
         );
         return;

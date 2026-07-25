@@ -15,7 +15,7 @@
  */
 
 // ─── Constantes ──────────────────────────────────────────────────────────────
-const MIN_SNR_DB = 3;
+const MIN_SNR_DB = 5;
 const SAT_HIGH = 240;  // umbral de saturación raw alto
 const SAT_LOW  = 15;   // umbral de saturación raw bajo
 
@@ -266,7 +266,7 @@ export function computeSNR(signal, fps) {
     if (i >= minBin && i <= maxBin) bandPower += power;
   }
   const noisePower = totalPower - bandPower;
-  if (noisePower <= 0) return 0;
+  if (noisePower <= 0) return 40;
   return 10 * Math.log10(bandPower / noisePower);
 }
 
@@ -317,6 +317,15 @@ export function estimateBPMFromFFT(signal, fps = 19) {
     const doubleBPM = Math.round(doubleBin * freqRes * 60);
     if (doublePower > peaks[0].power * 0.35 && doubleBPM >= 40 && doubleBPM <= 180) {
       return doubleBPM;
+    }
+  }
+  // Sub-harmonic check: if half-bin has significant power (>50% of peak), use half-frequency BPM
+  const halfBin = Math.floor(topBin / 2);
+  if (halfBin >= minBin) {
+    const halfPower = (spectrum[halfBin].re ** 2 + spectrum[halfBin].im ** 2);
+    if (halfPower > peaks[0].power * 0.50) {
+      const halfBPM = Math.round(halfBin * freqRes * 60);
+      if (halfBPM >= 40 && halfBPM <= 200) return halfBPM;
     }
   }
   return topBPM >= 40 && topBPM <= 200 ? topBPM : 0;
@@ -458,9 +467,9 @@ export function extractWaveMorphology(signal, peaks, fps = 19, snr = 0) {
 }
 
 // ─── Proceso completo ─────────────────────────────────────────────────────────
-export function processPPGSignal(rawValues, fpsPassed = 19) {
+export function processPPGSignal(rawValues, fpsPassed = 19, actualDuration = 60) {
   const fps = rawValues.length > 60
-    ? Math.round(rawValues.length / 60)
+    ? Math.round(rawValues.length / actualDuration)
     : fpsPassed;
 
   if (rawValues.length < fps * 5) {
@@ -504,8 +513,14 @@ export function processPPGSignal(rawValues, fpsPassed = 19) {
       bpm = Math.round(bpmFFT * 0.6 + peaksResult.bpm * 0.4);
       confidence = Math.min(1, peaksResult.confidence + 0.2);
     } else {
-      bpm = bpmFFT;
-      confidence = 0.5;
+      // When FFT and peaks disagree, prefer peaks if they're reliable
+      if (peaks.length >= 5 && peaksResult.confidence > 0.6) {
+        bpm = peaksResult.bpm;
+        confidence = peaksResult.confidence;
+      } else {
+        bpm = bpmFFT;
+        confidence = 0.5;
+      }
     }
   } else if (bpmFFT >= 40 && bpmFFT <= 200) {
     bpm = bpmFFT;

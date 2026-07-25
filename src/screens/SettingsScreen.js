@@ -76,10 +76,10 @@ function AccordionSection({
       >
         <Text style={accordionHeaderIcon}>{icon}</Text>
         <Text style={[
-          accordionHeaderTitle,
+          accordionHeaderTitle(colors),
           titleColor ? { color: titleColor } : null,
         ]}>{title}</Text>
-        <Text style={accordionChevron}>{expanded ? '▲' : '▼'}</Text>
+        <Text style={accordionChevron(colors)}>{expanded ? '▲' : '▼'}</Text>
       </TouchableOpacity>
       {expanded && (
         <View style={accordionContent(colors)}>
@@ -91,18 +91,10 @@ function AccordionSection({
 }
 
 // ─── Reusable accordion sub-styles (functions so they use the dynamic colors) ────
-const accordionCard = (colors, borderColor) => ({
-  backgroundColor: colors.bg,
-  borderRadius: 16,
-  marginBottom: 14,
-  borderWidth: borderColor ? 1.5 : 1,
-  borderColor: borderColor || colors.border,
-  overflow: 'hidden',
-  shadowColor: '#000',
-  shadowOffset: { width: 0, height: 2 },
-  shadowOpacity: 0.06,
-  shadowRadius: 8,
-  elevation: 2,
+const accordionCard = (colors, _borderColor) => ({
+  backgroundColor: 'transparent',
+  borderBottomWidth: 1,
+  borderBottomColor: colors.divider,
 });
 
 const accordionHeader = (colors) => ({
@@ -119,24 +111,25 @@ const accordionHeaderIcon = {
   textAlign: 'center',
 };
 
-const accordionHeaderTitle = {
+const accordionHeaderTitle = (colors) => ({
   flex: 1,
   fontSize: 15,
   fontWeight: '700',
-  color: '#1E293B', // overridden per section when needed
-};
+  color: colors.textPrimary,
+});
 
-const accordionChevron = {
+const accordionChevron = (colors) => ({
   fontSize: 12,
-  color: '#94A3B8',
-};
+  color: colors.textMuted,
+});
 
 const accordionContent = (colors) => ({
   paddingHorizontal: 18,
   paddingBottom: 18,
   borderTopWidth: 1,
-  borderTopColor: colors.borderLight || colors.border,
+  borderTopColor: colors.divider,
   paddingTop: 14,
+  backgroundColor: colors.bgCard,
 });
 
 // ─── Main Screen ─────────────────────────────────────────────────────────────────
@@ -949,13 +942,8 @@ const createStyles = (colors) => StyleSheet.create({
 
   // ─── PRO section ──────────────────────────────────────────────────────────────
   proAccordionCard: {
-    borderWidth: 2,
-    backgroundColor: colors.bg,
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12,
-    shadowRadius: 10,
-    elevation: 4,
+    borderLeftWidth: 3,
+    borderLeftColor: colors.primary,
   },
   proIntroText: {
     color: colors.textSecondary,
@@ -1269,8 +1257,8 @@ const createStyles = (colors) => StyleSheet.create({
 
   // ─── Danger zone (inside accordion) ───────────────────────────────────────────
   dangerAccordionCard: {
-    borderWidth: 2,
-    backgroundColor: colors.dangerLight,
+    borderLeftWidth: 3,
+    borderLeftColor: colors.danger,
   },
   dangerDesc: {
     color: colors.dangerDark,
