@@ -770,11 +770,6 @@ export default function SettingsScreen() {
                 </View>
               </View>
             </View>
-            <Text style={styles.privacyFooter}>
-              Monitor cardiovascular personal. Los datos se almacenan
-              exclusivamente en este dispositivo. Esta aplicación NO es un
-              dispositivo médico certificado.
-            </Text>
           </AccordionSection>
 
           {/* ═══════════════════════════════════════════════════════════════════
@@ -851,10 +846,6 @@ export default function SettingsScreen() {
                 <Text style={styles.aboutValue}>{DEVELOPER}</Text>
               </View>
             </View>
-            <Text style={styles.aboutDesc}>
-              Monitor cardiovascular personal. Los datos se almacenan
-              exclusivamente en este dispositivo.
-            </Text>
           </AccordionSection>
 
           {/* ─── Banner Ad ─────────────────────────────────────────────────── */}

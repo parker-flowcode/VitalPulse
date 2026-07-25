@@ -182,7 +182,7 @@ export default function ResultsScreen({ navigation, route }) {
             style={[
               styles.glassCard,
               styles.glassBpmCard,
-              SHADOWS.glow,
+              SHADOWS.elevated,
             ]}
           >
             <Text style={[styles.cardLabel, { color: colors.textMuted }]}>FRECUENCIA CARDIACA</Text>
@@ -215,7 +215,7 @@ export default function ResultsScreen({ navigation, route }) {
               style={[
                 styles.glassCard,
                 styles.glassBpCard,
-                SHADOWS.glow,
+                SHADOWS.elevated,
               ]}
             >
               <Text style={[styles.cardLabel, { color: colors.textMuted }]}>PRESION ARTERIAL</Text>
@@ -406,7 +406,7 @@ export default function ResultsScreen({ navigation, route }) {
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.actionBtn, styles.calibrateBtn, { backgroundColor: colors.glassBg, borderColor: colors.primary }]}
+            style={[styles.actionBtn, styles.calibrateBtn, { backgroundColor: colors.bgCard, borderColor: colors.primary }]}
             onPress={() => navigation.navigate('Calibration', { measurement })}
             activeOpacity={0.7}
           >
@@ -430,7 +430,7 @@ export default function ResultsScreen({ navigation, route }) {
               <Text style={[styles.primaryBtnText, { color: colors.textOnPrimary }]}>Nueva medicion</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.secondaryBtn, { backgroundColor: colors.glassBg, borderColor: colors.primary }]}
+              style={[styles.secondaryBtn, { backgroundColor: colors.bgCard, borderColor: colors.primary }]}
               onPress={() => navigation.navigate('HomeMain')}
               activeOpacity={0.8}
             >
@@ -476,10 +476,10 @@ const createStyles = (colors, resolvedTheme) =>
 
     // ─── Glassmorphism card base ────────────────────────────────────
     glassCard: {
-      backgroundColor: colors.glassBg,
+      backgroundColor: colors.bgCard,
       borderRadius: RADIUS.lg,
       borderWidth: 1,
-      borderColor: colors.glassBorder,
+      borderColor: colors.border,
       marginBottom: 12,
     },
 

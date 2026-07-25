@@ -125,7 +125,6 @@ export default function HomeScreen({ navigation }) {
             )}
             <View style={styles.heroTextCol}>
               <Text style={styles.heroTitle}>VitalPulse</Text>
-              <Text style={styles.heroSub}>Monitor cardiovascular personal</Text>
             </View>
           </View>
         </View>
@@ -344,13 +343,13 @@ function createStyles(colors, isDark) {
 
     // ── Hero Section (~90px) ──
     heroGlass: {
-      backgroundColor: colors.glassBg,
+      backgroundColor: colors.bgCard,
       borderRadius: 16,
       marginBottom: 14,
       paddingVertical: 14,
       paddingHorizontal: 18,
       borderWidth: 1,
-      borderColor: colors.glassBorder,
+      borderColor: colors.border,
       ...Platform.select({
         ios: {
           shadowColor: '#000',
@@ -435,13 +434,13 @@ function createStyles(colors, isDark) {
 
     // ── CTA Measurement Card (~120px) ──
     measureGlass: {
-      backgroundColor: colors.glassBg,
+      backgroundColor: colors.bgCard,
       borderRadius: 20,
       marginBottom: 14,
       flexDirection: 'row',
       overflow: 'hidden',
       borderWidth: 1,
-      borderColor: colors.glassBorder,
+      borderColor: colors.border,
       ...Platform.select({
         ios: {
           shadowColor: '#38BDF8',
@@ -540,12 +539,12 @@ function createStyles(colors, isDark) {
 
     // ── Last measurement card (~130px) ──
     lastGlass: {
-      backgroundColor: colors.glassBg,
+      backgroundColor: colors.bgCard,
       borderRadius: 20,
       padding: 14,
       marginBottom: 14,
       borderWidth: 1,
-      borderColor: colors.glassBorder,
+      borderColor: colors.border,
       ...Platform.select({
         ios: {
           shadowColor: '#000',
@@ -639,13 +638,13 @@ function createStyles(colors, isDark) {
 
     // ── Empty state ──
     emptyGlass: {
-      backgroundColor: colors.glassBg,
+      backgroundColor: colors.bgCard,
       borderRadius: 20,
       padding: 24,
       alignItems: 'center',
       marginBottom: 14,
       borderWidth: 1,
-      borderColor: colors.glassBorder,
+      borderColor: colors.border,
       ...Platform.select({
         ios: {
           shadowColor: '#000',
@@ -707,14 +706,14 @@ function createStyles(colors, isDark) {
     },
     statGlass: {
       flex: 1,
-      backgroundColor: colors.glassBg,
+      backgroundColor: colors.bgCard,
       borderRadius: 14,
       paddingVertical: 10,
       paddingHorizontal: 8,
       alignItems: 'center',
       justifyContent: 'center',
       borderWidth: 1,
-      borderColor: colors.glassBorder,
+      borderColor: colors.border,
       ...Platform.select({
         ios: {
           shadowColor: '#000',
@@ -751,11 +750,11 @@ function createStyles(colors, isDark) {
       paddingVertical: 10,
       paddingHorizontal: 16,
       marginBottom: 12,
-      backgroundColor: colors.glassBg,
+      backgroundColor: colors.bgCard,
       borderRadius: 14,
       gap: 8,
       borderWidth: 1,
-      borderColor: colors.glassBorder,
+      borderColor: colors.border,
       ...Platform.select({
         ios: {
           shadowColor: '#000',

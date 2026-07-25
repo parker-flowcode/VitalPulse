@@ -168,8 +168,8 @@ function SearchBar({ value, onChangeText, colors }) {
         style={[
           styles.searchContainer,
           {
-            backgroundColor: colors.glassBg,
-            borderColor: value.trim() ? colors.primary : colors.glassBorder,
+            backgroundColor: colors.bgCard,
+            borderColor: value.trim() ? colors.primary : colors.border,
           },
         ]}
       >
@@ -348,9 +348,9 @@ function SwipeableItem({ item, onDelete, colors, isExpanded, onToggleExpand }) {
         style={[
           styles.card,
           {
-            backgroundColor: colors.glassBg,
-            borderColor: colors.glassBorder,
-            ...SHADOWS.glass,
+            backgroundColor: colors.bgCard,
+            borderColor: colors.border,
+            ...SHADOWS.card,
             transform: [{ translateX }],
           },
         ]}

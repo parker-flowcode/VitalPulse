@@ -35,11 +35,6 @@ const TUTORIAL_SLIDES = [
     title: 'Para mayor precisión',
     body:  'Mantén el móvil apoyado en una superficie durante la medición. Cuantos más datos personales nos des, más precisa será la estimación de tu presión arterial.',
   },
-  {
-    icon:  '⚕️',
-    title: 'Aviso importante',
-    body:  'VitalPulse es una herramienta de seguimiento personal. No es un dispositivo médico certificado y no sustituye el diagnóstico clínico. Consulta siempre a tu médico.',
-  },
 ];
 
 export default function OnboardingScreen({ navigation }) {

@@ -22,7 +22,7 @@ export default function LegalDisclaimer({ compact = false }) {
   if (compact) {
     return (
       <Text style={styles.compactText}>
-        {'⚕️ Esta app no es un dispositivo medico certificado. Consulte a un profesional.'}
+        {'⚕️ No sustituye el criterio medico. Consulte a un profesional.'}
       </Text>
     );
   }
@@ -31,7 +31,7 @@ export default function LegalDisclaimer({ compact = false }) {
     <View style={styles.container}>
       <Text style={styles.icon}>{'⚕️'}</Text>
       <Text style={styles.text}>
-        {'Esta aplicacion no es un dispositivo medico certificado. Consulte siempre a un profesional de la salud.'}
+        {'No es un dispositivo medico certificado. Consulte a un profesional de la salud.'}
       </Text>
     </View>
   );

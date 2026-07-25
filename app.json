@@ -6,11 +6,15 @@
     "sdkVersion": "54.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "splash": {
       "image": "./assets/splash_icon.png",
       "backgroundColor": "#FFFFFF",
-      "resizeMode": "contain"
+      "resizeMode": "contain",
+      "dark": {
+        "image": "./assets/splash_icon.png",
+        "backgroundColor": "#0F172A"
+      }
     },
     "assetBundlePatterns": [
       "**/*"
@@ -33,7 +37,7 @@
         "backgroundColor": "#38BDF8"
       },
       "package": "com.vpstudios.vitalpulse",
-      "versionCode": 12,
+      "versionCode": 13,
       "permissions": [
         "android.permission.CAMERA"
       ]
