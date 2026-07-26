@@ -15,6 +15,7 @@ import {
   Dimensions,
   StatusBar,
 } from 'react-native';
+import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import { useTheme } from '../theme/ThemeContext';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -69,7 +70,7 @@ export default function ProFeaturesModal({ visible, onClose, onWatchAd, onUpgrad
 
           {/* ── Header ── */}
           <View style={styles.headerRow}>
-            <Text style={styles.headerEmoji}>{'💎'}</Text>
+            <Icon name="crown" size={28} color={colors.primary} style={{marginRight: 8}} />
             <Text style={styles.headerTitle}>VitalPulse Pro</Text>
           </View>
           <Text style={styles.headerDesc}>
@@ -84,7 +85,7 @@ export default function ProFeaturesModal({ visible, onClose, onWatchAd, onUpgrad
           <Text style={styles.sectionLabel}>INCLUYE</Text>
           {PRO_FEATURES.map((feature, index) => (
             <View key={index} style={styles.featureRow}>
-              <Text style={styles.checkmark}>{'✅ '}</Text>
+              <Icon name="check-circle" size={16} color={colors.success} style={{marginRight: 10}} />
               <Text style={styles.featureText}>{feature}</Text>
             </View>
           ))}
@@ -98,9 +99,10 @@ export default function ProFeaturesModal({ visible, onClose, onWatchAd, onUpgrad
             onPress={onWatchAd}
             activeOpacity={0.8}
           >
-            <Text style={styles.watchAdBtnText}>
-              {'🎬 Ver anuncio (+1 gratis)'}
-            </Text>
+            <View style={styles.btnContentRow}>
+              <Icon name="play-circle" size={16} color="#92400E" />
+              <Text style={styles.watchAdBtnText}>{'  Ver anuncio (+1 gratis)'}</Text>
+            </View>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -163,10 +165,6 @@ function createStyles(colors) {
       justifyContent: 'center',
       marginBottom: 10,
     },
-    headerEmoji: {
-      fontSize: 28,
-      marginRight: 8,
-    },
     headerTitle: {
       fontSize: 24,
       fontWeight: '700',
@@ -203,10 +201,6 @@ function createStyles(colors) {
       flexDirection: 'row',
       alignItems: 'center',
       marginBottom: 10,
-    },
-    checkmark: {
-      fontSize: 16,
-      marginRight: 10,
     },
     featureText: {
       fontSize: 15,
@@ -253,6 +247,13 @@ function createStyles(colors) {
       fontSize: 14,
       color: colors.textMuted,
       fontWeight: '500',
+    },
+
+    // ── Button content row ──
+    btnContentRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
     },
   });
 }

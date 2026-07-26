@@ -6,6 +6,7 @@
  */
 import React, { Component } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { lightColors } from '../theme/designTokens';
@@ -50,8 +51,8 @@ export default class ErrorBoundary extends Component {
       return (
         <SafeAreaView style={styles.safe}>
           <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
-            <Text style={styles.icon}>⚠️</Text>
-            <Text style={styles.title}>Algo salió mal</Text>
+            <Icon name="alert" size={64} color={C.danger} style={styles.icon} />
+            <Text style={styles.title}>Algo salio mal</Text>
             <Text style={styles.subtitle}>Se ha producido un error inesperado en VitalPulse.</Text>
 
             {__DEV__ && (
@@ -64,20 +65,26 @@ export default class ErrorBoundary extends Component {
 
             <View style={styles.card}>
               <Text style={styles.cardText}>
-                Todos tus datos están almacenados solo en este dispositivo y no se han perdido.
+                Todos tus datos estan almacenados solo en este dispositivo y no se han perdido.
               </Text>
             </View>
 
             <TouchableOpacity style={styles.primaryBtn} onPress={this.handleRetry}>
-              <Text style={styles.primaryBtnText}>🔄 Reintentar</Text>
+              <View style={styles.btnRow}>
+                <Icon name="refresh" size={17} color="#fff" />
+                <Text style={styles.primaryBtnText}> Reintentar</Text>
+              </View>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.dangerBtn} onPress={this.handleClearAndRestart}>
-              <Text style={styles.dangerBtnText}>🗑️ Borrar datos locales y reiniciar</Text>
+              <View style={styles.btnRow}>
+                <Icon name="delete" size={15} color={C.danger} />
+                <Text style={styles.dangerBtnText}> Borrar datos locales y reiniciar</Text>
+              </View>
             </TouchableOpacity>
 
             <Text style={styles.hint}>
-              Si el error persiste, prueba a borrar los datos locales con el botón superior.
+              Si el error persiste, prueba a borrar los datos locales con el boton superior.
             </Text>
           </ScrollView>
         </SafeAreaView>
@@ -91,7 +98,7 @@ export default class ErrorBoundary extends Component {
 const styles = StyleSheet.create({
   safe:            { flex: 1, backgroundColor: C.bg },
   container:       { padding: 24, paddingBottom: 48, alignItems: 'center', justifyContent: 'center', flexGrow: 1 },
-  icon:            { fontSize: 64, marginBottom: 20 },
+  icon:            { marginBottom: 20 },
   title:           { color: C.danger, fontSize: 24, fontWeight: '700', marginBottom: 8, textAlign: 'center' },
   subtitle:        { color: C.textSecondary, fontSize: 15, textAlign: 'center', lineHeight: 22, marginBottom: 24 },
   debugBox:        { backgroundColor: C.bgCard, borderRadius: 12, padding: 14, marginBottom: 20, width: '100%', borderWidth: 1, borderColor: C.danger + '33' },
@@ -105,4 +112,5 @@ const styles = StyleSheet.create({
   dangerBtn:       { backgroundColor: 'transparent', borderRadius: 16, padding: 16, alignItems: 'center', marginBottom: 16, borderWidth: 1, borderColor: C.danger, width: '100%' },
   dangerBtnText:   { color: C.danger, fontSize: 15, fontWeight: '600' },
   hint:            { color: C.textMuted, fontSize: 12, textAlign: 'center', lineHeight: 18 },
+  btnRow:          { flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
 });

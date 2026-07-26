@@ -2,7 +2,7 @@
  * OnboardingScreen.js — VitalPulse v5.0
  *
  * Tutorial de bienvenida con formulario de perfil personal.
- * Soporta tema dinámico mediante ThemeContext.
+ * Soporta tema dinamico mediante ThemeContext.
  */
 import React, { useState, useRef, useMemo } from 'react';
 import {
@@ -11,6 +11,7 @@ import {
   FlatList, KeyboardAvoidingView, Platform,
   Alert, Image,
 } from 'react-native';
+import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/ThemeContext';
 import useHealthStore from '../store/healthstore';
@@ -21,19 +22,19 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 // ─── Datos de los pasos del tutorial ─────────────────────────────────────────
 const TUTORIAL_SLIDES = [
   {
-    icon:  '💚',
+    icon:  'heart',
     title: 'Bienvenido a VitalPulse',
-    body:  'Tu monitor cardiovascular personal. Mide tu frecuencia cardíaca y estima tu presión arterial usando únicamente la cámara de tu móvil.',
+    body:  'Tu monitor cardiovascular personal. Mide tu frecuencia cardiaca y estima tu presion arterial usando unicamente la camara de tu movil.',
   },
   {
-    icon:  '📷',
-    title: 'Cómo funciona',
-    body:  'Coloca el dedo índice sobre la cámara trasera y el flash. La luz del flash atraviesa tu dedo y la cámara detecta las pulsaciones de tu sangre en tiempo real.',
+    icon:  'camera',
+    title: 'Como funciona',
+    body:  'Coloca el dedo indice sobre la camara trasera y el flash. La luz del flash atraviesa tu dedo y la camara detecta las pulsaciones de tu sangre en tiempo real.',
   },
   {
-    icon:  '🎯',
-    title: 'Para mayor precisión',
-    body:  'Mantén el móvil apoyado en una superficie durante la medición. Cuantos más datos personales nos des, más precisa será la estimación de tu presión arterial.',
+    icon:  'target',
+    title: 'Para mayor precision',
+    body:  'Manten el movil apoyado en una superficie durante la medicion. Cuantos mas datos personales nos des, mas precisa sera la estimacion de tu presion arterial.',
   },
 ];
 
@@ -71,7 +72,7 @@ export default function OnboardingScreen({ navigation }) {
 
   const handleFinish = async () => {
     if (!termsAccepted) {
-      Alert.alert('Términos y condiciones', 'Debes aceptar los Términos de Uso y la Política de Privacidad para continuar.');
+      Alert.alert('Terminos y condiciones', 'Debes aceptar los Terminos de Uso y la Politica de Privacidad para continuar.');
       return;
     }
     // Guardar perfil con los datos introducidos
@@ -85,7 +86,7 @@ export default function OnboardingScreen({ navigation }) {
       smoker,
       diabetic,
     });
-    // Guardar aceptación de términos
+    // Guardar aceptacion de terminos
     await setTermsAccepted(true);
     await setOnboardingDone();
     // Navegar a la app principal
@@ -109,7 +110,7 @@ export default function OnboardingScreen({ navigation }) {
               {index === 0 && (
                 <Image source={require('../../assets/icon.png')} style={styles.slideLogo} />
               )}
-              <Text style={styles.slideIcon}>{item.icon}</Text>
+              <Icon name={item.icon} size={80} color={colors.primary} style={{marginBottom: 28}} />
               <Text style={[styles.slideTitle, { color: colors.textPrimary }]}>{item.title}</Text>
               <Text style={[styles.slideBody, { color: colors.textSecondary }]}>{item.body}</Text>
             </View>
@@ -132,7 +133,7 @@ export default function OnboardingScreen({ navigation }) {
             onPress={goNext}
           >
             <Text style={[styles.primaryBtnText, { color: colors.textOnPrimary }]}>
-              {step < TUTORIAL_SLIDES.length - 1 ? 'Siguiente →' : 'Personalizar mi perfil'}
+              {step < TUTORIAL_SLIDES.length - 1 ? 'Siguiente' : 'Personalizar mi perfil'}
             </Text>
           </TouchableOpacity>
           {step < TUTORIAL_SLIDES.length - 1 && (
@@ -159,7 +160,7 @@ export default function OnboardingScreen({ navigation }) {
         >
           <Text style={[styles.formTitle, { color: colors.textPrimary }]}>Tu perfil personal</Text>
           <Text style={[styles.formSubtitle, { color: colors.textSecondary }]}>
-            Estos datos mejoran significativamente la precisión de las estimaciones.
+            Estos datos mejoran significativamente la precision de las estimaciones.
             Puedes cambiarlos en cualquier momento desde Ajustes.
           </Text>
 
@@ -170,7 +171,7 @@ export default function OnboardingScreen({ navigation }) {
               style={[styles.input, { backgroundColor: colors.bgSecondary, color: colors.textPrimary, borderColor: colors.border }]}
               value={name}
               onChangeText={setName}
-              placeholder="¿Cómo te llamas?"
+              placeholder="Como te llamas?"
               placeholderTextColor={colors.textMuted}
               maxLength={40}
             />
@@ -183,35 +184,37 @@ export default function OnboardingScreen({ navigation }) {
               style={[styles.input, { backgroundColor: colors.bgSecondary, color: colors.textPrimary, borderColor: colors.border }]}
               value={age}
               onChangeText={setAge}
-              placeholder="Años"
+              placeholder="Anos"
               placeholderTextColor={colors.textMuted}
               keyboardType="number-pad"
               maxLength={3}
             />
             <Text style={[styles.fieldHint, { color: colors.textSecondary }]}>
-              La edad es el factor más importante para estimar la PA
+              La edad es el factor mas importante para estimar la PA
             </Text>
           </View>
 
           {/* Sexo */}
           <View style={styles.fieldGroup}>
-            <Text style={[styles.fieldLabel, { color: colors.primary }]}>Sexo biológico *</Text>
+            <Text style={[styles.fieldLabel, { color: colors.primary }]}>Sexo biologico *</Text>
             <View style={styles.optionRow}>
               <TouchableOpacity
                 style={[styles.optionBtn, sex === 'male' && styles.optionBtnActive]}
                 onPress={() => setSex('male')}
               >
-                <Text style={[styles.optionBtnText, sex === 'male' && styles.optionBtnTextActive]}>
-                  👨 Hombre
-                </Text>
+                <View style={styles.optionBtnContent}>
+                  <Icon name="account" size={15} color={sex === 'male' ? colors.textOnPrimary : colors.textSecondary} />
+                  <Text style={[styles.optionBtnText, sex === 'male' && styles.optionBtnTextActive]}> Hombre</Text>
+                </View>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.optionBtn, sex === 'female' && styles.optionBtnActive]}
                 onPress={() => setSex('female')}
               >
-                <Text style={[styles.optionBtnText, sex === 'female' && styles.optionBtnTextActive]}>
-                  👩 Mujer
-                </Text>
+                <View style={styles.optionBtnContent}>
+                  <Icon name="account" size={15} color={sex === 'female' ? colors.textOnPrimary : colors.textSecondary} />
+                  <Text style={[styles.optionBtnText, sex === 'female' && styles.optionBtnTextActive]}> Mujer</Text>
+                </View>
               </TouchableOpacity>
             </View>
           </View>
@@ -248,28 +251,30 @@ export default function OnboardingScreen({ navigation }) {
             </View>
           </View>
 
-          {/* Actividad física */}
+          {/* Actividad fisica */}
           <View style={styles.fieldGroup}>
-            <Text style={[styles.fieldLabel, { color: colors.primary }]}>Actividad física *</Text>
+            <Text style={[styles.fieldLabel, { color: colors.primary }]}>Actividad fisica *</Text>
             <Text style={[styles.fieldHint, { color: colors.textSecondary }]}>
-              Las personas activas tienen la PA más baja en reposo
+              Las personas activas tienen la PA mas baja en reposo
             </Text>
             <View style={styles.optionRow}>
               <TouchableOpacity
                 style={[styles.optionBtn, isActive === false && styles.optionBtnActive]}
                 onPress={() => setIsActive(false)}
               >
-                <Text style={[styles.optionBtnText, isActive === false && styles.optionBtnTextActive]}>
-                  🛋️ Sedentario
-                </Text>
+                <View style={styles.optionBtnContent}>
+                  <Icon name="sofa" size={15} color={isActive === false ? colors.textOnPrimary : colors.textSecondary} />
+                  <Text style={[styles.optionBtnText, isActive === false && styles.optionBtnTextActive]}> Sedentario</Text>
+                </View>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.optionBtn, isActive === true && styles.optionBtnActive]}
                 onPress={() => setIsActive(true)}
               >
-                <Text style={[styles.optionBtnText, isActive === true && styles.optionBtnTextActive]}>
-                  🏃 Activo
-                </Text>
+                <View style={styles.optionBtnContent}>
+                  <Icon name="run" size={15} color={isActive === true ? colors.textOnPrimary : colors.textSecondary} />
+                  <Text style={[styles.optionBtnText, isActive === true && styles.optionBtnTextActive]}> Activo</Text>
+                </View>
               </TouchableOpacity>
             </View>
           </View>
@@ -284,9 +289,12 @@ export default function OnboardingScreen({ navigation }) {
               onPress={() => setSmoker(!smoker)}
             >
               <View style={[styles.checkbox, { borderColor: colors.border }, smoker && { backgroundColor: colors.primary, borderColor: colors.primary }]}>
-                {smoker && <Text style={styles.checkmark}>✓</Text>}
+                {smoker && <Text style={styles.checkmark}>{'✓'}</Text>}
               </View>
-              <Text style={[styles.checkLabel, { color: colors.textPrimary }]}>Fumador/a</Text>
+              <View style={styles.checkLabelContent}>
+                <Icon name="smoking" size={16} color={smoker ? colors.primary : colors.textMuted} style={{marginRight: 6}} />
+                <Text style={[styles.checkLabel, { color: colors.textPrimary }]}>Fumador/a</Text>
+              </View>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -294,26 +302,32 @@ export default function OnboardingScreen({ navigation }) {
               onPress={() => setDiabetic(!diabetic)}
             >
               <View style={[styles.checkbox, { borderColor: colors.border }, diabetic && { backgroundColor: colors.primary, borderColor: colors.primary }]}>
-                {diabetic && <Text style={styles.checkmark}>✓</Text>}
+                {diabetic && <Text style={styles.checkmark}>{'✓'}</Text>}
               </View>
-              <Text style={[styles.checkLabel, { color: colors.textPrimary }]}>Diabetes</Text>
+              <View style={styles.checkLabelContent}>
+                <Icon name="needle" size={16} color={diabetic ? colors.primary : colors.textMuted} style={{marginRight: 6}} />
+                <Text style={[styles.checkLabel, { color: colors.textPrimary }]}>Diabetes</Text>
+              </View>
             </TouchableOpacity>
           </View>
 
-          {/* Aceptación de términos */}
+          {/* Aceptacion de terminos */}
           <View style={styles.termsSection}>
             <TouchableOpacity
               style={styles.checkRow}
               onPress={() => setTermsAcceptedState(!termsAccepted)}
             >
               <View style={[styles.checkbox, { borderColor: colors.border }, termsAccepted && { backgroundColor: colors.primary, borderColor: colors.primary }]}>
-                {termsAccepted && <Text style={styles.checkmark}>✓</Text>}
+                {termsAccepted && <Text style={styles.checkmark}>{'✓'}</Text>}
               </View>
-              <Text style={[styles.checkLabel, { color: colors.textPrimary }]}>Acepto los Términos de Uso y la Política de Privacidad</Text>
+              <Text style={[styles.checkLabel, { color: colors.textPrimary }]}>Acepto los Terminos de Uso y la Politica de Privacidad</Text>
             </TouchableOpacity>
             <View style={styles.termsLinks}>
               <TouchableOpacity onPress={() => setShowTermsSubmenu(!showTermsSubmenu)}>
-                <Text style={[styles.linkText, { color: colors.primary }]}>📄 Ver documentos legales</Text>
+                <View style={styles.linkRow}>
+                  <Icon name="file-document" size={14} color={colors.primary} />
+                  <Text style={[styles.linkText, { color: colors.primary }]}> Ver documentos legales</Text>
+                </View>
               </TouchableOpacity>
               {showTermsSubmenu && (
                 <View style={[styles.termsSubmenu, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
@@ -321,42 +335,54 @@ export default function OnboardingScreen({ navigation }) {
                     style={styles.termsSubmenuItem}
                     onPress={() => navigation.navigate('Terms')}
                   >
-                    <Text style={[styles.termsSubmenuText, { color: colors.primary }]}>📜 Términos de Uso</Text>
+                    <View style={styles.linkRow}>
+                      <Icon name="clipboard-text" size={14} color={colors.primary} />
+                      <Text style={[styles.termsSubmenuText, { color: colors.primary }]}> Terminos de Uso</Text>
+                    </View>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={styles.termsSubmenuItem}
                     onPress={() => navigation.navigate('PrivacyPolicy')}
                   >
-                    <Text style={[styles.termsSubmenuText, { color: colors.primary }]}>🔒 Política de Privacidad</Text>
+                    <View style={styles.linkRow}>
+                      <Icon name="shield-lock" size={14} color={colors.primary} />
+                      <Text style={[styles.termsSubmenuText, { color: colors.primary }]}> Politica de Privacidad</Text>
+                    </View>
                   </TouchableOpacity>
                   <Text style={[styles.termsSubmenuHint, { color: colors.textMuted }]}>
-                    Pulsa el botón "Volver" de la pantalla de términos para regresar aquí.
+                    Pulsa el boton "Volver" de la pantalla de terminos para regresar aqui.
                   </Text>
                 </View>
               )}
             </View>
           </View>
 
-          {/* Botón finalizar */}
+          {/* Boton finalizar */}
           <TouchableOpacity
             style={[styles.finishBtn, { backgroundColor: colors.primary }]}
             onPress={handleFinish}
           >
-            <Text style={[styles.finishBtnText, { color: colors.textOnPrimary }]}>
-              {age && sex && isActive !== null ? '✅ Empezar a usar VitalPulse' : 'Continuar sin perfil completo'}
-            </Text>
+            <View style={styles.finishBtnContent}>
+              {age && sex && isActive !== null && (
+                <Icon name="check-circle" size={17} color={colors.textOnPrimary} />
+              )}
+              <Text style={[styles.finishBtnText, { color: colors.textOnPrimary }]}>
+                {age && sex && isActive !== null ? ' Empezar a usar VitalPulse' : 'Continuar sin perfil completo'}
+              </Text>
+            </View>
           </TouchableOpacity>
 
           {age && sex && isActive !== null && (
-            <Text style={[styles.profileComplete, { color: colors.primary }]}>
-              ✨ Perfil completo — máxima precisión activada
-            </Text>
+            <View style={styles.profileCompleteRow}>
+              <Icon name="crown" size={14} color={colors.primary} />
+              <Text style={[styles.profileComplete, { color: colors.primary }]}> Perfil completo — maxima precision activada</Text>
+            </View>
           )}
 
-          <Text style={[styles.privacyNote, { color: colors.textMuted }]}>
-            🔒 Todos los datos se guardan únicamente en tu dispositivo.
-            Nunca se envían a ningún servidor.
-          </Text>
+          <View style={styles.privacyNoteRow}>
+            <Icon name="shield-lock" size={12} color={colors.textMuted} />
+            <Text style={[styles.privacyNote, { color: colors.textMuted }]}> Todos los datos se guardan unicamente en tu dispositivo. Nunca se envian a ningun servidor.</Text>
+          </View>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -369,7 +395,6 @@ const createStyles = (colors) => StyleSheet.create({
   // Tutorial
   slide:        { width: SCREEN_WIDTH, paddingHorizontal: 32, paddingTop: 80, alignItems: 'center' },
   slideLogo:    { width: 64, height: 64, marginBottom: 16, resizeMode: 'contain' },
-  slideIcon:    { fontSize: 80, marginBottom: 28 },
   slideTitle:   { color: colors.textPrimary, fontSize: 26, fontWeight: '700', textAlign: 'center', marginBottom: 20 },
   slideBody:    { color: colors.textSecondary, fontSize: 16, textAlign: 'center', lineHeight: 26 },
   dotsContainer:{ flexDirection: 'row', justifyContent: 'center', gap: 8, marginVertical: 32 },
@@ -392,21 +417,27 @@ const createStyles = (colors) => StyleSheet.create({
   optionRow:    { flexDirection: 'row', gap: 12 },
   optionBtn:    { flex: 1, backgroundColor: colors.bg, borderRadius: 12, padding: 14, alignItems: 'center', borderWidth: 1, borderColor: colors.border },
   optionBtnActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+  optionBtnContent: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
   optionBtnText:   { color: colors.textSecondary, fontSize: 15, fontWeight: '600' },
   optionBtnTextActive: { color: colors.textOnPrimary },
   termsSection: { marginBottom: 24 },
   termsLinks: { marginLeft: 36, marginTop: 4 },
+  linkRow: { flexDirection: 'row', alignItems: 'center' },
   termsSubmenu: { backgroundColor: colors.bgCard, borderRadius: 12, padding: 12, marginTop: 8, borderWidth: 1, borderColor: colors.border },
   termsSubmenuItem: { paddingVertical: 8, paddingHorizontal: 4 },
   termsSubmenuText: { color: colors.primary, fontSize: 14, fontWeight: '600' },
   termsSubmenuHint: { color: colors.textMuted, fontSize: 11, textAlign: 'center', marginTop: 8, lineHeight: 16 },
   linkText:     { color: colors.primary, fontSize: 14, fontWeight: '600' },
   checkRow:     { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, gap: 12 },
+  checkLabelContent: { flexDirection: 'row', alignItems: 'center', flex: 1 },
   checkbox:     { width: 24, height: 24, borderRadius: 6, borderWidth: 2, borderColor: colors.border, justifyContent: 'center', alignItems: 'center' },
   checkmark:    { color: colors.textOnPrimary, fontSize: 14, fontWeight: '700' },
   checkLabel:   { color: colors.textPrimary, fontSize: 15 },
   finishBtn:    { backgroundColor: colors.primary, borderRadius: 16, padding: 18, alignItems: 'center', marginTop: 8, marginBottom: 12 },
+  finishBtnContent: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
   finishBtnText:{ color: colors.textOnPrimary, fontSize: 17, fontWeight: '700' },
-  profileComplete: { color: colors.primary, fontSize: 13, textAlign: 'center', marginBottom: 16 },
+  profileCompleteRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 16 },
+  profileComplete: { color: colors.primary, fontSize: 13, textAlign: 'center' },
+  privacyNoteRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
   privacyNote:  { color: colors.textMuted, fontSize: 12, textAlign: 'center', lineHeight: 18 },
 });

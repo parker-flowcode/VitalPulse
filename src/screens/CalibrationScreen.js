@@ -1,12 +1,13 @@
 /**
  * CalibrationScreen.js — VitalPulse v5.0
  *
- * Pantalla para que el usuario introduzca una medición real de presión arterial
- * y la asocie a la última medición de PPG, creando un punto de calibración.
- * Soporta tema dinámico mediante ThemeContext.
+ * Pantalla para que el usuario introduzca una medicion real de presion arterial
+ * y la asocie a la ultima medicion de PPG, creando un punto de calibracion.
+ * Soporta tema dinamico mediante ThemeContext.
  */
 import React, { useState, useMemo } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/ThemeContext';
 import useHealthStore from '../store/healthstore';
@@ -16,7 +17,7 @@ export default function CalibrationScreen({ navigation, route }) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const { addCalibrationPoint, calibration } = useHealthStore();
-  // La pantalla puede recibir la medición reciente para asociar datos de morfología y BPM
+  // La pantalla puede recibir la medicion reciente para asociar datos de morfologia y BPM
   const measurement = route?.params?.measurement || null;
   const [systolic, setSystolic] = useState('');
   const [diastolic, setDiastolic] = useState('');
@@ -25,10 +26,10 @@ export default function CalibrationScreen({ navigation, route }) {
     const sys = parseInt(systolic, 10);
     const dia = parseInt(diastolic, 10);
     if (isNaN(sys) || isNaN(dia) || sys < 50 || sys > 250 || dia < 30 || dia > 150) {
-      Alert.alert('Valores inválidos', 'Introduce valores de presión arterial reales y dentro de rangos razonables.');
+      Alert.alert('Valores invalidos', 'Introduce valores de presion arterial reales y dentro de rangos razonables.');
       return;
     }
-    // Si disponemos de la medición original, incluimos sus datos para la calibración multi‑punto
+    // Si disponemos de la medicion original, incluimos sus datos para la calibracion multipunto
     const extra = measurement
       ? {
           morphology: measurement.bp?.morphology || measurement.morphology,
@@ -37,18 +38,18 @@ export default function CalibrationScreen({ navigation, route }) {
         }
       : {};
     await addCalibrationPoint({ realSystolic: sys, realDiastolic: dia, ...extra });
-    Alert.alert('Calibración guardada', 'El punto de calibración se ha añadido.');
+    Alert.alert('Calibracion guardada', 'El punto de calibracion se ha anadido.');
     navigation.goBack();
   };
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]}>
       <View style={styles.container}>
-        <Text style={[styles.title, { color: colors.textPrimary }]}>Calibración manual</Text>
+        <Text style={[styles.title, { color: colors.textPrimary }]}>Calibracion manual</Text>
         <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-          Introduce los valores de tu tensiómetro real para mejorar la precisión.
+          Introduce los valores de tu tensiometro real para mejorar la precision.
         </Text>
-        <Text style={[styles.label, { color: colors.primary }]}>Presión sistólica (mmHg)</Text>
+        <Text style={[styles.label, { color: colors.primary }]}>Presion sistolica (mmHg)</Text>
         <TextInput
           style={[styles.input, { backgroundColor: colors.bgSecondary, color: colors.textPrimary, borderColor: colors.border }]}
           value={systolic}
@@ -57,7 +58,7 @@ export default function CalibrationScreen({ navigation, route }) {
           placeholder="120"
           placeholderTextColor={colors.textMuted}
         />
-        <Text style={[styles.label, { color: colors.primary }]}>Presión diastólica (mmHg)</Text>
+        <Text style={[styles.label, { color: colors.primary }]}>Presion diastolica (mmHg)</Text>
         <TextInput
           style={[styles.input, { backgroundColor: colors.bgSecondary, color: colors.textPrimary, borderColor: colors.border }]}
           value={diastolic}
@@ -67,11 +68,11 @@ export default function CalibrationScreen({ navigation, route }) {
           placeholderTextColor={colors.textMuted}
         />
         <TouchableOpacity style={[styles.saveBtn, { backgroundColor: colors.primary }]} onPress={handleSave}>
-          <Text style={[styles.saveBtnText, { color: colors.textOnPrimary }]}>Guardar punto de calibración</Text>
+          <Text style={[styles.saveBtnText, { color: colors.textOnPrimary }]}>Guardar punto de calibracion</Text>
         </TouchableOpacity>
         {calibration?.points?.length > 0 && (
           <View style={[styles.infoCard, { backgroundColor: colors.primarySubtle, borderColor: colors.primaryMuted }]}>
-            <Text style={styles.infoIcon}>📏</Text>
+            <Icon name="ruler" size={18} color={colors.primary} />
             <Text style={[styles.infoText, { color: colors.primary }]}>Puntos guardados: {calibration.points.length}</Text>
           </View>
         )}

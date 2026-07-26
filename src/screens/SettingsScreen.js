@@ -2,28 +2,13 @@
  * SettingsScreen.js — VitalPulse v9.0
  *
  * Premium accordion-style settings with dynamic Sky Blue theme.
- *
- * ┌─────────────────────────────────────────────────┐
- * │ [Logo]                                           │
- * ├─────────────────────────────────────────────────┤
- * │ ▼ 💎 VitalPulse Pro (always first, prominent)  │
- * │ ▼ 🎨 Tema (pill buttons, expanded by default)  │
- * │ ▼ 👤 Perfil personal                            │
- * │ ▼ 📏 Calibración PA                             │
- * │ ▼ 🔔 Alertas BPM                                │
- * │ ▼ 📤 Exportar datos                             │
- * │ ▼ 🔒 Gestión de datos                           │
- * │ ▼ ⚠️ Zona de peligro                            │
- * │ ▼ ℹ️ Acerca de                                   │
- * ├─────────────────────────────────────────────────┤
- * │ Política de Privacidad · Términos de Uso         │
- * └─────────────────────────────────────────────────┘
  */
 import React, { useState, useMemo } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
   ScrollView, Alert, KeyboardAvoidingView, Platform, Switch, Image,
 } from 'react-native';
+import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import useHealthStore from '../store/healthstore';
 import { useNavigation } from '@react-navigation/native';
@@ -35,18 +20,18 @@ import { SPACING, RADIUS, SHADOWS } from '../theme/designTokens';
 
 // ─── Constants ───────────────────────────────────────────────────────────────────
 const THEME_OPTIONS = [
-  { key: 'system', label: 'Sistema', icon: '📱' },
-  { key: 'light',  label: 'Claro',   icon: '☀️' },
-  { key: 'dark',   label: 'Oscuro',  icon: '🌙' },
+  { key: 'system', label: 'Sistema', icon: 'cellphone' },
+  { key: 'light',  label: 'Claro',   icon: 'weather-sunny' },
+  { key: 'dark',   label: 'Oscuro',  icon: 'weather-night' },
 ];
 
 const PRO_FEATURES = [
-  { icon: '📊', title: 'Mediciones ilimitadas',         desc: 'Sin límite diario de mediciones' },
-  { icon: '📈', title: 'Calibración avanzada',           desc: 'Calibración multi-punto con regresión' },
-  { icon: '📤', title: 'Exportación a CSV',               desc: 'Descarga tus datos completos' },
-  { icon: '📉', title: 'Gráficas de tendencias',          desc: 'Visualiza tu evolución cardiovascular' },
-  { icon: '🎯', title: 'Métricas de calidad',             desc: 'SNR y métricas avanzadas de señal' },
-  { icon: '🚫', title: 'Sin anuncios',                    desc: 'Experiencia limpia y sin distracciones' },
+  { icon: 'chart-bar', title: 'Mediciones ilimitadas',         desc: 'Sin limite diario de mediciones' },
+  { icon: 'chart-line', title: 'Calibracion avanzada',           desc: 'Calibracion multi-punto con regresion' },
+  { icon: 'share-variant', title: 'Exportacion a CSV',               desc: 'Descarga tus datos completos' },
+  { icon: 'chart-line', title: 'Graficas de tendencias',          desc: 'Visualiza tu evolucion cardiovascular' },
+  { icon: 'target', title: 'Metricas de calidad',             desc: 'SNR y metricas avanzadas de senal' },
+  { icon: 'close-circle', title: 'Sin anuncios',                    desc: 'Experiencia limpia y sin distracciones' },
 ];
 
 const APP_VERSION = '9.0.0';
@@ -74,12 +59,12 @@ function AccordionSection({
         onPress={onToggle}
         activeOpacity={0.7}
       >
-        <Text style={accordionHeaderIcon}>{icon}</Text>
+        <Icon name={icon} size={20} color={colors.textPrimary} style={{width: 28, textAlign: 'center'}} />
         <Text style={[
           accordionHeaderTitle(colors),
           titleColor ? { color: titleColor } : null,
         ]}>{title}</Text>
-        <Text style={accordionChevron(colors)}>{expanded ? '▲' : '▼'}</Text>
+        <Icon name={expanded ? 'chevron-up' : 'chevron-down'} size={12} color={colors.textMuted} />
       </TouchableOpacity>
       {expanded && (
         <View style={accordionContent(colors)}>
@@ -105,22 +90,11 @@ const accordionHeader = (colors) => ({
   gap: 10,
 });
 
-const accordionHeaderIcon = {
-  fontSize: 20,
-  width: 28,
-  textAlign: 'center',
-};
-
 const accordionHeaderTitle = (colors) => ({
   flex: 1,
   fontSize: 15,
   fontWeight: '700',
   color: colors.textPrimary,
-});
-
-const accordionChevron = (colors) => ({
-  fontSize: 12,
-  color: colors.textMuted,
 });
 
 const accordionContent = (colors) => ({
@@ -176,7 +150,7 @@ export default function SettingsScreen() {
   const saveProfile = async () => {
     const parsedAge = age ? parseInt(age, 10) : null;
     if (parsedAge !== null && (isNaN(parsedAge) || parsedAge < 5 || parsedAge > 120)) {
-      Alert.alert('Edad inválida', 'Introduce una edad entre 5 y 120 años.');
+      Alert.alert('Edad invalida', 'Introduce una edad entre 5 y 120 anios.');
       return;
     }
     await updateUserProfile({
@@ -189,14 +163,14 @@ export default function SettingsScreen() {
       smoker,
       diabetic,
     });
-    Alert.alert('Guardado', 'Perfil actualizado. Las próximas mediciones serán más precisas.');
+    Alert.alert('Guardado', 'Perfil actualizado. Las proximas mediciones seran mas precisas.');
   };
 
   const saveAlerts = () => {
     const high = parseInt(alertHigh, 10);
     const low  = parseInt(alertLow, 10);
     if (isNaN(high) || isNaN(low) || low >= high) {
-      Alert.alert('Inválido', 'El BPM alto debe ser mayor que el BPM bajo.');
+      Alert.alert('Invalido', 'El BPM alto debe ser mayor que el BPM bajo.');
       return;
     }
     updateSettings({ alertBPMHigh: high, alertBPMLow: low });
@@ -210,8 +184,8 @@ export default function SettingsScreen() {
 
   const handleClearCalibration = () => {
     Alert.alert(
-      'Borrar calibración',
-      '¿Eliminar todos los puntos de calibración de PA?',
+      'Borrar calibracion',
+      'Eliminar todos los puntos de calibracion de PA?',
       [
         { text: 'Cancelar', style: 'cancel' },
         { text: 'Borrar', style: 'destructive', onPress: clearCalibration },
@@ -222,7 +196,7 @@ export default function SettingsScreen() {
   const handleClearAll = () => {
     Alert.alert(
       'Borrar todos los datos',
-      'Se eliminarán mediciones, calibración, perfil y configuración. Esta acción no se puede deshacer.',
+      'Se eliminaran mediciones, calibracion, perfil y configuracion. Esta accion no se puede deshacer.',
       [
         { text: 'Cancelar', style: 'cancel' },
         {
@@ -240,7 +214,7 @@ export default function SettingsScreen() {
   const handleClearHistory = () => {
     Alert.alert(
       'Borrar historial',
-      '¿Eliminar todas las mediciones guardadas?',
+      'Eliminar todas las mediciones guardadas?',
       [
         { text: 'Cancelar', style: 'cancel' },
         { text: 'Borrar', style: 'destructive', onPress: clearHistory },
@@ -261,9 +235,9 @@ export default function SettingsScreen() {
       const filename = getExportFilename();
       const success = await shareCSV(csv, filename);
       if (success) {
-        Alert.alert('Exportado', `Historial compartido como ${filename}`);
+        Alert.alert('Exportado', 'Historial compartido como ' + filename);
       } else {
-        Alert.alert('Exportación cancelada', 'No se pudo completar la exportación.');
+        Alert.alert('Exportacion cancelada', 'No se pudo completar la exportacion.');
       }
     } catch (e) {
       Alert.alert('Error', 'No se pudo exportar el historial.');
@@ -314,18 +288,18 @@ export default function SettingsScreen() {
               ]}
             >
               {profileComplete
-                ? 'Perfil completo — máxima precisión activa'
-                : 'Perfil incompleto — complétalo para mayor precisión'}
+                ? 'Perfil completo — maxima precision activa'
+                : 'Perfil incompleto — completalo para mayor precision'}
             </Text>
           </View>
 
           {/* ═══════════════════════════════════════════════════════════════════
-              1. 💎 VITALPULSE PRO — Always at the very top
+              1. VITALPULSE PRO — Always at the very top
               ═══════════════════════════════════════════════════════════════════ */}
           <AccordionSection
             expanded={expandedPro}
             onToggle={() => setExpandedPro(!expandedPro)}
-            icon="💎"
+            icon="crown"
             title={userIsPro ? 'VitalPulse Pro — Activo' : 'VitalPulse Pro'}
             titleColor={colors.primary}
             borderColor={colors.primary}
@@ -335,7 +309,7 @@ export default function SettingsScreen() {
             {userIsPro ? (
               <>
                 <View style={styles.proBadgeActive}>
-                  <Text style={styles.proBadgeActiveIcon}>✅</Text>
+                  <Icon name="check-circle" size={18} color={colors.successDark} />
                   <Text style={styles.proBadgeActiveText}>
                     Plan {currentPlan?.name || 'Pro'} activo
                   </Text>
@@ -346,7 +320,7 @@ export default function SettingsScreen() {
                 <View style={styles.proFeaturesList}>
                   {PRO_FEATURES.map((f, i) => (
                     <View key={i} style={styles.proFeatureItem}>
-                      <Text style={styles.proFeatureIcon}>{f.icon}</Text>
+                      <Icon name={f.icon} size={18} color={colors.primary} />
                       <View style={styles.proFeatureTextWrap}>
                         <Text style={styles.proFeatureTitle}>{f.title}</Text>
                         <Text style={styles.proFeatureDesc}>{f.desc}</Text>
@@ -358,13 +332,13 @@ export default function SettingsScreen() {
             ) : (
               <>
                 <Text style={styles.proIntroText}>
-                  Desbloquea el máximo potencial de VitalPulse. Mide sin límites,
-                  exporta tus datos y obtén análisis avanzados.
+                  Desbloquea el maximo potencial de VitalPulse. Mide sin limites,
+                  exporta tus datos y obten analisis avanzados.
                 </Text>
                 <View style={styles.proFeaturesList}>
                   {PRO_FEATURES.map((f, i) => (
                     <View key={i} style={styles.proFeatureItem}>
-                      <Text style={styles.proFeatureIcon}>{f.icon}</Text>
+                      <Icon name={f.icon} size={18} color={colors.primary} />
                       <View style={styles.proFeatureTextWrap}>
                         <Text style={styles.proFeatureTitle}>{f.title}</Text>
                         <Text style={styles.proFeatureDesc}>{f.desc}</Text>
@@ -377,8 +351,8 @@ export default function SettingsScreen() {
                   onPress={() => navigation.navigate('Upgrade')}
                   activeOpacity={0.8}
                 >
-                  <Text style={styles.proActivateBtnIcon}>💎</Text>
-                  <Text style={styles.proActivateBtnText}>Activar VitalPulse Pro</Text>
+                  <Icon name="crown" size={18} color={colors.textOnPrimary} />
+                  <Text style={styles.proActivateBtnText}>  Activar VitalPulse Pro</Text>
                 </TouchableOpacity>
                 <Text style={styles.proPriceHint}>
                   Desde {PLANS.monthly.price} o {PLANS.lifetime.price} vitalicio
@@ -388,17 +362,17 @@ export default function SettingsScreen() {
           </AccordionSection>
 
           {/* ═══════════════════════════════════════════════════════════════════
-              2. 🎨 TEMA — Always expanded by default
+              2. TEMA — Always expanded by default
               ═══════════════════════════════════════════════════════════════════ */}
           <AccordionSection
             expanded={expandedTheme}
             onToggle={() => setExpandedTheme(!expandedTheme)}
-            icon="🎨"
+            icon="palette"
             title="Tema"
             colors={colors}
           >
             <Text style={styles.sectionDesc}>
-              Elige cómo se ve VitalPulse. El modo "Sistema" sigue la configuración
+              Elige como se ve VitalPulse. El modo "Sistema" sigue la configuracion
               de tu dispositivo.
             </Text>
             <View style={styles.themeRow}>
@@ -411,7 +385,7 @@ export default function SettingsScreen() {
                     onPress={() => setTheme(opt.key)}
                     activeOpacity={0.7}
                   >
-                    <Text style={styles.themePillIcon}>{opt.icon}</Text>
+                    <Icon name={opt.icon} size={18} color={isSelected ? colors.textOnPrimary : colors.textSecondary} />
                     <Text
                       style={[
                         styles.themePillLabel,
@@ -424,24 +398,27 @@ export default function SettingsScreen() {
                 );
               })}
             </View>
-            <Text style={styles.themeHint}>
-              Modo actual: {resolvedTheme === 'dark' ? '🌙 Oscuro' : '☀️ Claro'}
-            </Text>
+            <View style={styles.themeHintRow}>
+              <Icon name={resolvedTheme === 'dark' ? 'weather-night' : 'weather-sunny'} size={12} color={colors.textMuted} />
+              <Text style={styles.themeHint}>
+                Modo actual: {resolvedTheme === 'dark' ? ' Oscuro' : ' Claro'}
+              </Text>
+            </View>
           </AccordionSection>
 
           {/* ═══════════════════════════════════════════════════════════════════
-              3. 👤 PERFIL PERSONAL
+              3. PERFIL PERSONAL
               ═══════════════════════════════════════════════════════════════════ */}
           <AccordionSection
             expanded={expandedProfile}
             onToggle={() => setExpandedProfile(!expandedProfile)}
-            icon="👤"
+            icon="account"
             title="Perfil personal"
             colors={colors}
           >
             <Text style={styles.sectionDesc}>
-              Tus datos demográficos mejoran la precisión de la estimación de
-              presión arterial.
+              Tus datos demograficos mejoran la precision de la estimacion de
+              presion arterial.
             </Text>
 
             <Text style={styles.label}>Nombre</Text>
@@ -459,31 +436,34 @@ export default function SettingsScreen() {
               style={styles.input}
               value={age}
               onChangeText={setAge}
-              placeholder="Años"
+              placeholder="Anios"
               placeholderTextColor={colors.textMuted}
               keyboardType="number-pad"
               maxLength={3}
             />
 
-            <Text style={styles.label}>Sexo biológico *</Text>
+            <Text style={styles.label}>Sexo biologico *</Text>
             <View style={styles.optionRow}>
               {[
-                ['male', '👨 Hombre'],
-                ['female', '👩 Mujer'],
+                ['male', 'Hombre'],
+                ['female', 'Mujer'],
               ].map(([val, label]) => (
                 <TouchableOpacity
                   key={val}
                   style={[styles.optionBtn, sex === val && styles.optionBtnActive]}
                   onPress={() => setSex(val)}
                 >
-                  <Text
-                    style={[
-                      styles.optionText,
-                      sex === val && styles.optionTextActive,
-                    ]}
-                  >
-                    {label}
-                  </Text>
+                  <View style={styles.optionBtnContent}>
+                    <Icon name="account" size={15} color={sex === val ? colors.textOnPrimary : colors.textSecondary} />
+                    <Text
+                      style={[
+                        styles.optionText,
+                        sex === val && styles.optionTextActive,
+                      ]}
+                    >
+                      {label}
+                    </Text>
+                  </View>
                 </TouchableOpacity>
               ))}
             </View>
@@ -516,12 +496,12 @@ export default function SettingsScreen() {
               </View>
             </View>
 
-            <Text style={styles.label}>Actividad física *</Text>
+            <Text style={styles.label}>Actividad fisica *</Text>
             <View style={styles.optionRow}>
               {[
-                [false, '🛋️ Sedentario'],
-                [true, '🏃 Activo'],
-              ].map(([val, label]) => (
+                [false, 'sofa', 'Sedentario'],
+                [true, 'run', 'Activo'],
+              ].map(([val, iconName, label]) => (
                 <TouchableOpacity
                   key={label}
                   style={[
@@ -530,32 +510,38 @@ export default function SettingsScreen() {
                   ]}
                   onPress={() => setIsActive(val)}
                 >
-                  <Text
-                    style={[
-                      styles.optionText,
-                      isActive === val && styles.optionTextActive,
-                    ]}
-                  >
-                    {label}
-                  </Text>
+                  <View style={styles.optionBtnContent}>
+                    <Icon name={iconName} size={15} color={isActive === val ? colors.textOnPrimary : colors.textSecondary} />
+                    <Text
+                      style={[
+                        styles.optionText,
+                        isActive === val && styles.optionTextActive,
+                      ]}
+                    >
+                      {label}
+                    </Text>
+                  </View>
                 </TouchableOpacity>
               ))}
             </View>
 
             <Text style={styles.label}>Factores de salud</Text>
             {[
-              [smoker, setSmoker, '🚬 Fumador/a'],
-              [diabetic, setDiabetic, '💉 Diabetes'],
-            ].map(([val, setter, label]) => (
+              [smoker, setSmoker, 'smoking', 'Fumador/a'],
+              [diabetic, setDiabetic, 'needle', 'Diabetes'],
+            ].map(([val, setter, iconName, label]) => (
               <TouchableOpacity
                 key={label}
                 style={styles.checkRow}
                 onPress={() => setter(!val)}
               >
                 <View style={[styles.checkbox, val && styles.checkboxActive]}>
-                  {val && <Text style={styles.checkmark}>✓</Text>}
+                  {val && <Text style={styles.checkmark}>{'✓'}</Text>}
                 </View>
-                <Text style={styles.checkLabel}>{label}</Text>
+                <View style={styles.checkLabelRow}>
+                  <Icon name={iconName} size={16} color={val ? colors.primary : colors.textMuted} style={{marginRight: 6}} />
+                  <Text style={styles.checkLabel}>{label}</Text>
+                </View>
               </TouchableOpacity>
             ))}
 
@@ -565,30 +551,33 @@ export default function SettingsScreen() {
           </AccordionSection>
 
           {/* ═══════════════════════════════════════════════════════════════════
-              4. 📏 CALIBRACIÓN PA
+              4. CALIBRACION PA
               ═══════════════════════════════════════════════════════════════════ */}
           <AccordionSection
             expanded={expandedCal}
             onToggle={() => setExpandedCal(!expandedCal)}
-            icon="📏"
-            title="Calibración PA"
+            icon="ruler"
+            title="Calibracion PA"
             colors={colors}
           >
             <Text style={styles.sectionDesc}>
-              Puedes calibrar la estimación de presión arterial desde la pantalla
-              de resultados después de cada medición, introduciendo la lectura de
-              tu tensiómetro real.
+              Puedes calibrar la estimacion de presion arterial desde la pantalla
+              de resultados despues de cada medicion, introduciendo la lectura de
+              tu tensiometro real.
             </Text>
             {calibration?.points?.length > 0 ? (
               <>
                 <View style={styles.calStatus}>
-                  <Text style={styles.calStatusText}>
-                    ✅ {calibration.points.length} punto
-                    {calibration.points.length > 1 ? 's' : ''} de calibración
-                    guardado{calibration.points.length > 1 ? 's' : ''}
-                  </Text>
+                  <View style={styles.calStatusRow}>
+                    <Icon name="check-circle" size={14} color={colors.primary} />
+                    <Text style={styles.calStatusText}>
+                      {' '}{calibration.points.length} punto
+                      {calibration.points.length > 1 ? 's' : ''} de calibracion
+                      guardado{calibration.points.length > 1 ? 's' : ''}
+                    </Text>
+                  </View>
                   <Text style={styles.calStatusSub}>
-                    Último:{' '}
+                    Ultimo:{' '}
                     {new Date(
                       calibration.points[calibration.points.length - 1].date
                     ).toLocaleDateString('es-ES')}
@@ -599,18 +588,18 @@ export default function SettingsScreen() {
                   onPress={handleClearCalibration}
                 >
                   <Text style={styles.dangerBtnSmallText}>
-                    Borrar calibración
+                    Borrar calibracion
                   </Text>
                 </TouchableOpacity>
               </>
             ) : (
               <Text style={styles.calEmptyText}>
-                Sin calibración. Usa el botón en la pantalla de resultados.
+                Sin calibracion. Usa el boton en la pantalla de resultados.
               </Text>
             )}
             <View style={styles.switchRow}>
               <Text style={styles.switchLabel}>
-                Preferir calibración por regresión
+                Preferir calibracion por regresion
               </Text>
               <Switch
                 value={preferRegression}
@@ -624,18 +613,18 @@ export default function SettingsScreen() {
           </AccordionSection>
 
           {/* ═══════════════════════════════════════════════════════════════════
-              5. 🔔 ALERTAS BPM
+              5. ALERTAS BPM
               ═══════════════════════════════════════════════════════════════════ */}
           <AccordionSection
             expanded={expandedAlerts}
             onToggle={() => setExpandedAlerts(!expandedAlerts)}
-            icon="🔔"
+            icon="bell"
             title="Alertas BPM"
             colors={colors}
           >
             <Text style={styles.sectionDesc}>
-              Recibe una notificación si tu frecuencia cardíaca supera o baja de
-              estos límites.
+              Recibe una notificacion si tu frecuencia cardiaca supera o baja de
+              estos limites.
             </Text>
             <Text style={styles.label}>Alerta BPM alto (por encima de)</Text>
             <TextInput
@@ -661,25 +650,25 @@ export default function SettingsScreen() {
           </AccordionSection>
 
           {/* ═══════════════════════════════════════════════════════════════════
-              6. 📤 EXPORTAR DATOS
+              6. EXPORTAR DATOS
               ═══════════════════════════════════════════════════════════════════ */}
           <AccordionSection
             expanded={expandedExport}
             onToggle={() => setExpandedExport(!expandedExport)}
-            icon="📤"
+            icon="share-variant"
             title="Exportar datos"
             colors={colors}
           >
             <Text style={styles.sectionDesc}>
               Exporta tu historial completo como archivo CSV compatible con Excel,
-              Google Sheets y otros programas de análisis.
+              Google Sheets y otros programas de analisis.
             </Text>
             {userIsPro ? (
               <TouchableOpacity
                 style={styles.exportBtn}
                 onPress={handleExportCSV}
               >
-                <Text style={styles.exportBtnIcon}>📊</Text>
+                <Icon name="chart-bar" size={20} color={colors.primary} />
                 <View style={{ flex: 1 }}>
                   <Text style={styles.exportBtnTitle}>
                     Exportar historial como CSV
@@ -688,19 +677,19 @@ export default function SettingsScreen() {
                     {history.length} mediciones · Punto y coma
                   </Text>
                 </View>
-                <Text style={styles.exportBtnArrow}>→</Text>
+                <Text style={styles.exportBtnArrow}>{'→'}</Text>
               </TouchableOpacity>
             ) : (
               <View style={styles.proGateContainer}>
                 <View style={styles.proGateBadge}>
-                  <Text style={styles.proGateIcon}>💎</Text>
+                  <Icon name="crown" size={24} color={colors.primary} style={{marginRight: 12}} />
                   <View style={{ flex: 1 }}>
                     <Text style={styles.proGateTitle}>
                       Necesitas VitalPulse Pro para exportar datos CSV
                     </Text>
                     <Text style={styles.proGateDesc}>
-                      Actualiza a Pro y obtén exportación ilimitada de tus
-                      mediciones, calibración avanzada y más.
+                      Actualiza a Pro y obten exportacion ilimitada de tus
+                      mediciones, calibracion avanzada y mas.
                     </Text>
                   </View>
                 </View>
@@ -709,56 +698,56 @@ export default function SettingsScreen() {
                   onPress={() => navigation.navigate('Upgrade')}
                   activeOpacity={0.8}
                 >
-                  <Text style={styles.proGateBtnIcon}>💎</Text>
-                  <Text style={styles.proGateBtnText}>Activar Pro</Text>
+                  <Icon name="crown" size={16} color={colors.textOnPrimary} />
+                  <Text style={styles.proGateBtnText}>  Activar Pro</Text>
                 </TouchableOpacity>
               </View>
             )}
           </AccordionSection>
 
           {/* ═══════════════════════════════════════════════════════════════════
-              7. 🔒 GESTIÓN DE DATOS
+              7. GESTION DE DATOS
               ═══════════════════════════════════════════════════════════════════ */}
           <AccordionSection
             expanded={expandedData}
             onToggle={() => setExpandedData(!expandedData)}
-            icon="🔒"
-            title="Gestión de datos"
+            icon="shield-lock"
+            title="Gestion de datos"
             colors={colors}
           >
             <Text style={styles.sectionDesc}>
-              VitalPulse prioriza tu privacidad. Aquí te explicamos cómo manejamos
-              tu información.
+              VitalPulse prioriza tu privacidad. Aqui te explicamos como manejamos
+              tu informacion.
             </Text>
             <View style={styles.privacyCard}>
               <View style={styles.privacyRow}>
-                <Text style={styles.privacyIcon}>📱</Text>
+                <Icon name="cellphone" size={18} color={colors.textSecondary} style={{width: 26, textAlign: 'center'}} />
                 <View style={{ flex: 1 }}>
                   <Text style={styles.privacyRowTitle}>
                     Almacenamiento local
                   </Text>
                   <Text style={styles.privacyRowDesc}>
-                    Todos los datos se guardan únicamente en este dispositivo. Nada
-                    se envía a servidores externos.
+                    Todos los datos se guardan unicamente en este dispositivo. Nada
+                    se envia a servidores externos.
                   </Text>
                 </View>
               </View>
               <View style={styles.privacyDivider} />
               <View style={styles.privacyRow}>
-                <Text style={styles.privacyIcon}>🔐</Text>
+                <Icon name="shield-lock" size={18} color={colors.textSecondary} style={{width: 26, textAlign: 'center'}} />
                 <View style={{ flex: 1 }}>
                   <Text style={styles.privacyRowTitle}>
                     Sin registro de cuenta
                   </Text>
                   <Text style={styles.privacyRowDesc}>
                     No necesitas crear una cuenta ni compartir tu correo
-                    electrónico. Tu identidad permanece anónima.
+                    electronico. Tu identidad permanece anonima.
                   </Text>
                 </View>
               </View>
               <View style={styles.privacyDivider} />
               <View style={styles.privacyRow}>
-                <Text style={styles.privacyIcon}>🚫</Text>
+                <Icon name="close-circle" size={18} color={colors.textSecondary} style={{width: 26, textAlign: 'center'}} />
                 <View style={{ flex: 1 }}>
                   <Text style={styles.privacyRowTitle}>
                     Sin terceros
@@ -773,12 +762,12 @@ export default function SettingsScreen() {
           </AccordionSection>
 
           {/* ═══════════════════════════════════════════════════════════════════
-              8. ⚠️ ZONA DE PELIGRO
+              8. ZONA DE PELIGRO
               ═══════════════════════════════════════════════════════════════════ */}
           <AccordionSection
             expanded={expandedDanger}
             onToggle={() => setExpandedDanger(!expandedDanger)}
-            icon="⚠️"
+            icon="alert"
             title="Zona de peligro"
             titleColor={colors.danger}
             borderColor={colors.danger}
@@ -795,14 +784,14 @@ export default function SettingsScreen() {
               onPress={handleClearHistory}
             >
               <View style={styles.dangerActionIconWrap}>
-                <Text style={styles.dangerActionIcon}>🗑️</Text>
+                <Icon name="delete" size={20} color={colors.danger} />
               </View>
               <View style={styles.dangerActionTextWrap}>
                 <Text style={styles.dangerActionTitle}>
                   Borrar historial de mediciones
                 </Text>
                 <Text style={styles.dangerActionSub}>
-                  Se eliminarán todas las mediciones guardadas
+                  Se eliminaran todas las mediciones guardadas
                 </Text>
               </View>
             </TouchableOpacity>
@@ -812,32 +801,32 @@ export default function SettingsScreen() {
               onPress={handleClearAll}
             >
               <View style={styles.dangerActionIconWrap}>
-                <Text style={styles.dangerActionIcon}>☢️</Text>
+                <Icon name="radioactive" size={20} color={colors.dangerDark} />
               </View>
               <View style={styles.dangerActionTextWrap}>
                 <Text style={styles.dangerActionTitleDestructive}>
                   Borrar todos los datos
                 </Text>
                 <Text style={styles.dangerActionSub}>
-                  Mediciones, calibración, perfil y configuración
+                  Mediciones, calibracion, perfil y configuracion
                 </Text>
               </View>
             </TouchableOpacity>
           </AccordionSection>
 
           {/* ═══════════════════════════════════════════════════════════════════
-              9. ℹ️ ACERCA DE
+              9. ACERCA DE
               ═══════════════════════════════════════════════════════════════════ */}
           <AccordionSection
             expanded={expandedAbout}
             onToggle={() => setExpandedAbout(!expandedAbout)}
-            icon="ℹ️"
+            icon="information"
             title="Acerca de VitalPulse"
             colors={colors}
           >
             <View style={styles.aboutCard}>
               <View style={styles.aboutRow}>
-                <Text style={styles.aboutLabel}>Versión</Text>
+                <Text style={styles.aboutLabel}>Version</Text>
                 <Text style={styles.aboutValue}>{APP_VERSION}</Text>
               </View>
               <View style={styles.aboutDivider} />
@@ -860,14 +849,14 @@ export default function SettingsScreen() {
               onPress={() => navigation.navigate('PrivacyPolicy')}
               activeOpacity={0.7}
             >
-              <Text style={styles.footerLinkText}>Política de Privacidad</Text>
+              <Text style={styles.footerLinkText}>Politica de Privacidad</Text>
             </TouchableOpacity>
             <Text style={styles.footerDivider}>·</Text>
             <TouchableOpacity
               onPress={() => navigation.navigate('Terms')}
               activeOpacity={0.7}
             >
-              <Text style={styles.footerLinkText}>Términos de Uso</Text>
+              <Text style={styles.footerLinkText}>Terminos de Uso</Text>
             </TouchableOpacity>
           </View>
 
@@ -956,7 +945,6 @@ const createStyles = (colors) => StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.primaryMuted + '44',
   },
-  proFeatureIcon: { fontSize: 18, width: 26, textAlign: 'center' },
   proFeatureTextWrap: { flex: 1 },
   proFeatureTitle: {
     color: colors.textPrimary,
@@ -979,7 +967,6 @@ const createStyles = (colors) => StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.success + '44',
   },
-  proBadgeActiveIcon: { fontSize: 18 },
   proBadgeActiveText: {
     color: colors.successDark,
     fontSize: 14,
@@ -1001,7 +988,6 @@ const createStyles = (colors) => StyleSheet.create({
     shadowRadius: 8,
     elevation: 4,
   },
-  proActivateBtnIcon: { fontSize: 18 },
   proActivateBtnText: {
     color: colors.textOnPrimary,
     fontSize: 16,
@@ -1035,7 +1021,6 @@ const createStyles = (colors) => StyleSheet.create({
     backgroundColor: colors.primary,
     borderColor: colors.primary,
   },
-  themePillIcon: { fontSize: 18 },
   themePillLabel: {
     color: colors.textSecondary,
     fontSize: 11,
@@ -1044,11 +1029,16 @@ const createStyles = (colors) => StyleSheet.create({
   themePillLabelActive: {
     color: colors.textOnPrimary,
   },
+  themeHintRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 4,
+    gap: 4,
+  },
   themeHint: {
     color: colors.textMuted,
     fontSize: 12,
-    textAlign: 'center',
-    marginTop: 4,
   },
 
   // ─── Form fields ──────────────────────────────────────────────────────────────
@@ -1079,6 +1069,11 @@ const createStyles = (colors) => StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
   },
+  optionBtnContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   optionBtnActive: {
     backgroundColor: colors.primary,
     borderColor: colors.primary,
@@ -1090,6 +1085,11 @@ const createStyles = (colors) => StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 8,
     gap: 12,
+  },
+  checkLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
   },
   checkbox: {
     width: 22,
@@ -1118,6 +1118,10 @@ const createStyles = (colors) => StyleSheet.create({
     borderRadius: 8,
     padding: 12,
     marginBottom: 10,
+  },
+  calStatusRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   calStatusText: { color: colors.primary, fontSize: 13, fontWeight: '600' },
   calStatusSub:  { color: colors.textSecondary, fontSize: 12, marginTop: 2 },
@@ -1153,7 +1157,6 @@ const createStyles = (colors) => StyleSheet.create({
     borderColor: colors.border,
     gap: 12,
   },
-  exportBtnIcon:   { fontSize: 20 },
   exportBtnTitle:  { color: colors.primary, fontSize: 14, fontWeight: '600' },
   exportBtnSub:    { color: colors.textSecondary, fontSize: 11, marginTop: 2 },
   exportBtnArrow:  { color: colors.primary, fontSize: 16, fontWeight: '600' },
@@ -1169,10 +1172,8 @@ const createStyles = (colors) => StyleSheet.create({
   proGateBadge: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: 12,
     marginBottom: 14,
   },
-  proGateIcon: { fontSize: 24 },
   proGateTitle: {
     color: colors.textPrimary,
     fontSize: 14,
@@ -1199,7 +1200,6 @@ const createStyles = (colors) => StyleSheet.create({
     shadowRadius: 6,
     elevation: 3,
   },
-  proGateBtnIcon: { fontSize: 16 },
   proGateBtnText: {
     color: colors.textOnPrimary,
     fontSize: 15,
@@ -1220,7 +1220,6 @@ const createStyles = (colors) => StyleSheet.create({
     gap: 12,
     padding: 14,
   },
-  privacyIcon:    { fontSize: 18, width: 26, textAlign: 'center' },
   privacyRowTitle: {
     color: colors.textPrimary,
     fontSize: 13,
@@ -1236,14 +1235,6 @@ const createStyles = (colors) => StyleSheet.create({
     height: 1,
     backgroundColor: colors.border,
     marginHorizontal: 14,
-  },
-  privacyFooter: {
-    color: colors.textMuted,
-    fontSize: 12,
-    lineHeight: 18,
-    marginTop: 12,
-    fontStyle: 'italic',
-    textAlign: 'center',
   },
 
   // ─── Danger zone (inside accordion) ───────────────────────────────────────────
@@ -1280,7 +1271,6 @@ const createStyles = (colors) => StyleSheet.create({
     borderColor: colors.danger,
   },
   dangerActionIconWrap:  { width: 32, alignItems: 'center' },
-  dangerActionIcon:      { fontSize: 20 },
   dangerActionTextWrap:  { flex: 1 },
   dangerActionTitle:     { color: colors.danger, fontSize: 14, fontWeight: '600' },
   dangerActionTitleDestructive: {
@@ -1312,13 +1302,6 @@ const createStyles = (colors) => StyleSheet.create({
   },
   aboutLabel: { color: colors.textSecondary, fontSize: 13 },
   aboutValue: { color: colors.textPrimary, fontSize: 13, fontWeight: '600' },
-  aboutDesc: {
-    color: colors.textSecondary,
-    fontSize: 12,
-    lineHeight: 18,
-    marginTop: 12,
-    textAlign: 'center',
-  },
 
   // ─── Footer (end of scroll, not sticky) ────────────────────────────────────────
   footer: {

@@ -1,14 +1,15 @@
 /**
  * UpgradeScreen.js — VitalPulse v5.0
  *
- * Pantalla de suscripción "Hazte Pro" refinada con tema dinámico.
- * Muestra el plan actual, días restantes, planes disponibles y botón de compra.
+ * Pantalla de suscripcion "Hazte Pro" refinada con tema dinamico.
+ * Muestra el plan actual, dias restantes, planes disponibles y boton de compra.
  */
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet,
   ScrollView, Alert, Platform, ActivityIndicator, Image,
 } from 'react-native';
+import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/ThemeContext';
 import {
@@ -18,12 +19,12 @@ import {
 import { SPACING, RADIUS, SHADOWS } from '../theme/designTokens';
 
 const FEATURES = [
-  { icon: '✅', text: 'Mediciones ilimitadas' },
-  { icon: '✅', text: 'Calibración multi-punto avanzada' },
-  { icon: '✅', text: 'Exportación de datos a CSV' },
-  { icon: '✅', text: 'Gráficas detalladas de tendencias' },
-  { icon: '✅', text: 'SNR y métricas de calidad avanzadas' },
-  { icon: '✅', text: 'Sin anuncios' },
+  { icon: 'check-circle', text: 'Mediciones ilimitadas' },
+  { icon: 'check-circle', text: 'Calibracion multi-punto avanzada' },
+  { icon: 'check-circle', text: 'Exportacion de datos a CSV' },
+  { icon: 'check-circle', text: 'Graficas detalladas de tendencias' },
+  { icon: 'check-circle', text: 'SNR y metricas de calidad avanzadas' },
+  { icon: 'check-circle', text: 'Sin anuncios' },
 ];
 
 export default function UpgradeScreen({ navigation }) {
@@ -36,7 +37,7 @@ export default function UpgradeScreen({ navigation }) {
   const alreadyPro = isPro();
   const daysLeft = getDaysRemaining();
 
-  // Escuchar cambios de suscripción en tiempo real
+  // Escuchar cambios de suscripcion en tiempo real
   useEffect(() => {
     const unsub = addSubscriptionListener(() => {
       setCurrentPlan(getCurrentPlan());
@@ -51,14 +52,14 @@ export default function UpgradeScreen({ navigation }) {
       if (success) {
         setCurrentPlan(getCurrentPlan());
         Alert.alert(
-          '✅ ¡Bienvenido a VitalPulse Pro!',
+          'Bienvenido a VitalPulse Pro!',
           selectedPlan === 'lifetime'
             ? 'Ahora tienes acceso ilimitado de por vida a todas las funciones.'
-            : 'Ahora tienes acceso ilimitado durante 30 días a todas las funciones.',
+            : 'Ahora tienes acceso ilimitado durante 30 dias a todas las funciones.',
           [{ text: 'Genial', onPress: () => navigation.goBack() }]
         );
       } else {
-        Alert.alert('Error', 'No se pudo completar la compra. Inténtalo de nuevo.');
+        Alert.alert('Error', 'No se pudo completar la compra. Intentelo de nuevo.');
       }
     } finally {
       setPurchasing(false);
@@ -71,7 +72,7 @@ export default function UpgradeScreen({ navigation }) {
       const restored = await restorePurchases();
       if (restored) {
         setCurrentPlan(getCurrentPlan());
-        Alert.alert('✅ Compras restauradas', 'Tus suscripciones anteriores han sido restauradas.');
+        Alert.alert('Compras restauradas', 'Tus suscripciones anteriores han sido restauradas.');
       } else {
         Alert.alert('Sin compras', 'No se encontraron suscripciones anteriores para restaurar.');
       }
@@ -93,7 +94,9 @@ export default function UpgradeScreen({ navigation }) {
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.closeBtn}>
-            <Text style={[styles.closeBtnText, { color: colors.textMuted }]}>✕</Text>
+            <View style={styles.closeBtnContent}>
+              <Icon name="close" size={22} color={colors.textMuted} />
+            </View>
           </TouchableOpacity>
         </View>
 
@@ -101,31 +104,40 @@ export default function UpgradeScreen({ navigation }) {
           <Image source={require('../../assets/icon.png')} style={styles.heroLogo} />
           <Text style={[styles.heroTitle, { color: colors.primary }]}>VitalPulse Pro</Text>
           <Text style={[styles.heroSubtitle, { color: colors.textSecondary }]}>
-            Lleva tu monitorización cardiovascular al siguiente nivel
+            Lleva tu monitorizacion cardiovascular al siguiente nivel
           </Text>
         </View>
 
         {/* Plan actual */}
         <View style={[styles.currentPlanCard, SHADOWS.card, { backgroundColor: colors.bg, borderColor: colors.border }]}>
-          <Text style={[styles.currentPlanLabel, { color: colors.textSecondary }]}>
-            {alreadyPro ? '✅ Plan actual' : '📋 Plan actual'}
-          </Text>
+          <View style={styles.currentPlanLabelRow}>
+            <Icon name={alreadyPro ? 'check-circle' : 'clipboard-text'} size={14} color={colors.textSecondary} />
+            <Text style={[styles.currentPlanLabel, { color: colors.textSecondary }]}>
+              {alreadyPro ? ' Plan actual' : ' Plan actual'}
+            </Text>
+          </View>
           <Text style={[styles.currentPlanName, { color: colors.primary }]}>
             {currentPlan.name}
           </Text>
           {alreadyPro && daysLeft !== null && (
-            <Text style={[styles.daysLeft, { color: colors.textSecondary }]}>
-              {daysLeft > 0
-                ? `⏱ ${daysLeft} día${daysLeft !== 1 ? 's' : ''} restante${daysLeft !== 1 ? 's' : ''}`
-                : '⏱ Se renueva hoy'}
-            </Text>
+            <View style={styles.daysLeftRow}>
+              <Icon name="timer-sand" size={14} color={colors.textSecondary} />
+              <Text style={[styles.daysLeft, { color: colors.textSecondary }]}>
+                {daysLeft > 0
+                  ? ` ${daysLeft} dia${daysLeft !== 1 ? 's' : ''} restante${daysLeft !== 1 ? 's' : ''}`
+                  : ' Se renueva hoy'}
+              </Text>
+            </View>
           )}
           {alreadyPro && currentPlan.id === 'pro_lifetime' && (
-            <Text style={[styles.daysLeft, { color: colors.textSecondary }]}>♾️ Acceso vitalicio</Text>
+            <View style={styles.daysLeftRow}>
+              <Icon name="infinity" size={14} color={colors.textSecondary} />
+              <Text style={[styles.daysLeft, { color: colors.textSecondary }]}> Acceso vitalicio</Text>
+            </View>
           )}
           {!alreadyPro && (
             <Text style={[styles.currentPlanDesc, { color: colors.textSecondary }]}>
-              {PLANS.free.maxMeasurementsPerDay} mediciones gratuitas por día
+              {PLANS.free.maxMeasurementsPerDay} mediciones gratuitas por dia
             </Text>
           )}
         </View>
@@ -135,8 +147,8 @@ export default function UpgradeScreen({ navigation }) {
           <Text style={[styles.featuresTitle, { color: colors.textPrimary }]}>Funciones Pro</Text>
           {FEATURES.map((f, i) => (
             <View key={i} style={styles.featureRow}>
-              <Text style={[styles.featureIcon, { color: colors.success }]}>{f.icon}</Text>
-              <Text style={[styles.featureText, { color: colors.textPrimary }]}>{f.text}</Text>
+              <Icon name={f.icon} size={18} color={colors.success} />
+              <Text style={[styles.featureText, { color: colors.textPrimary }]}> {f.text}</Text>
             </View>
           ))}
         </View>
@@ -179,7 +191,7 @@ export default function UpgradeScreen({ navigation }) {
                   <Text style={[styles.planName, { color: colors.textPrimary }]}>{PLANS.lifetime.name}</Text>
                 </View>
                 <Text style={[styles.planPrice, { color: colors.primary }]}>{PLANS.lifetime.price}</Text>
-                <Text style={[styles.planPeriod, { color: colors.textSecondary }]}>pago único</Text>
+                <Text style={[styles.planPeriod, { color: colors.textSecondary }]}>pago unico</Text>
                 <Text style={[styles.planDesc, { color: colors.textSecondary }]}>Sin renovaciones · Para siempre</Text>
               </TouchableOpacity>
             </View>
@@ -188,28 +200,28 @@ export default function UpgradeScreen({ navigation }) {
             <View style={[styles.comparisonCard, SHADOWS.card, { backgroundColor: colors.bg, borderColor: colors.border }]}>
               <Text style={[styles.comparisonTitle, { color: colors.textPrimary }]}>Comparativa</Text>
               <View style={[styles.compRow, { borderBottomColor: colors.divider }]}>
-                <Text style={[styles.compLabel, { color: colors.textSecondary }]}>Mediciones/día</Text>
+                <Text style={[styles.compLabel, { color: colors.textSecondary }]}>Mediciones/dia</Text>
                 <Text style={[styles.compValueFree, { color: colors.danger }]}>5</Text>
                 <Text style={[styles.compValuePro, { color: colors.success }]}>∞</Text>
               </View>
               <View style={[styles.compRow, { borderBottomColor: colors.divider }]}>
                 <Text style={[styles.compLabel, { color: colors.textSecondary }]}>Anuncios</Text>
-                <Text style={[styles.compValueFree, { color: colors.danger }]}>Sí</Text>
+                <Text style={[styles.compValueFree, { color: colors.danger }]}>Si</Text>
                 <Text style={[styles.compValuePro, { color: colors.success }]}>No</Text>
               </View>
               <View style={[styles.compRow, { borderBottomColor: colors.divider }]}>
-                <Text style={[styles.compLabel, { color: colors.textSecondary }]}>Calibración avanzada</Text>
+                <Text style={[styles.compLabel, { color: colors.textSecondary }]}>Calibracion avanzada</Text>
                 <Text style={[styles.compValueFree, { color: colors.danger }]}>No</Text>
-                <Text style={[styles.compValuePro, { color: colors.success }]}>Sí</Text>
+                <Text style={[styles.compValuePro, { color: colors.success }]}>Si</Text>
               </View>
               <View style={[styles.compRow, { borderBottomColor: colors.divider }]}>
-                <Text style={[styles.compLabel, { color: colors.textSecondary }]}>Exportación CSV</Text>
+                <Text style={[styles.compLabel, { color: colors.textSecondary }]}>Exportacion CSV</Text>
                 <Text style={[styles.compValueFree, { color: colors.danger }]}>No</Text>
-                <Text style={[styles.compValuePro, { color: colors.success }]}>Sí</Text>
+                <Text style={[styles.compValuePro, { color: colors.success }]}>Si</Text>
               </View>
             </View>
 
-            {/* Botón de compra */}
+            {/* Boton de compra */}
             <TouchableOpacity
               style={[styles.purchaseBtn, { backgroundColor: colors.primary }, purchasing && styles.purchaseBtnDisabled]}
               onPress={handlePurchase}
@@ -224,7 +236,7 @@ export default function UpgradeScreen({ navigation }) {
                   </Text>
                   <Text style={[styles.purchaseBtnSub, { color: colors.textOnPrimary + 'B3' }]}>
                     {selectedPlan === 'monthly' ? PLANS.monthly.price : PLANS.lifetime.price}
-                    {selectedPlan === 'monthly' ? ' · Cancela cuando quieras' : ' · Pago único'}
+                    {selectedPlan === 'monthly' ? ' · Cancela cuando quieras' : ' · Pago unico'}
                   </Text>
                 </>
               )}
@@ -232,18 +244,18 @@ export default function UpgradeScreen({ navigation }) {
           </>
         )}
 
-        {/* Si ya es Pro, botón de gestión */}
+        {/* Si ya es Pro, boton de gestion */}
         {alreadyPro && (
           <TouchableOpacity
             style={[styles.manageBtn, { backgroundColor: colors.bg, borderColor: colors.border }]}
             onPress={() => {
               Alert.alert(
-                'Gestionar suscripción',
-                'Puedes gestionar tu suscripción desde la App Store/Google Play.'
+                'Gestionar suscripcion',
+                'Puedes gestionar tu suscripcion desde la App Store/Google Play.'
               );
             }}
           >
-            <Text style={[styles.manageBtnText, { color: colors.primary }]}>Gestionar suscripción</Text>
+            <Text style={[styles.manageBtnText, { color: colors.primary }]}>Gestionar suscripcion</Text>
           </TouchableOpacity>
         )}
 
@@ -261,8 +273,8 @@ export default function UpgradeScreen({ navigation }) {
         </TouchableOpacity>
 
         <Text style={[styles.footer, { color: colors.textMuted }]}>
-          El pago se cargará a tu cuenta de {Platform.OS === 'ios' ? 'Apple' : 'Google'}.
-          Las suscripciones se renuevan automáticamente a menos que se cancelen
+          El pago se cargara a tu cuenta de {Platform.OS === 'ios' ? 'Apple' : 'Google'}.
+          Las suscripciones se renuevan automaticamente a menos que se cancelen
           24 horas antes del final del periodo actual.
         </Text>
       </ScrollView>
@@ -279,7 +291,7 @@ const createStyles = (colors) => StyleSheet.create({
     marginBottom: 8,
   },
   closeBtn: { width: 40, height: 40, justifyContent: 'center', alignItems: 'center' },
-  closeBtnText: { color: colors.textMuted, fontSize: 22, fontWeight: '600' },
+  closeBtnContent: { justifyContent: 'center', alignItems: 'center' },
 
   heroSection: { alignItems: 'center', marginBottom: 24 },
   heroLogo: { width: 64, height: 64, marginBottom: 12, resizeMode: 'contain' },
@@ -292,9 +304,18 @@ const createStyles = (colors) => StyleSheet.create({
     marginBottom: 20, borderWidth: 1, borderColor: colors.border,
     alignItems: 'center',
   },
+  currentPlanLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   currentPlanLabel: { color: colors.textSecondary, fontSize: 11, fontWeight: '700', letterSpacing: 1.2, textTransform: 'uppercase' },
   currentPlanName: { color: colors.primary, fontSize: 22, fontWeight: '800', marginTop: 8 },
-  daysLeft: { color: colors.textSecondary, fontSize: 13, marginTop: 4 },
+  daysLeftRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  daysLeft: { color: colors.textSecondary, fontSize: 13 },
   currentPlanDesc: { color: colors.textSecondary, fontSize: 13, marginTop: 4 },
 
   sectionTitle: { color: colors.textPrimary, fontSize: 17, fontWeight: '700', marginBottom: 12 },
@@ -305,7 +326,6 @@ const createStyles = (colors) => StyleSheet.create({
   },
   featuresTitle: { color: colors.textPrimary, fontSize: 16, fontWeight: '700', marginBottom: 16 },
   featureRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 12, gap: 12 },
-  featureIcon: { color: colors.success, fontSize: 18, fontWeight: '700' },
   featureText: { color: colors.textPrimary, fontSize: 14, flex: 1 },
 
   plansContainer: { gap: 12, marginBottom: 20 },

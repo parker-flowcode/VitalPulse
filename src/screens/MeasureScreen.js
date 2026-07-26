@@ -31,6 +31,7 @@ import {
   useCameraPermission,
   useFrameProcessor,
 } from 'react-native-vision-camera';
+import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import { Worklets, useSharedValue } from 'react-native-worklets-core';
 import { useResizePlugin } from 'vision-camera-resize-plugin';
 import { Accelerometer } from 'expo-sensors';
@@ -470,7 +471,7 @@ export default function MeasureScreen({ navigation }) {
       <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]}>
         <StatusBar barStyle="dark-content" backgroundColor={colors.bg} />
         <View style={[styles.center, { backgroundColor: colors.bg }]}>
-          <Text style={styles.permIcon}>📷</Text>
+          <Icon name="camera" size={48} color={colors.primary} style={{ marginBottom: 16 }} />
           <Text style={[styles.permTitle, { color: colors.textPrimary, fontSize: Math.round(20 * fontScale) }]}>
             Camara requerida
           </Text>
@@ -501,7 +502,7 @@ export default function MeasureScreen({ navigation }) {
       <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]}>
         <StatusBar barStyle="dark-content" backgroundColor={colors.bg} />
         <View style={[styles.center, { backgroundColor: colors.bg }]}>
-          <Text style={styles.processingIcon}>🫀</Text>
+          <Icon name="heart-pulse" size={64} color={colors.primary} style={{ marginBottom: 20 }} />
           <Text style={[styles.processingTitle, { color: colors.textPrimary, fontSize: Math.round(22 * fontScale) }]}>
             Analizando senal...
           </Text>
@@ -548,7 +549,7 @@ export default function MeasureScreen({ navigation }) {
             style={styles.closeBtn}
             hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
           >
-            <Text style={[styles.closeBtnText, { color: colors.textMuted }]}>✕</Text>
+            <Icon name="close" size={20} color={colors.textMuted} />
           </TouchableOpacity>
         </View>
 
@@ -585,37 +586,48 @@ export default function MeasureScreen({ navigation }) {
             </Text>
 
             <View style={styles.stepRow}>
-              <Text style={styles.stepIcon}>👆</Text>
+              <View style={styles.stepIcon}>
+                <Icon name="gesture-tap" size={20} color={colors.textSecondary} />
+              </View>
               <Text style={[styles.stepText, { color: colors.textSecondary }]}>
                 Coloca el dedo indice cubriendo completamente la camara trasera y el flash.
               </Text>
             </View>
 
             <View style={styles.stepRow}>
-              <Text style={styles.stepIcon}>💡</Text>
+              <View style={styles.stepIcon}>
+                <Icon name="lightbulb-on" size={20} color={colors.textSecondary} />
+              </View>
               <Text style={[styles.stepText, { color: colors.textSecondary }]}>
                 El flash se encendera es normal y necesario.
               </Text>
             </View>
 
             <View style={styles.stepRow}>
-              <Text style={styles.stepIcon}>🤫</Text>
+              <View style={styles.stepIcon}>
+                <Icon name="hand-peace" size={20} color={colors.textSecondary} />
+              </View>
               <Text style={[styles.stepText, { color: colors.textSecondary }]}>
                 Presiona suavemente. Sin apretar en exceso.
               </Text>
             </View>
 
             <View style={styles.stepRow}>
-              <Text style={styles.stepIcon}>🧘</Text>
+              <View style={styles.stepIcon}>
+                <Icon name="meditation" size={20} color={colors.textSecondary} />
+              </View>
               <Text style={[styles.stepText, { color: colors.textSecondary }]}>
                 Apoya el codo y mantén el movil completamente quieto.
               </Text>
             </View>
 
             {!cameraReady && (
-              <Text style={[styles.cameraLoading, { color: colors.warning }]}>
-                ⏳ Iniciando camara...
-              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 12 }}>
+                <Icon name="timer-sand" size={14} color={colors.warning} />
+                <Text style={[styles.cameraLoading, { color: colors.warning, marginLeft: 4 }]}>
+                  Iniciando camara...
+                </Text>
+              </View>
             )}
           </View>
         )}
@@ -626,7 +638,7 @@ export default function MeasureScreen({ navigation }) {
             backgroundColor: colors.bgCard,
             borderColor: colors.warning + '44',
           }]}>
-            <Text style={styles.prepIcon}>👆</Text>
+            <Icon name="gesture-tap" size={52} color={colors.warning} style={{ marginBottom: 12 }} />
             <Text style={[styles.prepText, { color: colors.warning, fontSize: Math.round(22 * fontScale) }]}>
               Coloca el dedo ahora...
             </Text>
@@ -700,8 +712,9 @@ export default function MeasureScreen({ navigation }) {
                 backgroundColor: colors.dangerLight + '33',
                 borderColor: colors.danger + '44',
               }]}>
+                <Icon name="alert" size={14} color={colors.danger} />
                 <Text style={[styles.motionAlertText, { color: colors.danger }]}>
-                  ⚠️ Movimiento mantén quieto el movil
+                  Movimiento mantén quieto el movil
                 </Text>
               </View>
             )}
@@ -745,9 +758,18 @@ export default function MeasureScreen({ navigation }) {
               onPress={startMeasurement}
               disabled={!cameraReady}
             >
-              <Text style={[styles.startBtnText, { color: colors.textOnPrimary, fontSize: Math.round(18 * fontScale) }]}>
-                {cameraReady ? 'Iniciar medicion' : '⏳ Iniciando camara...'}
-              </Text>
+              {cameraReady ? (
+                <Text style={[styles.startBtnText, { color: colors.textOnPrimary, fontSize: Math.round(18 * fontScale) }]}>
+                  Iniciar medicion
+                </Text>
+              ) : (
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+                  <Icon name="timer-sand" size={18} color={colors.textOnPrimary} />
+                  <Text style={[styles.startBtnText, { color: colors.textOnPrimary, fontSize: Math.round(18 * fontScale), marginLeft: 6 }]}>
+                    Iniciando camara...
+                  </Text>
+                </View>
+              )}
             </TouchableOpacity>
           )}
           {(phase === 'measuring' || phase === 'preparing') && (
@@ -757,9 +779,12 @@ export default function MeasureScreen({ navigation }) {
               </Text>
             </TouchableOpacity>
           )}
-          <Text style={[styles.legalNote, { color: colors.textMuted }]}>
-            ⚠️ Esta app no es un dispositivo medico. Consulte a su medico.
-          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap' }}>
+            <Icon name="alert" size={11} color={colors.textMuted} />
+            <Text style={[styles.legalNote, { color: colors.textMuted, marginLeft: 4 }]}>
+              Esta app no es un dispositivo medico. Consulte a su medico.
+            </Text>
+          </View>
         </View>
       </SafeAreaView>
     </View>
@@ -795,10 +820,6 @@ const styles = StyleSheet.create({
   },
 
   // Permisos
-  permIcon: {
-    fontSize: 48,
-    marginBottom: 16,
-  },
   permTitle: {
     fontWeight: '700',
     marginBottom: 12,
@@ -820,10 +841,6 @@ const styles = StyleSheet.create({
   },
 
   // Processing
-  processingIcon: {
-    fontSize: 64,
-    marginBottom: 20,
-  },
   processingTitle: {
     fontWeight: '700',
     marginBottom: 10,
@@ -853,10 +870,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: 'transparent',
-  },
-  closeBtnText: {
-    fontSize: 20,
-    fontWeight: '600',
   },
 
   // Timer circular
@@ -907,10 +920,9 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   stepIcon: {
-    fontSize: 18,
     width: 26,
-    textAlign: 'center',
-    lineHeight: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   stepText: {
     flex: 1,
@@ -919,8 +931,6 @@ const styles = StyleSheet.create({
   },
   cameraLoading: {
     fontSize: 13,
-    marginTop: 12,
-    textAlign: 'center',
   },
 
   // Preparando
@@ -931,10 +941,6 @@ const styles = StyleSheet.create({
     padding: 24,
     borderWidth: 1,
     alignItems: 'center',
-  },
-  prepIcon: {
-    fontSize: 52,
-    marginBottom: 12,
   },
   prepText: {
     fontWeight: '700',
@@ -1029,6 +1035,7 @@ const styles = StyleSheet.create({
     padding: 12,
     marginTop: 6,
     borderWidth: 1,
+    gap: 6,
   },
   motionAlertText: {
     fontSize: 13,
@@ -1067,5 +1074,6 @@ const styles = StyleSheet.create({
     fontSize: 11,
     textAlign: 'center',
     lineHeight: 16,
+    flex: 0,
   },
 });

@@ -59,7 +59,7 @@ export const darkColors = {
   bg:               '#0F172A',
   bgCard:           '#1E293B',
   bgSecondary:      '#334155',
-  bgElevated:       '#1E293B',
+  bgElevated:       '#334155',
 
   primary:          '#38BDF8',
   primaryLight:     '#7DD3FC',
@@ -116,6 +116,9 @@ export const SHADOWS = {
   none:    { shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0 },
 };
 
+// ─── Iconos ──────────────────────────────────────────────────────────────────
+export const ICONS = { sm: 16, md: 20, lg: 24, xl: 28, xxl: 32 };
+
 // ─── Tipografia (usa COLORS dinamicamente) ───────────────────────────────────
 export const TYPOGRAPHY = {
   h1:     { fontSize: 28, fontWeight: '700', letterSpacing: -0.5 },
@@ -125,3 +128,6 @@ export const TYPOGRAPHY = {
   caption:{ fontSize: 12 },
   label:  { fontSize: 11, fontWeight: '600', letterSpacing: 0.5, textTransform: 'uppercase' },
 };
+
+// ─── Gradientes ──────────────────────────────────────────────────────────────
+export const GRADIENTS = { primary: ['#38BDF8', '#0EA5E9'], primaryVertical: ['#0EA5E9', '#38BDF8'] };

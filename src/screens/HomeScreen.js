@@ -18,6 +18,7 @@ import {
   Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import { useTheme } from '../theme/ThemeContext';
 import useHealthStore from '../store/healthstore';
 import LegalDisclaimer from '../components/LegalDisclaimer';
@@ -131,9 +132,9 @@ export default function HomeScreen({ navigation }) {
 
         {/* ───── Remaining pill — always visible ───── */}
         <View style={styles.remainingPill}>
+          <Icon name="chart-bar" size={14} color={colors.primary} />
           <Text style={styles.remainingText}>
-            {'📊 '}
-            {isPro() ? 'Ilimitadas' : `${remaining} de ${plan.maxMeasurementsPerDay}`}
+            {isPro() ? ' Ilimitadas' : ` ${remaining} de ${plan.maxMeasurementsPerDay}`}
             {' disponibles hoy'}
           </Text>
         </View>
@@ -147,7 +148,7 @@ export default function HomeScreen({ navigation }) {
           {/* Left sky blue accent — 3px */}
           <View style={styles.measureAccent} />
           <View style={styles.measureContent}>
-            <Text style={styles.measureIcon}>{'💙'}</Text>
+            <Icon name="heart-pulse" size={40} color={colors.primary} />
             <Text style={styles.measureTitle}>Iniciar Medicion</Text>
             <Text style={styles.measureSub}>~60 seg · Camara trasera</Text>
           </View>
@@ -164,7 +165,7 @@ export default function HomeScreen({ navigation }) {
               onPress={() => handleWatchAd(false)}
               activeOpacity={0.8}
             >
-              <Text style={styles.watchAdEmoji}>{'🎬'}</Text>
+              <Icon name="play-circle" size={18} color="#92400E" />
               <Text style={styles.watchAdBtnText}>Ver anuncio (+1)</Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -172,7 +173,7 @@ export default function HomeScreen({ navigation }) {
               onPress={handleUpgrade}
               activeOpacity={0.8}
             >
-              <Text style={styles.proBtnEmoji}>{'💎'}</Text>
+              <Icon name="crown" size={18} color={colors.textOnPrimary} />
               <Text style={styles.proBtnText}>VitalPulse Pro</Text>
             </TouchableOpacity>
           </View>
@@ -264,10 +265,10 @@ export default function HomeScreen({ navigation }) {
             </View>
           </View>
         ) : (
-          /* ───── Empty state ───── */
+          {/* ───── Empty state ───── */}
           <View style={styles.emptyGlass}>
             <View style={styles.emptyIconWrap}>
-              <Text style={styles.emptyIcon}>{'❤️'}</Text>
+              <Icon name="heart" size={22} color={colors.primary} />
             </View>
             <Text style={styles.emptyTitle}>Sin mediciones</Text>
             <Text style={styles.emptySub}>
@@ -308,7 +309,7 @@ export default function HomeScreen({ navigation }) {
           onPress={() => navigation.navigate('Tutorial')}
           activeOpacity={0.7}
         >
-          <Text style={styles.tutorialIcon}>{'🎮'}</Text>
+          <Icon name="controller-classic" size={18} color={colors.primary} />
           <Text style={styles.tutorialBtnText}>Modo Tutorial (sin camara)</Text>
           <Text style={styles.tutorialChevron}>{'›'}</Text>
         </TouchableOpacity>
@@ -417,6 +418,9 @@ function createStyles(colors, isDark) {
     // ── Remaining pill ──
     remainingPill: {
       alignSelf: 'center',
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
       backgroundColor: colors.primarySubtle,
       paddingVertical: 6,
       paddingHorizontal: 14,
@@ -466,16 +470,13 @@ function createStyles(colors, isDark) {
       paddingVertical: 16,
       paddingHorizontal: 12,
     },
-    measureIcon: {
-      fontSize: 22,
-      marginBottom: 4,
-    },
     measureTitle: {
       fontSize: 18,
       fontWeight: '700',
       color: colors.textPrimary,
       letterSpacing: -0.3,
       marginBottom: 2,
+      marginTop: 6,
     },
     measureSub: {
       fontSize: 11,
@@ -510,9 +511,6 @@ function createStyles(colors, isDark) {
       flexDirection: 'row',
       gap: 5,
     },
-    watchAdEmoji: {
-      fontSize: 14,
-    },
     watchAdBtnText: {
       color: isDark ? '#FDE68A' : '#92400E',
       fontSize: 12,
@@ -527,9 +525,6 @@ function createStyles(colors, isDark) {
       justifyContent: 'center',
       flexDirection: 'row',
       gap: 5,
-    },
-    proBtnEmoji: {
-      fontSize: 14,
     },
     proBtnText: {
       color: colors.textOnPrimary,
@@ -666,9 +661,6 @@ function createStyles(colors, isDark) {
       justifyContent: 'center',
       marginBottom: 12,
     },
-    emptyIcon: {
-      fontSize: 22,
-    },
     emptyTitle: {
       fontSize: 16,
       fontWeight: '700',
@@ -766,9 +758,6 @@ function createStyles(colors, isDark) {
           elevation: 1,
         },
       }),
-    },
-    tutorialIcon: {
-      fontSize: 14,
     },
     tutorialBtnText: {
       color: colors.textSecondary,

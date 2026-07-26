@@ -10,6 +10,7 @@ import React, { useMemo, useCallback, useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, Dimensions, Alert, TouchableOpacity,
 } from 'react-native';
+import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   VictoryChart,
@@ -153,9 +154,7 @@ function MetricCard({ label, value, unit, color, icon, c, onPress }) {
               { backgroundColor: color ? color + '18' : c.primarySubtle },
             ]}
           >
-            <Text style={[styles.metricIcon, { color: color || c.primary }]}>
-              {icon || '📊'}
-            </Text>
+            <Icon name={icon || 'chart-bar'} size={15} color={color || c.primary} />
           </View>
         </View>
         <View style={styles.metricData}>
@@ -441,7 +440,7 @@ export default function AnalyticsScreen() {
               { backgroundColor: colors.primarySubtle },
             ]}
           >
-            <Text style={styles.emptyIcon}>📊</Text>
+            <Icon name="chart-bar" size={32} color={colors.primary} />
           </View>
           <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>
             Sin datos disponibles
@@ -524,7 +523,7 @@ export default function AnalyticsScreen() {
             value={summaryMetrics.avgBpm}
             unit="BPM"
             color={bpmLineColor}
-            icon="❤️"
+            icon="heart"
             c={colors}
             onPress={() => {
               const classList = Object.entries(extraStats.bpmClassCounts)
@@ -544,7 +543,7 @@ export default function AnalyticsScreen() {
             value={summaryMetrics.lastBpStr}
             unit="mmHg"
             color={sysLineColor}
-            icon="🩸"
+            icon="water"
             c={colors}
             onPress={() => {
               if (!extraStats.bpDetail) {
@@ -569,7 +568,7 @@ export default function AnalyticsScreen() {
             }
             unit="ms"
             color={hrvLineColor}
-            icon="📊"
+            icon="chart-bar"
             c={colors}
             onPress={() => {
               Alert.alert(
@@ -584,7 +583,7 @@ export default function AnalyticsScreen() {
             label="Total Mediciones"
             value={summaryMetrics.total}
             color={colors.textPrimary}
-            icon="📋"
+            icon="clipboard-text"
             c={colors}
             onPress={() => {
               Alert.alert(
@@ -1086,7 +1085,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 20,
   },
-  emptyIcon: { fontSize: 32 },
   emptyTitle: {
     fontSize: 20,
     fontWeight: '700',
@@ -1131,9 +1129,6 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  metricIcon: {
-    fontSize: 15,
   },
   metricData: {
     flexDirection: 'row',

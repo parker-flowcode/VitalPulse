@@ -27,6 +27,7 @@ import {
   LayoutAnimation,
   UIManager,
 } from 'react-native';
+import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/ThemeContext';
 import useHealthStore from '../store/healthstore';
@@ -173,7 +174,7 @@ function SearchBar({ value, onChangeText, colors }) {
           },
         ]}
       >
-        <Text style={[styles.searchIcon, { color: colors.textMuted }]}>{'🔍'}</Text>
+        <Icon name="magnify" size={14} color={colors.textMuted} />
         <TextInput
           style={[styles.searchInput, { color: colors.textPrimary }]}
           placeholder="Buscar por fecha o BPM..."
@@ -189,7 +190,7 @@ function SearchBar({ value, onChangeText, colors }) {
             onPress={() => onChangeText('')}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <Text style={[styles.searchClear, { color: colors.textMuted }]}>{'✕'}</Text>
+            <Icon name="close" size={14} color={colors.textMuted} />
           </TouchableOpacity>
         )}
       </View>
@@ -336,7 +337,7 @@ function SwipeableItem({ item, onDelete, colors, isExpanded, onToggleExpand }) {
           style={styles.deleteActionInner}
           activeOpacity={0.8}
         >
-          <Text style={[styles.deleteActionIcon, { color: colors.danger }]}>{'🗑'}</Text>
+          <Icon name="delete-outline" size={16} color={colors.danger} />
           <Text style={[styles.deleteActionLabel, { color: colors.danger }]}>
             Eliminar
           </Text>
@@ -390,9 +391,12 @@ function SwipeableItem({ item, onDelete, colors, isExpanded, onToggleExpand }) {
             </View>
 
             {/* Expand indicator */}
-            <Text style={[styles.expandIcon, { color: colors.textMuted }]}>
-              {isExpanded ? '▲' : '▼'}
-            </Text>
+            <Icon
+              name={isExpanded ? 'chevron-up' : 'chevron-down'}
+              size={12}
+              color={colors.textMuted}
+              style={{ marginLeft: 8 }}
+            />
           </View>
 
           {/* ── Expanded detail (toggled inline, no Alert) ── */}
@@ -410,9 +414,10 @@ function SwipeableItem({ item, onDelete, colors, isExpanded, onToggleExpand }) {
 
               {/* BPM row + description */}
               <View style={styles.expandRow}>
-                <Text style={[styles.expandLabel, { color: colors.textMuted }]}>
-                  {'❤️ BPM:'}
-                </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', width: 68 }}>
+                  <Icon name="heart" size={12} color={colors.textMuted} />
+                  <Text style={[styles.expandLabel, { color: colors.textMuted, width: undefined, marginLeft: 4 }]}>BPM:</Text>
+                </View>
                 <Text style={[styles.expandValue, { color: bpmColor }]}>
                   {bpm} — {bpmClass?.label || '--'}
                 </Text>
@@ -425,9 +430,10 @@ function SwipeableItem({ item, onDelete, colors, isExpanded, onToggleExpand }) {
               {hasBp && (
                 <>
                   <View style={styles.expandRow}>
-                    <Text style={[styles.expandLabel, { color: colors.textMuted }]}>
-                      {'🩸 PA:'}
-                    </Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', width: 68 }}>
+                      <Icon name="water" size={12} color={colors.textMuted} />
+                      <Text style={[styles.expandLabel, { color: colors.textMuted, width: undefined, marginLeft: 4 }]}>PA:</Text>
+                    </View>
                     <Text style={[styles.expandValue, { color: bpColor }]}>
                       {item.bp.systolic}/{item.bp.diastolic} — {bpClass?.label}
                     </Text>
@@ -441,9 +447,10 @@ function SwipeableItem({ item, onDelete, colors, isExpanded, onToggleExpand }) {
               {/* HRV */}
               {item.sdnn > 0 && (
                 <View style={styles.expandRow}>
-                  <Text style={[styles.expandLabel, { color: colors.textMuted }]}>
-                    {'📊 HRV:'}
-                  </Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', width: 68 }}>
+                    <Icon name="chart-bar" size={12} color={colors.textMuted} />
+                    <Text style={[styles.expandLabel, { color: colors.textMuted, width: undefined, marginLeft: 4 }]}>HRV:</Text>
+                  </View>
                   <Text style={[styles.expandValue, { color: colors.info }]}>
                     {Math.round(item.sdnn * 10) / 10} ms
                   </Text>
@@ -452,9 +459,10 @@ function SwipeableItem({ item, onDelete, colors, isExpanded, onToggleExpand }) {
 
               {/* Quality */}
               <View style={styles.expandRow}>
-                <Text style={[styles.expandLabel, { color: colors.textMuted }]}>
-                  {'✅ Calidad:'}
-                </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', width: 68 }}>
+                  <Icon name="check-circle" size={12} color={colors.textMuted} />
+                  <Text style={[styles.expandLabel, { color: colors.textMuted, width: undefined, marginLeft: 4 }]}>Calidad:</Text>
+                </View>
                 <Text style={[styles.expandValue, { color: colors.success }]}>
                   {item.quality || 'Buena'}
                 </Text>
@@ -606,7 +614,7 @@ export default function HistoryScreen() {
               { backgroundColor: colors.primarySubtle },
             ]}
           >
-            <Text style={styles.emptyIcon}>{'❤️'}</Text>
+            <Icon name="heart" size={28} color={colors.primary} />
           </View>
           <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>
             Sin mediciones guardadas
@@ -625,7 +633,7 @@ export default function HistoryScreen() {
               { backgroundColor: colors.primarySubtle },
             ]}
           >
-            <Text style={styles.emptyIcon}>{'🔍'}</Text>
+            <Icon name="magnify" size={28} color={colors.primary} />
           </View>
           <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>
             Sin resultados
@@ -761,20 +769,12 @@ const styles = StyleSheet.create({
     height: 40,
     borderWidth: 1,
   },
-  searchIcon: {
-    fontSize: 13,
-    marginRight: 8,
-  },
   searchInput: {
     flex: 1,
     fontSize: 14,
     paddingVertical: 0,
     fontWeight: '400',
-  },
-  searchClear: {
-    fontSize: 14,
-    fontWeight: '600',
-    paddingLeft: 8,
+    marginLeft: 8,
   },
 
   /* ── Section list content padding ────────────────────────────────────── */
@@ -826,13 +826,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 8,
   },
-  deleteActionIcon: {
-    fontSize: 16,
-    marginBottom: 1,
-  },
   deleteActionLabel: {
     fontSize: 10,
     fontWeight: '700',
+    marginTop: 2,
   },
 
   /* ── Glass card ──────────────────────────────────────────────────────── */
@@ -903,12 +900,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 
-  /* ── Expand indicator ────────────────────────────────────────────────── */
-  expandIcon: {
-    fontSize: 9,
-    marginLeft: 8,
-  },
-
   /* ── Expanded detail area ────────────────────────────────────────────── */
   expandedContent: {
     paddingHorizontal: 12,
@@ -929,7 +920,6 @@ const styles = StyleSheet.create({
   expandLabel: {
     fontSize: 12,
     fontWeight: '600',
-    width: 68,
   },
   expandValue: {
     fontSize: 12,
@@ -965,9 +955,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,
-  },
-  emptyIcon: {
-    fontSize: 28,
   },
   emptyTitle: {
     fontSize: 18,

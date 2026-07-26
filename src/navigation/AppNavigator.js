@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, ActivityIndicator, Image } from 'react-native';
+import { View, ActivityIndicator, Image } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import { getFocusedRouteNameFromRoute } from '@react-navigation/native';
+import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 
 import OnboardingScreen from '../screens/OnboardingScreen';
 import HomeScreen       from '../screens/HomeScreen';
@@ -25,18 +26,19 @@ const HomeStack  = createStackNavigator();
 const RootStack  = createStackNavigator();
 
 const TAB_ICONS = {
-  Inicio:     { active: '❤️', inactive: '🤍' },
-  Historial:  { active: '📋', inactive: '📋' },
-  'Análisis': { active: '📈', inactive: '📈' },
-  Ajustes:    { active: '⚙️', inactive: '⚙️' },
+  Inicio:     { active: 'heart', inactive: 'heart-outline' },
+  Historial:  { active: 'clipboard-text', inactive: 'clipboard-text-outline' },
+  'Análisis': { active: 'chart-line', inactive: 'chart-line-variant' },
+  Ajustes:    { active: 'cog', inactive: 'cog-outline' },
 };
 
 function TabIcon({ name, focused }) {
-  const icons = TAB_ICONS[name] || { active: '●', inactive: '○' };
+  const icons = TAB_ICONS[name] || { active: 'circle', inactive: 'circle-outline' };
   return (
-    <Text style={{ fontSize: 20, opacity: focused ? 1 : 0.5 }}>
-      {focused ? icons.active : icons.inactive}
-    </Text>
+    <Icon
+      name={focused ? icons.active : icons.inactive}
+      size={22}
+    />
   );
 }
 

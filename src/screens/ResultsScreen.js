@@ -18,6 +18,7 @@ import {
   StatusBar,
   useWindowDimensions,
 } from 'react-native';
+import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/ThemeContext';
 import { classifyBPM, classifyBP } from '../utils/bpEstimator';
@@ -76,7 +77,7 @@ export default function ResultsScreen({ navigation, route }) {
       <SafeAreaView style={[styles.safe, { backgroundColor: colors.bgCard }]}>
         <StatusBar barStyle={resolvedTheme === 'dark' ? 'light-content' : 'dark-content'} backgroundColor={colors.bgCard} />
         <View style={styles.center}>
-          <Text style={[styles.errorIcon]}>⚠️</Text>
+          <Icon name="alert" size={36} color={colors.warning} style={{ marginBottom: 14 }} />
           <Text style={[styles.errorText, { color: colors.textSecondary }]}>
             No hay datos de medición disponibles.
           </Text>
@@ -124,6 +125,13 @@ export default function ResultsScreen({ navigation, route }) {
   const bpmClass = classifyBPM(bpm);
   const bpClass = bp ? classifyBP(bp.systolic, bp.diastolic) : null;
 
+  // ─── Map issue type to icon name ──────────────────────────────────────
+  const getIssueIconName = (type) => {
+    if (type === 'error') return 'alert-circle';
+    if (type === 'warning') return 'alert-outline';
+    return 'information';
+  };
+
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bgCard }]}>
       <StatusBar barStyle={resolvedTheme === 'dark' ? 'light-content' : 'dark-content'} backgroundColor={colors.bgCard} />
@@ -167,7 +175,7 @@ export default function ResultsScreen({ navigation, route }) {
                 ]}
               >
                 <View style={styles.alertRow}>
-                  <Text style={styles.alertIcon}>{issue.icon}</Text>
+                  <Icon name={getIssueIconName(issue.type)} size={14} color={alertBorderColor} />
                   <View style={styles.alertTextWrap}>
                     <Text style={[styles.alertTitle, { color: colors.textPrimary }]}>{issue.title}</Text>
                     <Text style={[styles.alertMessage, { color: colors.textSecondary }]}>{issue.message}</Text>
@@ -221,16 +229,22 @@ export default function ResultsScreen({ navigation, route }) {
               <Text style={[styles.cardLabel, { color: colors.textMuted }]}>PRESION ARTERIAL</Text>
               {!bp.isCalibrated && (
                 <View style={[styles.calibrationBadge, { backgroundColor: colors.warningLight }]}>
-                  <Text style={[styles.calibrationBadgeText, { color: colors.warning }]}>
-                    {'⚡'} Sin calibracion — valores orientativos
-                  </Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+                    <Icon name="lightning-bolt" size={10} color={colors.warning} />
+                    <Text style={[styles.calibrationBadgeText, { color: colors.warning, marginLeft: 4 }]}>
+                      Sin calibracion — valores orientativos
+                    </Text>
+                  </View>
                 </View>
               )}
               {bp.isCalibrated && (
                 <View style={[styles.calibrationBadge, { backgroundColor: colors.successLight }]}>
-                  <Text style={[styles.calibrationBadgeText, { color: colors.success }]}>
-                    {'✅'} Calibrado ({bp.calibrationPoints ?? 0})
-                  </Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+                    <Icon name="check-circle" size={10} color={colors.success} />
+                    <Text style={[styles.calibrationBadgeText, { color: colors.success, marginLeft: 4 }]}>
+                      Calibrado ({bp.calibrationPoints ?? 0})
+                    </Text>
+                  </View>
                 </View>
               )}
               <Text
@@ -263,7 +277,7 @@ export default function ResultsScreen({ navigation, route }) {
             <View style={[styles.qualityGrid, { gap: gridGap }]}>
               {/* Signal */}
               <View style={[styles.qualityCell, { width: qualityCellWidth }]}>
-                <Text style={styles.qualityCellIcon}>{qualityUX.icon || '📶'}</Text>
+                <Icon name="signal-cellular-3" size={16} color={qualityUX.color || colors.textPrimary} />
                 <Text style={[styles.qualityCellValue, { color: qualityUX.color || colors.textPrimary }]} numberOfLines={2}>
                   {qualityUX.label}
                 </Text>
@@ -271,7 +285,7 @@ export default function ResultsScreen({ navigation, route }) {
               </View>
               {/* Confidence */}
               <View style={[styles.qualityCell, { width: qualityCellWidth }]}>
-                <Text style={styles.qualityCellIcon}>🎯</Text>
+                <Icon name="target" size={16} color={confidenceUX.color || colors.textPrimary} />
                 <Text style={[styles.qualityCellValue, { color: confidenceUX.color || colors.textPrimary }]} numberOfLines={2}>
                   {confidenceUX.label}
                 </Text>
@@ -279,7 +293,7 @@ export default function ResultsScreen({ navigation, route }) {
               </View>
               {/* Stability */}
               <View style={[styles.qualityCell, { width: qualityCellWidth }]}>
-                <Text style={styles.qualityCellIcon}>⚖️</Text>
+                <Icon name="scale-balance" size={16} color={stabilityUX.color || colors.textPrimary} />
                 <Text style={[styles.qualityCellValue, { color: stabilityUX.color || colors.textPrimary }]} numberOfLines={2}>
                   {stabilityUX.label}
                 </Text>
@@ -287,7 +301,7 @@ export default function ResultsScreen({ navigation, route }) {
               </View>
               {/* Frames */}
               <View style={[styles.qualityCell, { width: qualityCellWidth }]}>
-                <Text style={styles.qualityCellIcon}>📊</Text>
+                <Icon name="chart-bar" size={16} color={colors.textPrimary} />
                 <Text style={[styles.qualityCellValue, { color: colors.textPrimary }]} numberOfLines={2}>
                   {measurement.signalLength || 0}
                 </Text>
@@ -295,7 +309,7 @@ export default function ResultsScreen({ navigation, route }) {
               </View>
               {/* Beats */}
               <View style={[styles.qualityCell, { width: qualityCellWidth }]}>
-                <Text style={styles.qualityCellIcon}>❤️</Text>
+                <Icon name="heart" size={16} color={colors.textPrimary} />
                 <Text style={[styles.qualityCellValue, { color: colors.textPrimary }]} numberOfLines={2}>
                   {rrIntervals?.length || 0}
                 </Text>
@@ -303,7 +317,11 @@ export default function ResultsScreen({ navigation, route }) {
               </View>
               {/* Sensor */}
               <View style={[styles.qualityCell, { width: qualityCellWidth }]}>
-                <Text style={styles.qualityCellIcon}>{saturatedAlert ? '💡' : '✅'}</Text>
+                <Icon
+                  name={saturatedAlert ? 'lightbulb-on' : 'check-circle'}
+                  size={16}
+                  color={saturatedAlert ? saturatedAlert.color : colors.success}
+                />
                 <Text
                   style={[
                     styles.qualityCellValue,
@@ -317,9 +335,12 @@ export default function ResultsScreen({ navigation, route }) {
               </View>
             </View>
             {hasWarning && !hasCriticalIssue && (
-              <Text style={[styles.qualityHint, { color: colors.warning }]}>
-                {'💡'} Resultados aproximados. Recoloca el dedo y vuelve a medir.
-              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 8 }}>
+                <Icon name="lightbulb-on" size={10} color={colors.warning} />
+                <Text style={[styles.qualityHint, { color: colors.warning, marginTop: 0, marginLeft: 4 }]}>
+                  Resultados aproximados. Recoloca el dedo y vuelve a medir.
+                </Text>
+              </View>
             )}
           </View>
 
@@ -328,7 +349,7 @@ export default function ResultsScreen({ navigation, route }) {
             <View style={[styles.glassCard, styles.hrvCard]}>
               <Text style={[styles.cardLabel, { color: colors.textMuted }]}>VARIABILIDAD CARDIACA (HRV)</Text>
               <View style={styles.hrvHeader}>
-                <Text style={styles.hrvIcon}>{hrvUX.icon}</Text>
+                <Icon name="heart-pulse" size={20} color={hrvUX.color} />
                 <Text style={[styles.hrvTitle, { color: hrvUX.color }]}>{hrvUX.label}</Text>
               </View>
               <Text style={[styles.hrvDescription, { color: colors.textSecondary }]}>
@@ -384,7 +405,7 @@ export default function ResultsScreen({ navigation, route }) {
             <View style={[styles.glassCard, styles.hrvCard]}>
               <Text style={[styles.cardLabel, { color: colors.textMuted }]}>VARIABILIDAD CARDIACA (HRV)</Text>
               <View style={styles.hrvEmptyState}>
-                <Text style={styles.hrvEmptyIcon}>⏱️</Text>
+                <Icon name="timer-outline" size={28} color={colors.textSecondary} style={{ marginBottom: 8 }} />
                 <Text style={[styles.hrvEmptyTitle, { color: colors.textSecondary }]}>Datos insuficientes</Text>
                 <Text style={[styles.hrvEmptyText, { color: colors.textMuted }]}>
                   {hasCriticalIssue
@@ -401,7 +422,7 @@ export default function ResultsScreen({ navigation, route }) {
             onPress={() => shareMeasurementSummary(measurement)}
             activeOpacity={0.7}
           >
-            <Text style={styles.shareBtnIcon}>📤</Text>
+            <Icon name="share-variant" size={14} color={colors.primary} />
             <Text style={[styles.actionBtnText, { color: colors.primary }]}>Compartir resultado</Text>
           </TouchableOpacity>
 
@@ -410,7 +431,7 @@ export default function ResultsScreen({ navigation, route }) {
             onPress={() => navigation.navigate('Calibration', { measurement })}
             activeOpacity={0.7}
           >
-            <Text style={styles.calibrateBtnIcon}>📏</Text>
+            <Icon name="ruler" size={14} color={colors.primary} />
             <Text style={[styles.actionBtnText, { color: colors.primary }]}>Calibrar con tensiometro</Text>
           </TouchableOpacity>
 
@@ -462,10 +483,6 @@ const createStyles = (colors, resolvedTheme) =>
     },
 
     // ─── Empty / Error ──────────────────────────────────────────────
-    errorIcon: {
-      fontSize: 36,
-      marginBottom: 14,
-    },
     errorText: {
       fontSize: 15,
       color: colors.textSecondary,
@@ -563,16 +580,12 @@ const createStyles = (colors, resolvedTheme) =>
       backgroundColor: colors.bgSecondary,
       borderRadius: RADIUS.sm,
     },
-    qualityCellIcon: {
-      fontSize: 16,
-      marginBottom: 2,
-      textAlign: 'center',
-    },
     qualityCellValue: {
       fontSize: 11,
       fontWeight: '700',
       color: colors.textPrimary,
       textAlign: 'center',
+      marginTop: 2,
     },
     qualityCellLabel: {
       fontSize: 8,
@@ -586,7 +599,6 @@ const createStyles = (colors, resolvedTheme) =>
     qualityHint: {
       fontSize: 10,
       textAlign: 'center',
-      marginTop: 8,
       lineHeight: 14,
     },
 
@@ -600,9 +612,6 @@ const createStyles = (colors, resolvedTheme) =>
       alignItems: 'center',
       gap: 6,
       marginBottom: 6,
-    },
-    hrvIcon: {
-      fontSize: 20,
     },
     hrvTitle: {
       fontSize: 15,
@@ -662,10 +671,6 @@ const createStyles = (colors, resolvedTheme) =>
       alignItems: 'center',
       paddingVertical: 12,
     },
-    hrvEmptyIcon: {
-      fontSize: 28,
-      marginBottom: 8,
-    },
     hrvEmptyTitle: {
       fontSize: 14,
       fontWeight: '700',
@@ -690,10 +695,6 @@ const createStyles = (colors, resolvedTheme) =>
       flexDirection: 'row',
       gap: 8,
       alignItems: 'flex-start',
-    },
-    alertIcon: {
-      fontSize: 14,
-      marginTop: 0,
     },
     alertTextWrap: {
       flex: 1,
@@ -726,14 +727,8 @@ const createStyles = (colors, resolvedTheme) =>
       fontWeight: '600',
     },
     shareBtn: {},
-    shareBtnIcon: {
-      fontSize: 14,
-    },
     calibrateBtn: {
       borderWidth: 1,
-    },
-    calibrateBtnIcon: {
-      fontSize: 14,
     },
 
     // ─── Navigation buttons row ─────────────────────────────────────

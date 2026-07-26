@@ -6,6 +6,7 @@
  */
 import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, Platform } from 'react-native';
+import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import { BannerAd as AdMobBanner, BannerAdSize, TestIds } from 'react-native-google-mobile-ads';
 import { shouldShowBanner, getBannerUnitId } from '../services/ads';
 import { useTheme } from '../theme/ThemeContext';
@@ -49,7 +50,7 @@ export default function BannerAd({ compact = false }) {
   if (__DEV__ && compact) {
     return (
       <View style={styles.compactContainer}>
-        <Text style={styles.compactText}>📢</Text>
+        <Icon name="bullhorn" size={16} color={colors.textMuted} />
       </View>
     );
   }

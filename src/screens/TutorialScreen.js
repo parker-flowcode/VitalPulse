@@ -12,6 +12,7 @@ import {
   View, Text, TouchableOpacity, StyleSheet,
   ScrollView, Dimensions, Animated,
 } from 'react-native';
+import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Polyline, Line } from 'react-native-svg';
 import { useTheme } from '../theme/ThemeContext';
@@ -119,7 +120,7 @@ export default function TutorialScreen({ navigation }) {
     };
   }, []);
 
-  // ─── Animacion pulso (blue heart 💙) ───────────────────────────────────────
+  // ─── Animacion pulso (blue heart) ─────────────────────────────────────────
   useEffect(() => {
     const anim = Animated.loop(
       Animated.sequence([
@@ -234,6 +235,15 @@ export default function TutorialScreen({ navigation }) {
       ? colors.warning
       : colors.textMuted;
 
+  // ─── Info items for idle screen ────────────────────────────────────────────
+  const INFO_ITEMS = [
+    { icon: 'chart-bar', text: 'Senal PPG sintetica generada en tiempo real' },
+    { icon: 'chart-line', text: 'Deteccion de BPM con FFT + picos' },
+    { icon: 'chart-line', text: 'Estimacion de presion arterial' },
+    { icon: 'target', text: 'Metricas de calidad y SNR' },
+    { icon: 'timer-sand', text: 'Simulacion completa de 15 segundos' },
+  ];
+
   // ─── Pantalla de resultados simulados ───────────────────────────────────────
   if (phase === 'results' && result) {
     const bpmClass = classifyBPM(result.bpm);
@@ -244,7 +254,10 @@ export default function TutorialScreen({ navigation }) {
       <SafeAreaView style={styles.safe}>
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
           <View style={styles.resultsHeader}>
-            <Text style={styles.resultsTitle}>{'✅ Simulacion completada'}</Text>
+            <View style={styles.resultsTitleRow}>
+              <Icon name="check-circle" size={26} color={colors.success} />
+              <Text style={styles.resultsTitle}>Simulacion completada</Text>
+            </View>
             <Text style={styles.resultsSub}>
               Datos generados artificialmente — no es una medicion real
             </Text>
@@ -314,7 +327,7 @@ export default function TutorialScreen({ navigation }) {
       <SafeAreaView style={styles.safe}>
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
           <View style={styles.heroSection}>
-            <Text style={styles.heroIcon}>{'🎮'}</Text>
+            <Icon name="controller-classic" size={64} color={colors.primary} style={{marginBottom: 16}} />
             <Text style={styles.heroTitle}>Modo Tutorial</Text>
             <Text style={styles.heroSub}>
               Aprende como funciona VitalPulse sin usar la camara real
@@ -322,15 +335,12 @@ export default function TutorialScreen({ navigation }) {
           </View>
 
           <View style={styles.infoCard}>
-            <Text style={styles.infoTitle}>{'Que vas a ver?'}</Text>
-            {[
-              '📊 Senal PPG sintetica generada en tiempo real',
-              '📈 Deteccion de BPM con FFT + picos',
-              '📈 Estimacion de presion arterial',
-              '🎯 Metricas de calidad y SNR',
-              '⏱️ Simulacion completa de 15 segundos',
-            ].map((text, i) => (
-              <Text key={i} style={styles.infoItem}>{text}</Text>
+            <Text style={styles.infoTitle}>Que vas a ver?</Text>
+            {INFO_ITEMS.map((item, i) => (
+              <View key={i} style={styles.infoItemRow}>
+                <Icon name={item.icon} size={14} color={colors.primary} style={{marginRight: 8}} />
+                <Text style={styles.infoItem}>{item.text}</Text>
+              </View>
             ))}
           </View>
 
@@ -343,11 +353,11 @@ export default function TutorialScreen({ navigation }) {
           </View>
 
           <TouchableOpacity style={styles.startBtn} onPress={startSimulation}>
-            <Text style={styles.startBtnText}>{'Iniciar Simulacion'}</Text>
+            <Text style={styles.startBtnText}>Iniciar Simulacion</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.realBtn} onPress={() => navigation.navigate('Main')}>
-            <Text style={styles.realBtnText}>{'Ir a medicion real'}</Text>
+            <Text style={styles.realBtnText}>Ir a medicion real</Text>
           </TouchableOpacity>
 
           <LegalDisclaimer />
@@ -364,17 +374,20 @@ export default function TutorialScreen({ navigation }) {
       <View style={styles.simContainer}>
         {/* Header */}
         <View style={styles.simHeader}>
-          <Text style={styles.simTitle}>{'🔬 Simulando...'}</Text>
+          <View style={styles.simTitleRow}>
+            <Icon name="microscope" size={18} color={colors.warning} style={{marginRight: 6}} />
+            <Text style={styles.simTitle}>Simulando...</Text>
+          </View>
           <TouchableOpacity onPress={resetToIdle} style={styles.closeBtn}>
             <Text style={styles.closeBtnText}>{'✕'}</Text>
           </TouchableOpacity>
         </View>
 
-        {/* Blue heart animation (💙 instead of red) */}
+        {/* Blue heart animation */}
         <View style={styles.heartContainer}>
-          <Animated.Text style={[styles.heartIcon, { transform: [{ scale: pulseAnim }] }]}>
-            {'💙'}
-          </Animated.Text>
+          <Animated.View style={[styles.heartIcon, { transform: [{ scale: pulseAnim }] }]}>
+            <Icon name="heart" size={64} color="#38BDF8" />
+          </Animated.View>
           <Text style={styles.heartBPM}>{liveBPM > 0 ? liveBPM : '---'}</Text>
           <Text style={styles.heartLabel}>
             {liveBPM > 0 ? 'BPM detectado' : 'Generando senal...'}
@@ -422,7 +435,6 @@ function createStyles(colors) {
 
     // ── Hero section (idle) ──
     heroSection: { alignItems: 'center', marginBottom: 28, marginTop: 20 },
-    heroIcon: { fontSize: 64, marginBottom: 16 },
     heroTitle: {
       fontSize: 28,
       fontWeight: '700',
@@ -460,6 +472,12 @@ function createStyles(colors) {
       color: colors.textPrimary,
       fontSize: 14,
       lineHeight: 24,
+      flex: 1,
+    },
+    infoItemRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 8,
     },
     infoText: {
       color: colors.textSecondary,
@@ -504,13 +522,17 @@ function createStyles(colors) {
       alignItems: 'center',
       marginBottom: 16,
     },
+    simTitleRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
     simTitle: { color: colors.warning, fontSize: 18, fontWeight: '700' },
     closeBtn: { width: 40, height: 40, justifyContent: 'center', alignItems: 'center' },
     closeBtnText: { color: colors.textMuted, fontSize: 22, fontWeight: '600' },
 
     // ── Heart animation ──
     heartContainer: { alignItems: 'center', marginBottom: 20 },
-    heartIcon: { fontSize: 64, marginBottom: 8 },
+    heartIcon: { marginBottom: 8 },
     heartBPM: {
       color: colors.textOnPrimary,
       fontSize: 56,
@@ -562,6 +584,12 @@ function createStyles(colors) {
 
     // ── Results header ──
     resultsHeader: { marginBottom: 24 },
+    resultsTitleRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+      marginBottom: 8,
+    },
     resultsTitle: {
       fontSize: 26,
       fontWeight: '700',

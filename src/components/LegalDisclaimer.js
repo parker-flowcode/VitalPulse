@@ -7,6 +7,7 @@
  */
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import { useTheme } from '../theme/ThemeContext';
 
 /**
@@ -21,15 +22,18 @@ export default function LegalDisclaimer({ compact = false }) {
 
   if (compact) {
     return (
-      <Text style={styles.compactText}>
-        {'⚕️ No sustituye el criterio medico. Consulte a un profesional.'}
-      </Text>
+      <View style={styles.compactRow}>
+        <Icon name="medical-cross" size={11} color={colors.danger} style={styles.compactIcon} />
+        <Text style={styles.compactText}>
+          {'No sustituye el criterio medico. Consulte a un profesional.'}
+        </Text>
+      </View>
     );
   }
 
   return (
     <View style={styles.container}>
-      <Text style={styles.icon}>{'⚕️'}</Text>
+      <Icon name="medical-cross" size={16} color={colors.danger} style={styles.icon} />
       <Text style={styles.text}>
         {'No es un dispositivo medico certificado. Consulte a un profesional de la salud.'}
       </Text>
@@ -56,7 +60,6 @@ function createStyles(colors) {
       borderBottomColor: colors.border,
     },
     icon: {
-      fontSize: 16,
       marginRight: 8,
       marginTop: 1,
     },
@@ -66,12 +69,20 @@ function createStyles(colors) {
       fontSize: 12,
       lineHeight: 18,
     },
+    compactRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginVertical: 4,
+    },
+    compactIcon: {
+      marginRight: 4,
+    },
     compactText: {
       color: colors.danger,
       fontSize: 11,
       textAlign: 'center',
       opacity: 0.8,
-      marginVertical: 4,
     },
   });
 }
