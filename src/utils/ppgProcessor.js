@@ -15,7 +15,7 @@
  */
 
 // ─── Constantes ──────────────────────────────────────────────────────────────
-const MIN_SNR_DB = 5;
+const MIN_SNR_DB = 3; // 3 dB es adecuado para camara de movil
 const SAT_HIGH = 240;  // umbral de saturación raw alto
 const SAT_LOW  = 15;   // umbral de saturación raw bajo
 
@@ -409,9 +409,9 @@ export function signalQuality(signal, peaks, fps = 19) {
   if (signal.length < 10) return 0;
   const amplitude = Math.max(...signal) - Math.min(...signal);
   if (amplitude < 0.1) return 0;
-  const amplitudeScore = Math.min(1, amplitude / 5);
+  const amplitudeScore = Math.min(1, amplitude / 2.5);
   const snr = computeSNR(signal, fps);
-  const snrScore = Math.min(1, snr / 20);
+  const snrScore = Math.min(1, snr / 15);
   const baseScore = (amplitudeScore + snrScore) / 2;
   if (peaks.length < 3) return baseScore * 0.3;
   const intervals = peaks.slice(1).map((p, i) => p - peaks[i]);

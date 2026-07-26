@@ -45,10 +45,8 @@ import { useTheme } from '../theme/ThemeContext';
 
 const MEASURE_DURATION = 60;
 const MOTION_THRESHOLD = 0.12;
-const PREP_DELAY = 1000;        // v5.1: reducido de 1500ms a 1000ms
-const CAPTURE_START_DELAY = 200;
-const CHART_UPDATE_INTERVAL = 2;    // v5.1: cada 2 frames (era 4)
-const BPM_CHECK_INTERVAL = 10;      // v5.1: cada 10 frames (era 30)
+const PREP_DELAY = 800;             // ms antes de empezar fase measuring
+const CAPTURE_START_DELAY = 100;    // ms antes de activar captura
 
 export default function MeasureScreen({ navigation }) {
   const { colors } = useTheme();
@@ -108,6 +106,7 @@ export default function MeasureScreen({ navigation }) {
   setMotionAlertRef.current = setMotionAlert;
 
   // ─── Recibir valor de luminancia desde el worklet ─────────────────────────
+  const timeLeftRef = useRef(MEASURE_DURATION);
   const receiveFrame = useCallback((val) => {
     if (!isCapturingRef.current || isFinalizedRef.current || val < 0) return;
 
@@ -126,18 +125,18 @@ export default function MeasureScreen({ navigation }) {
 
     if (newCount % 15 === 0) setFrameCount(newCount);
 
-    // v5.1: Actualizar grafico cada 2 frames (mas rapido, menos latencia)
-    if (newCount - lastChartUpdateRef.current >= CHART_UPDATE_INTERVAL && newCount > 5) {
+    // Actualizar grafico cada 2 frames
+    if (newCount - lastChartUpdateRef.current >= 2 && newCount > 3) {
       lastChartUpdateRef.current = newCount;
       const raw = localValuesRef.current.slice(-100);
       const detrended = detrend(raw);
       setDisplayValues(detrended);
     }
 
-    // v5.1: BPM + finger detection cada 10 frames (empezar antes)
-    if (newCount - lastBPMCheckRef.current >= BPM_CHECK_INTERVAL && newCount > 30) {
+    // BPM + finger detection cada 5 frames (mas rapido)
+    if (newCount - lastBPMCheckRef.current >= 5 && newCount > 15) {
       lastBPMCheckRef.current = newCount;
-      const elapsed = MEASURE_DURATION - timeLeft;
+      const elapsed = MEASURE_DURATION - timeLeftRef.current;
       const currentFps = elapsed > 0 ? Math.round(newCount / elapsed) : 19;
 
       const finger = detectFinger(localValuesRef.current);
@@ -150,56 +149,26 @@ export default function MeasureScreen({ navigation }) {
         } else if (finger.state === 'no_finger') {
           setSignalQuality(0);
           setLiveBPM(0);
+        } else if (finger.state === 'low_ac') {
+          setSignalQuality(0.1);
+          setLiveBPM(0);
         }
         return;
       }
 
-      const partial = processPPGSignal(localValuesRef.current, currentFps);
+      const partial = processPPGSignal(localValuesRef.current, currentFps, Math.max(elapsed, 1));
       if (partial.ready && partial.bpm >= 40 && partial.bpm <= 200) {
         setLiveBPM(partial.bpm);
         setSignalQuality(partial.quality);
 
-        if (partial.quality > 0.6) {
-          Vibration.vibrate(50);
-        } else if (partial.quality < 0.3) {
-          Vibration.vibrate(150);
-        }
-      }
-
-      // Auto-cancelacion cada ~1s de frames nuevos
-      if (newCount >= currentFps * 15 && newCount - lastAutoCancelRef.current >= currentFps) {
-        lastAutoCancelRef.current = newCount;
-        const recent = localValuesRef.current.slice(-currentFps * 5);
-        if (recent.length >= currentFps * 3) {
-          const check = processPPGSignal(recent, currentFps);
-          const currentFinger = detectFinger(recent);
-
-          if (currentFinger.state === 'saturated_high') {
-            hardStopRef.current();
-            setIsRunningRef.current(false);
-            setPhaseRef.current('idle');
-            Alert.alert(
-              'Presion excesiva',
-              'Estas presionando demasiado fuerte. La sangre se ha desplazado del tejido y el sensor solo ve luz blanca.\n\nReduce la presion del dedo sobre la camara\nDebes ver un tono rojizo, no blanco',
-              [{ text: 'Entendido', onPress: resetToIdleRef.current }]
-            );
-            return;
-          }
-
-          if (check.ready && check.quality < 0.2 && currentFinger.state !== 'saturated_high') {
-            hardStopRef.current();
-            setIsRunningRef.current(false);
-            setPhaseRef.current('idle');
-            Alert.alert(
-              'Senal demasiado debil',
-              'La calidad de la senal es muy baja durante mas de 5 segundos.\nCubre completamente la camara y el flash con el dedo\nAjusta la presion del dedo',
-              [{ text: 'Entendido', onPress: resetToIdleRef.current }]
-            );
-          }
+        if (partial.quality > 0.5) {
+          Vibration.vibrate(30);
+        } else if (partial.quality < 0.25) {
+          Vibration.vibrate(100);
         }
       }
     }
-  }, [timeLeft]);
+  }, []);
 
   useEffect(() => {
     workletCallbackRef.current = Worklets.createRunOnJS(receiveFrame);
@@ -342,7 +311,9 @@ export default function MeasureScreen({ navigation }) {
       let elapsed = 0;
       timerRef.current = setInterval(() => {
         elapsed++;
-        setTimeLeft(Math.max(0, MEASURE_DURATION - elapsed));
+        const tl = Math.max(0, MEASURE_DURATION - elapsed);
+        timeLeftRef.current = tl;
+        setTimeLeft(tl);
 
         if (elapsed >= MEASURE_DURATION && !isFinalizedRef.current) {
           isFinalizedRef.current = true;
@@ -402,8 +373,8 @@ export default function MeasureScreen({ navigation }) {
         return;
       }
 
-      // Post-measurement SNR check: reject if both SNR and quality are too low
-      if (result.snr < 5 && result.quality < 0.3) {
+      // Post-measurement SNR check: only reject truly unrecoverable signals
+      if (result.snr < 2 && result.quality < 0.15) {
         setPhase('idle');
         Alert.alert(
           'Señal demasiado ruidosa',
@@ -568,7 +539,7 @@ export default function MeasureScreen({ navigation }) {
         torch={isRunning || phase === 'preparing' ? 'on' : 'off'}
         frameProcessor={frameProcessor}
         pixelFormat="yuv"
-        photo={false}
+        photo={true}
         video={false}
         enableZoomGesture={false}
         onInitialized={() => { setCameraReady(true); cameraReadySV.value = true; }}
