@@ -89,19 +89,20 @@ export async function showInterstitialAd() {
     const interstitial = InterstitialAd.createForAdRequest(ADS_CONFIG.admob.interstitial);
 
     return new Promise((resolve) => {
+      let resolved = false;
       const unsubscribeLoaded = interstitial.addAdEventListener(AdEventType.LOADED, () => {
         interstitial.show();
       });
       const unsubscribeClosed = interstitial.addAdEventListener(AdEventType.CLOSED, () => {
         unsubscribeLoaded();
         unsubscribeClosed();
-        resolve(true);
+        if (!resolved) { resolved = true; resolve(true); }
       });
       const unsubscribeError = interstitial.addAdEventListener(AdEventType.ERROR, () => {
         unsubscribeLoaded();
         unsubscribeClosed();
         unsubscribeError();
-        resolve(false);
+        if (!resolved) { resolved = true; resolve(false); }
       });
       interstitial.load();
     });
@@ -120,6 +121,7 @@ export async function showRewardedAd() {
     const rewarded = RewardedAd.createForAdRequest(ADS_CONFIG.admob.rewarded);
 
     return new Promise((resolve) => {
+      let resolved = false;
       const unsubscribeLoaded = rewarded.addAdEventListener(RewardedAdEventType.LOADED, () => {
         rewarded.show();
       });
@@ -127,21 +129,21 @@ export async function showRewardedAd() {
         RewardedAdEventType.EARNED_REWARD,
         () => {
           _extraMeasurements++;
-          resolve(true);
+          if (!resolved) { resolved = true; resolve(true); }
         }
       );
       const unsubscribeClosed = rewarded.addAdEventListener(AdEventType.CLOSED, () => {
         unsubscribeLoaded();
         unsubscribeEarned();
         unsubscribeClosed();
-        resolve(false);
+        if (!resolved) { resolved = true; resolve(false); }
       });
       const unsubscribeError = rewarded.addAdEventListener(AdEventType.ERROR, () => {
         unsubscribeLoaded();
         unsubscribeEarned();
         unsubscribeClosed();
         unsubscribeError();
-        resolve(false);
+        if (!resolved) { resolved = true; resolve(false); }
       });
       rewarded.load();
     });

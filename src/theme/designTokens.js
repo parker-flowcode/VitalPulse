@@ -111,9 +111,9 @@ export const RADIUS = { sm: 8, md: 12, lg: 16, xl: 20, full: 999 };
 
 // ─── Sombras ─────────────────────────────────────────────────────────────────
 export const SHADOWS = {
-  card:    { shadowColor: '#000', shadowOffset: { w:0, h:2 }, shadowOpacity: 0.06, shadowRadius: 8,  elevation: 2 },
-  elevated:{ shadowColor: '#000', shadowOffset: { w:0, h:4 }, shadowOpacity: 0.10, shadowRadius: 12, elevation: 4 },
-  none:    { shadowColor: 'transparent', shadowOffset: { w:0, h:0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0 },
+  card:    { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8,  elevation: 2 },
+  elevated:{ shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.10, shadowRadius: 12, elevation: 4 },
+  none:    { shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0 },
 };
 
 // ─── Tipografia (usa COLORS dinamicamente) ───────────────────────────────────

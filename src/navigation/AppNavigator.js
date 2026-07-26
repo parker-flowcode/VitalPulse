@@ -105,6 +105,7 @@ export default function AppNavigator() {
   return (
     <NavigationContainer>
       <RootStack.Navigator
+        initialRouteName={onboardingDone ? 'Main' : 'Onboarding'}
         screenOptions={{
           headerShown: false,
           cardStyleInterpolator: ({ current: { progress } }) => ({
@@ -121,13 +122,11 @@ export default function AppNavigator() {
           },
         }}
       >
-        {!onboardingDone ? (
-          <RootStack.Screen
-            name="Onboarding"
-            component={OnboardingScreen}
-            options={{ animationTypeForReplace: 'push' }}
-          />
-        ) : null}
+        <RootStack.Screen
+          name="Onboarding"
+          component={OnboardingScreen}
+          options={{ animationTypeForReplace: 'push' }}
+        />
         <RootStack.Screen name="Main" component={MainTabs} />
         <RootStack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />
         <RootStack.Screen name="Terms" component={TermsScreen} />

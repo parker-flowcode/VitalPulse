@@ -89,16 +89,13 @@ export function addSubscriptionListener(fn) {
 export function getCurrentPlan() {
   // Si hay fecha de expiración y ha pasado, hacer downgrade a free
   if (_expiresAt && _subscription !== 'free' && _subscription !== 'lifetime') {
-    try {
-      if (new Date(_expiresAt) < new Date()) {
-        console.log('[IAP] Suscripción expirada, downgrade a free');
-        _subscription = 'free';
-        _expiresAt = null;
-        _persist();
-        _notify('free');
-      }
-    } catch {
-      // Ignorar errores de parsing de fecha
+    const expiryDate = new Date(_expiresAt);
+    if (isNaN(expiryDate.getTime()) || expiryDate < new Date()) {
+      console.log('[IAP] Suscripción expirada o fecha inválida, downgrade a free');
+      _subscription = 'free';
+      _expiresAt = null;
+      _persist();
+      _notify('free');
     }
   }
   return PLANS[_subscription] || PLANS.free;

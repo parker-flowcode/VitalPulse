@@ -112,7 +112,7 @@ const useHealthStore = create((set, get) => ({
       realSystolic,
       realDiastolic,
       morphology: morphology || { ptt: 0, risingSlope: 0, augmentationIndex: 0, pulseWidth: 0, dicroticNotch: 0 },
-      bpm:        bpm || 70,
+      bpm:        bpm ?? 70,
       sdnn:       sdnn || 0,
       date:       new Date().toISOString(),
     };
@@ -130,8 +130,9 @@ const useHealthStore = create((set, get) => ({
 
   // ─── Mediciones ────────────────────────────────────────────────────────────
   addMeasurement: async (measurement) => {
+    const { filteredSignal, peaks, ...persistableMeasurement } = measurement;
     const entry = {
-      ...measurement,
+      ...persistableMeasurement,
       id:        Date.now().toString(),
       timestamp: new Date().toISOString(),
     };
@@ -166,9 +167,18 @@ const useHealthStore = create((set, get) => ({
     });
 
     const updates = {};
-    if (historyRaw)    updates.history        = JSON.parse(historyRaw);
-    if (calRaw)        updates.calibration     = JSON.parse(calRaw);
-    if (profileRaw)    updates.userProfile     = { ...get().userProfile, ...JSON.parse(profileRaw) };
+    if (historyRaw) {
+      try { updates.history = JSON.parse(historyRaw); }
+      catch (e) { console.warn('Corrupted history data, skipping'); }
+    }
+    if (calRaw) {
+      try { updates.calibration = JSON.parse(calRaw); }
+      catch (e) { console.warn('Corrupted calibration data, skipping'); }
+    }
+    if (profileRaw) {
+      try { updates.userProfile = { ...get().userProfile, ...JSON.parse(profileRaw) }; }
+      catch (e) { console.warn('Corrupted profile data, skipping'); }
+    }
     if (onboardingRaw) updates.onboardingDone  = true;
     set(updates);
   },

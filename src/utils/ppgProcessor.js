@@ -476,6 +476,9 @@ export function processPPGSignal(rawValues, fpsPassed = 19, actualDuration = 60)
     return { ready: false, reason: `Insuficiente: ${rawValues.length} frames` };
   }
 
+  // Reset Kalman state so each measurement starts fresh
+  resetKalman();
+
   // --- Detrend mejorado (2 pasos) ---
   const detrended = detrend(rawValues);
 

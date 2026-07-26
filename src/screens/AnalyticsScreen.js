@@ -225,7 +225,7 @@ export default function AnalyticsScreen() {
 
   // Sort measurements chronologically (oldest first for trend charts)
   const chronological = useMemo(
-    () => [...filteredHistory].reverse().slice(-40),
+    () => [...filteredHistory].slice(-40).reverse(),
     [filteredHistory]
   );
 

@@ -94,17 +94,6 @@ export default function MeasureScreen({ navigation }) {
 
   const { calibration, userProfile, settings, addMeasurement } = useHealthStore();
 
-  const hardStopRef = useRef();
-  const setIsRunningRef = useRef();
-  const setPhaseRef = useRef();
-  const resetToIdleRef = useRef();
-  const setMotionAlertRef = useRef();
-  hardStopRef.current = hardStop;
-  setIsRunningRef.current = setIsRunning;
-  setPhaseRef.current = setPhase;
-  resetToIdleRef.current = resetToIdle;
-  setMotionAlertRef.current = setMotionAlert;
-
   // ─── Recibir valor de luminancia desde el worklet ─────────────────────────
   const timeLeftRef = useRef(MEASURE_DURATION);
   const receiveFrame = useCallback((val) => {
@@ -392,6 +381,7 @@ export default function MeasureScreen({ navigation }) {
 
       const measurement = {
         bpm: result.bpm, bpmFFT: result.bpmFFT, bpmPeaks: result.bpmPeaks,
+        morphology: result.morphology,
         bp, quality: result.quality, confidence: result.confidence,
         rrIntervals: result.rrIntervals || [], sdnn: result.sdnn || 0,
         signalLength: values.length,

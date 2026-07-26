@@ -81,7 +81,7 @@ export default function UpgradeScreen({ navigation }) {
   };
 
   const planLabel = alreadyPro
-    ? currentPlan.id === 'lifetime' ? 'Vitalicio' : currentPlan.name
+    ? currentPlan.id === 'pro_lifetime' ? 'Vitalicio' : currentPlan.name
     : '';
 
   return (
@@ -120,7 +120,7 @@ export default function UpgradeScreen({ navigation }) {
                 : '⏱ Se renueva hoy'}
             </Text>
           )}
-          {alreadyPro && currentPlan.id === 'lifetime' && (
+          {alreadyPro && currentPlan.id === 'pro_lifetime' && (
             <Text style={[styles.daysLeft, { color: colors.textSecondary }]}>♾️ Acceso vitalicio</Text>
           )}
           {!alreadyPro && (

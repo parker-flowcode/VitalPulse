@@ -50,7 +50,7 @@ export default function ProFeaturesModal({ visible, onClose, onWatchAd, onUpgrad
       statusBarTranslucent
       onRequestClose={onClose}
     >
-      <StatusBar barStyle="dark-content" />
+      <StatusBar barStyle={colors.textPrimary === '#F8FAFC' ? 'light-content' : 'dark-content'} />
 
       {/* ─── Overlay backdrop ─── */}
       <TouchableOpacity
