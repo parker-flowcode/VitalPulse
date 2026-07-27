@@ -525,7 +525,7 @@ const createStyles = (colors, resolvedTheme) =>
 
     // ─── Card label ─────────────────────────────────────────────────
     cardLabel: {
-      fontSize: 9,
+      fontSize: 11,
       fontWeight: '700',
       color: colors.textMuted,
       letterSpacing: 1.5,
@@ -558,7 +558,7 @@ const createStyles = (colors, resolvedTheme) =>
       width: '100%',
     },
     calibrationBadgeText: {
-      fontSize: 10,
+      fontSize: 12,
       fontWeight: '600',
       textAlign: 'center',
     },
@@ -597,7 +597,7 @@ const createStyles = (colors, resolvedTheme) =>
       textAlign: 'center',
     },
     qualityHint: {
-      fontSize: 10,
+      fontSize: 12,
       textAlign: 'center',
       lineHeight: 14,
     },
@@ -648,14 +648,14 @@ const createStyles = (colors, resolvedTheme) =>
       color: colors.textMuted,
     },
     hrvMetricBlockUnit: {
-      fontSize: 10,
+      fontSize: 12,
       color: colors.textMuted,
       marginTop: 0,
       fontWeight: '500',
       textTransform: 'lowercase',
     },
     hrvMetricBlockLabel: {
-      fontSize: 9,
+      fontSize: 11,
       fontWeight: '600',
       color: colors.textMuted,
       marginTop: 2,

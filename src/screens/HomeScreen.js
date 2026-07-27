@@ -570,14 +570,14 @@ function createStyles(colors, isDark) {
       backgroundColor: colors.success,
     },
     lastLabel: {
-      fontSize: 10,
+      fontSize: 12,
       fontWeight: '700',
       color: colors.textMuted,
       letterSpacing: 0.6,
       textTransform: 'uppercase',
     },
     lastDate: {
-      fontSize: 10,
+      fontSize: 12,
       color: colors.textSecondary,
       fontWeight: '500',
     },
@@ -605,7 +605,7 @@ function createStyles(colors, isDark) {
       lineHeight: 26,
     },
     metricUnit: {
-      fontSize: 10,
+      fontSize: 12,
       color: colors.textMuted,
       fontWeight: '600',
       letterSpacing: 0.3,
@@ -626,7 +626,7 @@ function createStyles(colors, isDark) {
       borderRadius: 2.5,
     },
     classText: {
-      fontSize: 9,
+      fontSize: 11,
       fontWeight: '800',
       letterSpacing: 0.2,
     },
@@ -726,7 +726,7 @@ function createStyles(colors, isDark) {
       letterSpacing: -0.3,
     },
     statLabel: {
-      fontSize: 9,
+      fontSize: 11,
       fontWeight: '700',
       color: colors.textMuted,
       marginTop: 2,
