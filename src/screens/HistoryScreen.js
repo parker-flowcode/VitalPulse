@@ -630,99 +630,102 @@ export default function HistoryScreen() {
       {/* ── Glass search bar ───────────────────────────────────────────── */}
       <SearchBar value={search} onChangeText={setSearch} colors={colors} />
 
-      {/* ── Empty state: no measurements at all ────────────────────────── */}
-      {!hasData && !isSearching ? (
-        <View style={styles.empty}>
-          <View
-            style={[
-              styles.emptyIconWrap,
-              { backgroundColor: colors.primarySubtle },
-            ]}
-          >
-            <Icon name="heart" size={28} color={colors.primary} />
-          </View>
-          <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>
-            Sin mediciones guardadas
-          </Text>
-          <Text style={[styles.emptySub, { color: colors.textSecondary }]}>
-            Las mediciones apareceran aqui automaticamente despues de cada
-            lectura.
-          </Text>
-        </View>
-      ) : // ── Empty state: filtered results ─────────────────────────────────
-      !hasFilteredData ? (
-        <View style={styles.empty}>
-          <View
-            style={[
-              styles.emptyIconWrap,
-              { backgroundColor: colors.primarySubtle },
-            ]}
-          >
-            <Icon name="magnify" size={28} color={colors.primary} />
-          </View>
-          <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>
-            Sin resultados
-          </Text>
-          <Text style={[styles.emptySub, { color: colors.textSecondary }]}>
-            Intenta con otro termino de busqueda o filtro.
-          </Text>
-        </View>
-      ) : (
-        // ── SectionList with grouped measurements ──────────────────────────
-        <SectionList
-          ref={listRef}
-          sections={sections}
-          keyExtractor={(item) => item.id || item.timestamp}
-          renderItem={({ item }) => (
-            <SwipeableItem
-              item={item}
-              onDelete={handleDeleteItem}
-              colors={colors}
-              isExpanded={expandedId === item.id}
-              onToggleExpand={handleToggleExpand}
-            />
-          )}
-          renderSectionHeader={({ section }) => (
+      {/* ── Content area (fills remaining space) ──────────────────────────── */}
+      <View style={{ flex: 1 }}>
+        {/* ── Empty state: no measurements at all ────────────────────────── */}
+        {!hasData && !isSearching ? (
+          <View style={styles.empty}>
             <View
               style={[
-                styles.sectionHeader,
-                { backgroundColor: colors.bgSecondary },
+                styles.emptyIconWrap,
+                { backgroundColor: colors.primarySubtle },
               ]}
             >
-              <Text
+              <Icon name="heart" size={28} color={colors.primary} />
+            </View>
+            <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>
+              Sin mediciones guardadas
+            </Text>
+            <Text style={[styles.emptySub, { color: colors.textSecondary }]}>
+              Las mediciones apareceran aqui automaticamente despues de cada
+              lectura.
+            </Text>
+          </View>
+        ) : // ── Empty state: filtered results ─────────────────────────────────
+        !hasFilteredData ? (
+          <View style={styles.empty}>
+            <View
+              style={[
+                styles.emptyIconWrap,
+                { backgroundColor: colors.primarySubtle },
+              ]}
+            >
+              <Icon name="magnify" size={28} color={colors.primary} />
+            </View>
+            <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>
+              Sin resultados
+            </Text>
+            <Text style={[styles.emptySub, { color: colors.textSecondary }]}>
+              Intenta con otro termino de busqueda o filtro.
+            </Text>
+          </View>
+        ) : (
+          // ── SectionList with grouped measurements ──────────────────────────
+          <SectionList
+            ref={listRef}
+            sections={sections}
+            keyExtractor={(item) => item.id || item.timestamp}
+            renderItem={({ item }) => (
+              <SwipeableItem
+                item={item}
+                onDelete={handleDeleteItem}
+                colors={colors}
+                isExpanded={expandedId === item.id}
+                onToggleExpand={handleToggleExpand}
+              />
+            )}
+            renderSectionHeader={({ section }) => (
+              <View
                 style={[
-                  styles.sectionHeaderText,
-                  { color: colors.textSecondary },
+                  styles.sectionHeader,
+                  { backgroundColor: colors.bgSecondary },
                 ]}
               >
-                {section.title.toUpperCase()}
-              </Text>
-              <Text style={[styles.sectionCount, { color: colors.textMuted }]}>
-                {section.data.length}
-              </Text>
-            </View>
-          )}
-          contentContainerStyle={styles.list}
-          showsVerticalScrollIndicator={false}
-          ListFooterComponent={() => (
-            <View style={styles.footer}>
-              <LegalDisclaimer />
-              <BannerAd compact />
-            </View>
-          )}
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={onRefresh}
-              tintColor={colors.primary}
-              colors={[colors.primary]}
-              progressBackgroundColor={colors.bg}
-            />
-          }
-          keyboardShouldPersistTaps="handled"
-          stickySectionHeadersEnabled={false}
-        />
-      )}
+                <Text
+                  style={[
+                    styles.sectionHeaderText,
+                    { color: colors.textSecondary },
+                  ]}
+                >
+                  {section.title.toUpperCase()}
+                </Text>
+                <Text style={[styles.sectionCount, { color: colors.textMuted }]}>
+                  {section.data.length}
+                </Text>
+              </View>
+            )}
+            contentContainerStyle={styles.list}
+            showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                tintColor={colors.primary}
+                colors={[colors.primary]}
+                progressBackgroundColor={colors.bg}
+              />
+            }
+            keyboardShouldPersistTaps="handled"
+            stickySectionHeadersEnabled={false}
+          />
+        )}
+      </View>
+
+      {/* ── Footer (always visible at bottom) ──────────────────────────────── */}
+      <View style={styles.footer}>
+        <LegalDisclaimer />
+        <BannerAd compact />
+      </View>
     </SafeAreaView>
   );
 }

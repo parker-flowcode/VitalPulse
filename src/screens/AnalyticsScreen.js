@@ -1,14 +1,13 @@
 /**
- * AnalyticsScreen.js — VitalPulse v5.0
+ * AnalyticsScreen.js — VitalPulse v9.5
  *
- * Pantalla de analisis premium con graficas de tendencias basadas en fechas,
- * cuadricula de resumen profesional, distribucion de PA y temas dinamicos.
- * Todos los graficos usan la paleta sky blue (#38BDF8).
- * VictoryAxis tickFormat utiliza fechas, NO numeros de indice.
+ * Pantalla de analisis premium con metricas coloreadas por tipo,
+ * graficas con etiquetas de unidad, expansion inline de tarjetas
+ * y distribucion de PA con colores clinicos.
  */
 import React, { useMemo, useCallback, useState } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, Dimensions, Alert, TouchableOpacity,
+  View, Text, StyleSheet, ScrollView, Dimensions, TouchableOpacity,
 } from 'react-native';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -30,11 +29,14 @@ import { SPACING, RADIUS, SHADOWS } from '../theme/designTokens';
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CHART_WIDTH = SCREEN_WIDTH - 64;
 const CHART_HEIGHT = 210;
-const SKY_BLUE = '#38BDF8';
-const SKY_BLUE_LIGHT = '#7DD3FC';
-const SKY_BLUE_DARK = '#0EA5E9';
-const HRV_GREEN = '#10B981';
-const HRV_GREEN_LIGHT = '#34D399';
+
+// ─── Card color palette (one distinct color per metric) ─────────────────
+const CARD_COLORS = {
+  bpm:   '#10B981', // success green
+  bp:    '#EF4444', // danger red
+  hrv:   '#6366F1', // info indigo
+  total: '#38BDF8', // primary sky blue
+};
 
 // ─── Axis style factory ─────────────────────────────────────────────────
 function createAxisStyle(colors) {
@@ -94,6 +96,20 @@ function formatDate(timestamp) {
   }
 }
 
+function formatFullDate(timestamp) {
+  if (!timestamp) return '';
+  try {
+    const d = timestamp instanceof Date ? timestamp : new Date(timestamp);
+    return d.toLocaleDateString('es-ES', {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric',
+    });
+  } catch {
+    return '';
+  }
+}
+
 function getBpDescription(label) {
   const map = {
     'Optima': 'Presion arterial optima. Mantenga este nivel.',
@@ -128,8 +144,201 @@ function filterByPeriod(history, period) {
   return history.filter((h) => new Date(h.timestamp).getTime() >= cutoff);
 }
 
+// ─── Expanded detail sections per card ──────────────────────────────────
+function BpmExpanded({ stats, cardColors, c }) {
+  const classList = Object.entries(stats.bpmClassCounts);
+
+  return (
+    <View style={styles.expandedBody}>
+      {/* Min / Max / Last row */}
+      <View style={styles.expandedRow}>
+        <View style={styles.expandedStat}>
+          <Text style={[styles.expandedStatVal, { color: cardColors.bpm }]}>
+            {stats.minBpm}
+          </Text>
+          <Text style={[styles.expandedStatLbl, { color: c.textMuted }]}>
+            Minimo
+          </Text>
+        </View>
+        <View style={styles.expandedStat}>
+          <Text style={[styles.expandedStatVal, { color: cardColors.bpm }]}>
+            {stats.maxBpm}
+          </Text>
+          <Text style={[styles.expandedStatLbl, { color: c.textMuted }]}>
+            Maximo
+          </Text>
+        </View>
+        <View style={styles.expandedStat}>
+          <Text style={[styles.expandedStatVal, { color: cardColors.bpm }]}>
+            {stats.lastBpm}
+          </Text>
+          <Text style={[styles.expandedStatLbl, { color: c.textMuted }]}>
+            Ultimo
+          </Text>
+        </View>
+      </View>
+
+      {/* Latest classification badge */}
+      {stats.lastBpmClass && (
+        <View style={[styles.expandedBadge, { backgroundColor: cardColors.bpm + '15' }]}>
+          <View style={[styles.expandedDot, { backgroundColor: stats.lastBpmClass.color || cardColors.bpm }]} />
+          <Text style={[styles.expandedBadgeText, { color: stats.lastBpmClass.color || cardColors.bpm }]}>
+            Ultimo: {stats.lastBpmClass.label}
+          </Text>
+        </View>
+      )}
+
+      {/* Classification breakdown */}
+      {classList.length > 0 && (
+        <View style={styles.expandedSection}>
+          <Text style={[styles.expandedSectionTitle, { color: c.textSecondary }]}>
+            Clasificaciones
+          </Text>
+          {classList.map(([lbl, cnt]) => (
+            <View key={lbl} style={styles.expandedClassRow}>
+              <Text style={[styles.expandedClassLabel, { color: c.textSecondary }]}>
+                {lbl}
+              </Text>
+              <Text style={[styles.expandedClassCount, { color: c.textPrimary }]}>
+                {cnt} {cnt === 1 ? 'vez' : 'veces'}
+              </Text>
+            </View>
+          ))}
+        </View>
+      )}
+    </View>
+  );
+}
+
+function BpExpanded({ stats, cardColors, c }) {
+  if (!stats.bpDetail) {
+    return (
+      <View style={styles.expandedBody}>
+        <Text style={[styles.expandedEmpty, { color: c.textMuted }]}>
+          No hay mediciones de presion arterial registradas.
+        </Text>
+      </View>
+    );
+  }
+
+  const detail = stats.bpDetail;
+  const clsColor = detail.classColor || cardColors.bp;
+
+  return (
+    <View style={styles.expandedBody}>
+      {/* Systolic / Diastolic / Classification row */}
+      <View style={styles.expandedRow}>
+        <View style={styles.expandedStat}>
+          <Text style={[styles.expandedStatVal, { color: cardColors.bp }]}>
+            {detail.sys}
+          </Text>
+          <Text style={[styles.expandedStatLbl, { color: c.textMuted }]}>
+            Sistolica
+          </Text>
+        </View>
+        <View style={styles.expandedStat}>
+          <Text style={[styles.expandedStatVal, { color: cardColors.bp }]}>
+            {detail.dia}
+          </Text>
+          <Text style={[styles.expandedStatLbl, { color: c.textMuted }]}>
+            Diastolica
+          </Text>
+        </View>
+        <View style={styles.expandedStat}>
+          <Text style={[styles.expandedStatVal, { color: clsColor, fontSize: 13 }]}>
+            {detail.classification}
+          </Text>
+          <Text style={[styles.expandedStatLbl, { color: c.textMuted }]}>
+            Clasificacion
+          </Text>
+        </View>
+      </View>
+
+      {/* Description badge */}
+      <View style={[styles.expandedBadge, { backgroundColor: clsColor + '15' }]}>
+        <Text style={[styles.expandedDesc, { color: c.textSecondary }]}>
+          {getBpDescription(detail.classification)}
+        </Text>
+      </View>
+
+      {/* Date */}
+      <Text style={[styles.expandedDate, { color: c.textMuted }]}>
+        Registrado el {formatFullDate(detail.timestamp)}
+      </Text>
+    </View>
+  );
+}
+
+function HrvExpanded({ stats, cardColors, c }) {
+  const sdnn = stats.avgSdnn;
+  const interpretation = getHrvInterpretation(sdnn);
+  const interpColor = sdnn < 30 ? '#EF4444' : sdnn < 60 ? '#F59E0B' : '#10B981';
+
+  return (
+    <View style={styles.expandedBody}>
+      {/* Interpretation badge */}
+      <View style={[styles.expandedBadge, { backgroundColor: interpColor + '15' }]}>
+        <View style={[styles.expandedDot, { backgroundColor: interpColor }]} />
+        <Text style={[styles.expandedBadgeText, { color: interpColor }]}>
+          {interpretation}
+        </Text>
+      </View>
+
+      {/* SDNN explanation */}
+      <View style={styles.expandedSection}>
+        <Text style={[styles.expandedSectionTitle, { color: c.textSecondary }]}>
+          Que es SDNN?
+        </Text>
+        <Text style={[styles.expandedDesc, { color: c.textMuted }]}>
+          El SDNN mide la variabilidad del ritmo cardiaco. Valores altos indican buena
+          recuperacion y salud cardiovascular.
+        </Text>
+      </View>
+    </View>
+  );
+}
+
+function TotalExpanded({ stats, cardColors, c }) {
+  return (
+    <View style={styles.expandedBody}>
+      {/* Total count */}
+      <View style={styles.expandedRow}>
+        <View style={[styles.expandedStat, { flex: 1 }]}>
+          <Text style={[styles.expandedStatVal, { color: cardColors.total, fontSize: 28 }]}>
+            {stats.total}
+          </Text>
+          <Text style={[styles.expandedStatLbl, { color: c.textMuted }]}>
+            Total registros
+          </Text>
+        </View>
+      </View>
+
+      {/* Date range */}
+      <Text style={[styles.expandedDate, { color: c.textMuted }]}>
+        Rango: {stats.dateRange}
+      </Text>
+
+      {/* Tip */}
+      <Text style={[styles.expandedTip, { color: c.textSecondary }]}>
+        {stats.total > 0
+          ? stats.total === 1
+            ? 'Realiza mas mediciones para obtener tendencias.'
+            : 'Mantener un registro regular ayuda a identificar patrones en tu salud cardiovascular.'
+          : 'Comienza a registrar mediciones para ver tu historial.'}
+      </Text>
+    </View>
+  );
+}
+
 // ─── Metric Card ────────────────────────────────────────────────────────
-function MetricCard({ label, value, unit, color, icon, c, onPress }) {
+function MetricCard({
+  label, value, unit, color, icon, c, expanded, onPress, expandedContent,
+}) {
+  // When icon is explicitly null, hide both the accent bar and the icon.
+  // When icon is a string, show both.
+  const showAccent = icon !== null;
+  const showIcon = icon !== null;
+
   return (
     <TouchableOpacity
       onPress={onPress}
@@ -139,24 +348,36 @@ function MetricCard({ label, value, unit, color, icon, c, onPress }) {
         SHADOWS.card,
         {
           backgroundColor: c.bg,
-          borderColor: c.borderLight,
+          borderColor: expanded ? color + '50' : c.borderLight,
         },
       ]}
     >
-      {/* Sky blue top accent */}
-      <View style={[styles.metricAccent, { backgroundColor: color || c.primary }]} />
+      {/* Top accent bar (hidden when icon is null) */}
+      {showAccent && (
+        <View style={[styles.metricAccent, { backgroundColor: color || c.primary }]} />
+      )}
 
       <View style={styles.metricBody}>
         <View style={styles.metricHeader}>
-          <View
-            style={[
-              styles.metricIconWrap,
-              { backgroundColor: color ? color + '18' : c.primarySubtle },
-            ]}
-          >
-            <Icon name={icon || 'chart-bar'} size={15} color={color || c.primary} />
-          </View>
+          {/* Icon circle (hidden when icon is null) */}
+          {showIcon && (
+            <View
+              style={[
+                styles.metricIconWrap,
+                { backgroundColor: color ? color + '18' : c.primarySubtle },
+              ]}
+            >
+              <Icon name={icon} size={15} color={color || c.primary} />
+            </View>
+          )}
+          {/* Collapse indicator when expanded */}
+          {expanded && (
+            <View style={styles.expandBadge}>
+              <Icon name="chevron-up" size={13} color={color || c.primary} />
+            </View>
+          )}
         </View>
+
         <View style={styles.metricData}>
           <Text
             style={[styles.metricValue, { color: color || c.textPrimary }]}
@@ -165,16 +386,24 @@ function MetricCard({ label, value, unit, color, icon, c, onPress }) {
           >
             {value}
           </Text>
-          {unit && (
+          {unit !== null && unit !== undefined && (
             <Text style={[styles.metricUnit, { color: c.textMuted }]}>
               {unit}
             </Text>
           )}
         </View>
+
         <Text style={[styles.metricLabel, { color: c.textSecondary }]}>
           {label}
         </Text>
       </View>
+
+      {/* Expanded detail area */}
+      {expanded && expandedContent && (
+        <View style={[styles.expandedContainer, { borderTopColor: color + '25' }]}>
+          {expandedContent}
+        </View>
+      )}
     </TouchableOpacity>
   );
 }
@@ -215,14 +444,19 @@ export default function AnalyticsScreen() {
   const { colors } = useTheme();
   const { history } = useHealthStore();
   const [selectedFilter, setSelectedFilter] = useState('Todo');
+  const [expandedCard, setExpandedCard] = useState(null);
 
-  // Filter by selected period
+  // Toggle which card is expanded (or close it)
+  const toggleCard = useCallback((cardKey) => {
+    setExpandedCard((prev) => (prev === cardKey ? null : cardKey));
+  }, []);
+
+  // ─── Data processing ─────────────────────────────────────────────────
   const filteredHistory = useMemo(
     () => filterByPeriod(history, selectedFilter),
     [history, selectedFilter]
   );
 
-  // Sort measurements chronologically (oldest first for trend charts)
   const chronological = useMemo(
     () => [...filteredHistory].slice(-40).reverse(),
     [filteredHistory]
@@ -249,20 +483,16 @@ export default function AnalyticsScreen() {
   const dateTickFormat = useCallback((x) => formatDate(x), []);
 
   // ─── BPM Chart Data ──────────────────────────────────────────────────
-  const bpmChartData = useMemo(
-    () => {
-      const raw = chronological
-        .filter((h) => h.bpm && h.bpm > 0)
-        .map((item) => ({
-          x: new Date(item.timestamp).getTime(),
-          y: item.bpm,
-          ts: item.timestamp,
-        }));
-      // Return oldest-first for timeline
-      return raw.reverse();
-    },
-    [chronological]
-  );
+  const bpmChartData = useMemo(() => {
+    const raw = chronological
+      .filter((h) => h.bpm && h.bpm > 0)
+      .map((item) => ({
+        x: new Date(item.timestamp).getTime(),
+        y: item.bpm,
+        ts: item.timestamp,
+      }));
+    return raw.reverse();
+  }, [chronological]);
 
   const bpmTickValues = useMemo(
     () => buildDateTickValues(bpmChartData, 5),
@@ -274,7 +504,6 @@ export default function AnalyticsScreen() {
     const valid = chronological.filter(
       (h) => h.bp?.systolic && h.bp?.diastolic
     );
-    // Oldest first for proper timeline
     const raw = {
       sys: valid.map((item) => ({
         x: new Date(item.timestamp).getTime(),
@@ -298,19 +527,16 @@ export default function AnalyticsScreen() {
   );
 
   // ─── HRV Chart Data ──────────────────────────────────────────────────
-  const hrvChartData = useMemo(
-    () => {
-      const raw = chronological
-        .filter((h) => h.sdnn && h.sdnn > 0)
-        .map((item) => ({
-          x: new Date(item.timestamp).getTime(),
-          y: Math.round(item.sdnn * 10) / 10,
-          ts: item.timestamp,
-        }));
-      return raw.reverse();
-    },
-    [chronological]
-  );
+  const hrvChartData = useMemo(() => {
+    const raw = chronological
+      .filter((h) => h.sdnn && h.sdnn > 0)
+      .map((item) => ({
+        x: new Date(item.timestamp).getTime(),
+        y: Math.round(item.sdnn * 10) / 10,
+        ts: item.timestamp,
+      }));
+    return raw.reverse();
+  }, [chronological]);
 
   const hrvTickValues = useMemo(
     () => buildDateTickValues(hrvChartData, 5),
@@ -340,7 +566,6 @@ export default function AnalyticsScreen() {
           ) / 10
         : 0;
 
-    // Latest BPM classification
     const lastBpmItem = [...filteredHistory].reverse().find((h) => h.bpm && h.bpm > 0);
     const lastBpm = lastBpmItem ? lastBpmItem.bpm : 0;
     const lastBpmClass = classifyBPM(lastBpm);
@@ -348,7 +573,7 @@ export default function AnalyticsScreen() {
     return { avgBpm, lastBpStr, avgSdnn, total: filteredHistory.length, lastBpm, lastBpmClass };
   }, [filteredHistory]);
 
-  // ─── Extra stats for metric card alerts ──────────────────────────────
+  // ─── Extra stats for expanded cards ──────────────────────────────────
   const extraStats = useMemo(() => {
     const bpms = filteredHistory.map((h) => h.bpm || 0).filter((b) => b > 0);
     const minBpm = bpms.length > 0 ? Math.min(...bpms) : 0;
@@ -369,6 +594,7 @@ export default function AnalyticsScreen() {
         sys: lastBpItem.bp.systolic,
         dia: lastBpItem.bp.diastolic,
         classification: cls.label,
+        classColor: cls.color,
         timestamp: lastBpItem.timestamp,
       };
     }
@@ -380,8 +606,14 @@ export default function AnalyticsScreen() {
       ? formatDate(timestamps[0])
       : 'Sin datos';
 
-    return { minBpm, maxBpm, bpmClassCounts, bpDetail, dateRange };
-  }, [filteredHistory]);
+    return {
+      minBpm, maxBpm, bpmClassCounts, bpDetail, dateRange,
+      lastBpm: summaryMetrics.lastBpm,
+      lastBpmClass: summaryMetrics.lastBpmClass,
+      avgSdnn: summaryMetrics.avgSdnn,
+      total: summaryMetrics.total,
+    };
+  }, [filteredHistory, summaryMetrics]);
 
   // ─── BP Distribution ─────────────────────────────────────────────────
   const bpDistribution = useMemo(() => {
@@ -457,11 +689,11 @@ export default function AnalyticsScreen() {
   const showBpChart = bpChartData.sys.length > 1;
   const showHrvChart = hrvChartData.length > 1;
 
-  // ─── Theme-based sky blue palette ───────────────────────────────────
-  const bpmLineColor = colors.chartBPM || SKY_BLUE;
-  const sysLineColor = colors.chartSystolic || SKY_BLUE;
-  const diaLineColor = colors.chartDiastolic || SKY_BLUE_LIGHT;
-  const hrvLineColor = colors.chartHRV || HRV_GREEN;
+  // ─── Chart line colors ───────────────────────────────────────────────
+  const bpmLineColor = colors.chartBPM || CARD_COLORS.bpm;
+  const sysLineColor = colors.chartSystolic || '#3B82F6';
+  const diaLineColor = colors.chartDiastolic || '#93C5FD';
+  const hrvLineColor = colors.chartHRV || CARD_COLORS.hrv;
 
   // ─── Render ─────────────────────────────────────────────────────────
   return (
@@ -516,49 +748,39 @@ export default function AnalyticsScreen() {
           ))}
         </View>
 
-        {/* ── Summary Grid (2x2) ────────────────────────────────────── */}
+        {/* ── Summary Grid (2x2) with inline expansion ──────────────── */}
         <View style={styles.summaryGrid}>
+          {/* Promedio BPM — success green */}
           <MetricCard
             label="Promedio BPM"
             value={summaryMetrics.avgBpm}
             unit="BPM"
-            color={bpmLineColor}
+            color={CARD_COLORS.bpm}
             icon="heart"
             c={colors}
-            onPress={() => {
-              const classList = Object.entries(extraStats.bpmClassCounts)
-                .map(([lbl, cnt]) => '  • ' + lbl + ': ' + cnt)
-                .join('\n');
-              Alert.alert(
-                'Promedio BPM',
-                'Promedio: ' + summaryMetrics.avgBpm + ' BPM\n' +
-                'Minimo: ' + extraStats.minBpm + ' BPM | Maximo: ' + extraStats.maxBpm + ' BPM\n' +
-                'Ultima: ' + summaryMetrics.lastBpm + ' BPM (' + (summaryMetrics.lastBpmClass?.label || '--') + ')\n\n' +
-                'Clasificaciones:\n' + classList
-              );
-            }}
+            expanded={expandedCard === 'bpm'}
+            onPress={() => toggleCard('bpm')}
+            expandedContent={
+              <BpmExpanded stats={extraStats} cardColors={CARD_COLORS} c={colors} />
+            }
           />
+
+          {/* Ultima PA — danger red, no accent bar, no icon */}
           <MetricCard
             label="Ultima PA"
             value={summaryMetrics.lastBpStr}
             unit="mmHg"
-            color={sysLineColor}
-            icon="water"
+            color={CARD_COLORS.bp}
+            icon={null}
             c={colors}
-            onPress={() => {
-              if (!extraStats.bpDetail) {
-                Alert.alert('Ultima PA', 'No hay mediciones de presion arterial registradas.');
-                return;
-              }
-              Alert.alert(
-                'Ultima PA',
-                'Lectura: ' + extraStats.bpDetail.sys + '/' + extraStats.bpDetail.dia + ' mmHg\n' +
-                'Clasificacion: ' + extraStats.bpDetail.classification + '\n' +
-                getBpDescription(extraStats.bpDetail.classification) + '\n\n' +
-                'Fecha: ' + formatDate(extraStats.bpDetail.timestamp)
-              );
-            }}
+            expanded={expandedCard === 'bp'}
+            onPress={() => toggleCard('bp')}
+            expandedContent={
+              <BpExpanded stats={extraStats} cardColors={CARD_COLORS} c={colors} />
+            }
           />
+
+          {/* HRV Promedio — info indigo */}
           <MetricCard
             label="HRV Promedio"
             value={
@@ -567,36 +789,28 @@ export default function AnalyticsScreen() {
                 : '--'
             }
             unit="ms"
-            color={hrvLineColor}
-            icon="chart-bar"
+            color={CARD_COLORS.hrv}
+            icon="heart-pulse"
             c={colors}
-            onPress={() => {
-              Alert.alert(
-                'HRV Promedio',
-                'SDNN Promedio: ' + (summaryMetrics.avgSdnn > 0 ? summaryMetrics.avgSdnn.toFixed(1) : '--') + ' ms\n' +
-                'Interpretacion: ' + getHrvInterpretation(summaryMetrics.avgSdnn) + '\n\n' +
-                'El SDNN mide la variabilidad del ritmo cardiaco.\nValores altos indican buena recuperacion y salud cardiovascular.'
-              );
-            }}
+            expanded={expandedCard === 'hrv'}
+            onPress={() => toggleCard('hrv')}
+            expandedContent={
+              <HrvExpanded stats={extraStats} cardColors={CARD_COLORS} c={colors} />
+            }
           />
+
+          {/* Total Mediciones — primary sky blue */}
           <MetricCard
             label="Total Mediciones"
             value={summaryMetrics.total}
-            color={colors.textPrimary}
+            color={CARD_COLORS.total}
             icon="clipboard-text"
             c={colors}
-            onPress={() => {
-              Alert.alert(
-                'Total Mediciones',
-                'Total: ' + summaryMetrics.total + ' mediciones\n' +
-                'Rango de fechas: ' + extraStats.dateRange + '\n\n' +
-                (summaryMetrics.total > 0
-                  ? summaryMetrics.total === 1
-                    ? 'Realiza mas mediciones para obtener tendencias.'
-                    : 'Mantener un registro regular ayuda a identificar patrones en tu salud cardiovascular.'
-                  : 'Comienza a registrar mediciones para ver tu historial.')
-              );
-            }}
+            expanded={expandedCard === 'total'}
+            onPress={() => toggleCard('total')}
+            expandedContent={
+              <TotalExpanded stats={extraStats} cardColors={CARD_COLORS} c={colors} />
+            }
           />
         </View>
 
@@ -614,7 +828,7 @@ export default function AnalyticsScreen() {
             <VictoryChart
               width={CHART_WIDTH}
               height={CHART_HEIGHT}
-              padding={{ top: 10, bottom: 38, left: 44, right: 14 }}
+              padding={{ top: 10, bottom: 38, left: 50, right: 14 }}
               scale={{ x: 'time' }}
               containerComponent={
                 <VictoryVoronoiContainer
@@ -622,7 +836,7 @@ export default function AnalyticsScreen() {
                   labelComponent={
                     <VictoryTooltip
                       style={{ fill: 'white', fontSize: 12, fontWeight: '500' }}
-                      flyoutStyle={{ fill: '#1E293B', stroke: SKY_BLUE, strokeWidth: 1.5 }}
+                      flyoutStyle={{ fill: '#1E293B', stroke: CARD_COLORS.bpm, strokeWidth: 1.5 }}
                       pointerLength={8}
                       cornerRadius={6}
                     />
@@ -638,6 +852,7 @@ export default function AnalyticsScreen() {
               />
               <VictoryAxis
                 dependentAxis
+                label="BPM"
                 style={depAxisStyle}
                 tickFormat={(t) => Math.round(t)}
               />
@@ -674,7 +889,7 @@ export default function AnalyticsScreen() {
             <VictoryChart
               width={CHART_WIDTH}
               height={CHART_HEIGHT}
-              padding={{ top: 10, bottom: 38, left: 44, right: 14 }}
+              padding={{ top: 10, bottom: 38, left: 56, right: 14 }}
               scale={{ x: 'time' }}
               containerComponent={
                 <VictoryVoronoiContainer
@@ -682,7 +897,7 @@ export default function AnalyticsScreen() {
                   labelComponent={
                     <VictoryTooltip
                       style={{ fill: 'white', fontSize: 12, fontWeight: '500' }}
-                      flyoutStyle={{ fill: '#1E293B', stroke: SKY_BLUE, strokeWidth: 1.5 }}
+                      flyoutStyle={{ fill: '#1E293B', stroke: '#3B82F6', strokeWidth: 1.5 }}
                       pointerLength={8}
                       cornerRadius={6}
                     />
@@ -698,10 +913,11 @@ export default function AnalyticsScreen() {
               />
               <VictoryAxis
                 dependentAxis
+                label="mmHg"
                 style={depAxisStyle}
                 tickFormat={(t) => Math.round(t)}
               />
-              {/* Systolic — sky blue */}
+              {/* Systolic */}
               <VictoryLine
                 data={bpChartData.sys}
                 style={{
@@ -721,7 +937,7 @@ export default function AnalyticsScreen() {
                   },
                 }}
               />
-              {/* Diastolic — lighter blue */}
+              {/* Diastolic */}
               <VictoryLine
                 data={bpChartData.dia}
                 style={{
@@ -791,7 +1007,7 @@ export default function AnalyticsScreen() {
                   labelComponent={
                     <VictoryTooltip
                       style={{ fill: 'white', fontSize: 12, fontWeight: '500' }}
-                      flyoutStyle={{ fill: '#1E293B', stroke: HRV_GREEN, strokeWidth: 1.5 }}
+                      flyoutStyle={{ fill: '#1E293B', stroke: CARD_COLORS.hrv, strokeWidth: 1.5 }}
                       pointerLength={8}
                       cornerRadius={6}
                     />
@@ -807,6 +1023,7 @@ export default function AnalyticsScreen() {
               />
               <VictoryAxis
                 dependentAxis
+                label="ms"
                 style={depAxisStyle}
                 tickFormat={(t) => Math.round(t)}
               />
@@ -951,8 +1168,7 @@ export default function AnalyticsScreen() {
                       styles.statusLabel,
                       {
                         color:
-                          summaryMetrics.lastBpmClass.color ||
-                          colors.textSecondary,
+                          summaryMetrics.lastBpmClass.color || colors.textSecondary,
                       },
                     ]}
                   >
@@ -1121,6 +1337,7 @@ const styles = StyleSheet.create({
   metricHeader: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     marginBottom: 8,
   },
   metricIconWrap: {
@@ -1149,6 +1366,107 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '500',
     marginTop: 1,
+  },
+
+  /* ── Expanded card area ──────────────────────────────────────────────── */
+  expandBadge: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  expandedContainer: {
+    borderTopWidth: 1,
+    paddingHorizontal: 14,
+    paddingBottom: 14,
+    paddingTop: 10,
+  },
+  expandedBody: {
+    gap: 10,
+  },
+  expandedRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  expandedStat: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  expandedStatVal: {
+    fontSize: 20,
+    fontWeight: '800',
+    letterSpacing: -0.3,
+  },
+  expandedStatLbl: {
+    fontSize: 10,
+    fontWeight: '500',
+    marginTop: 2,
+    textAlign: 'center',
+  },
+  expandedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    borderRadius: RADIUS.sm,
+    gap: 6,
+  },
+  expandedDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
+  },
+  expandedBadgeText: {
+    fontSize: 12,
+    fontWeight: '700',
+    flex: 1,
+  },
+  expandedDesc: {
+    fontSize: 12,
+    fontWeight: '400',
+    flex: 1,
+    lineHeight: 17,
+  },
+  expandedSection: {
+    paddingTop: 2,
+    gap: 6,
+  },
+  expandedSectionTitle: {
+    fontSize: 11,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  expandedClassRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 3,
+  },
+  expandedClassLabel: {
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  expandedClassCount: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  expandedDate: {
+    fontSize: 11,
+    fontWeight: '500',
+  },
+  expandedTip: {
+    fontSize: 12,
+    fontWeight: '400',
+    lineHeight: 17,
+    fontStyle: 'italic',
+  },
+  expandedEmpty: {
+    fontSize: 13,
+    fontWeight: '400',
+    textAlign: 'center',
+    paddingVertical: 6,
   },
 
   /* ── Chart Card ──────────────────────────────────────────────────────── */
