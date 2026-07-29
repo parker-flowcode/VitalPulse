@@ -71,6 +71,23 @@ function getBpDescription(label) {
   return map[label] || '';
 }
 
+// ─── HRV description (Spanish) ────────────────────────────────────────────
+function getHrvDescription(sdnn) {
+  if (sdnn <= 0) return '';
+  if (sdnn < 30) return 'Baja variabilidad (mayor = mejor salud cardiovascular).';
+  if (sdnn < 60) return 'Variabilidad moderada (mayor = mejor salud cardiovascular).';
+  return 'Alta variabilidad — buena recuperacion (mayor = mejor salud cardiovascular).';
+}
+
+// ─── Quality description (Spanish) ─────────────────────────────────────────
+function getQualityDescription(quality) {
+  if (quality == null) return '';
+  if (quality > 0.8) return 'Excelente calidad de senal. Medicion confiable.';
+  if (quality > 0.6) return 'Buena calidad de senal. Resultado aceptable.';
+  if (quality > 0.4) return 'Calidad regular. Considere repetir la medicion.';
+  return 'Calidad baja. Cubra mejor la camara y evite movimiento.';
+}
+
 // ─── Filter data by active tab ─────────────────────────────────────────────────
 function filterByTab(data, tab) {
   if (tab === 'Todo') return data;
@@ -446,15 +463,20 @@ function SwipeableItem({ item, onDelete, colors, isExpanded, onToggleExpand }) {
 
               {/* HRV */}
               {item.sdnn > 0 && (
-                <View style={styles.expandRow}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', width: 68 }}>
-                    <Icon name="chart-bar" size={12} color={colors.textMuted} />
-                    <Text style={[styles.expandLabel, { color: colors.textMuted, width: undefined, marginLeft: 4 }]}>HRV:</Text>
+                <>
+                  <View style={styles.expandRow}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', width: 68 }}>
+                      <Icon name="chart-bar" size={12} color={colors.textMuted} />
+                      <Text style={[styles.expandLabel, { color: colors.textMuted, width: undefined, marginLeft: 4 }]}>HRV:</Text>
+                    </View>
+                    <Text style={[styles.expandValue, { color: colors.info }]}>
+                      {Math.round(item.sdnn * 10) / 10} ms
+                    </Text>
                   </View>
-                  <Text style={[styles.expandValue, { color: colors.info }]}>
-                    {Math.round(item.sdnn * 10) / 10} ms
+                  <Text style={[styles.expandDesc, { color: colors.textMuted }]}>
+                    {getHrvDescription(item.sdnn)}
                   </Text>
-                </View>
+                </>
               )}
 
               {/* Quality */}
@@ -464,9 +486,12 @@ function SwipeableItem({ item, onDelete, colors, isExpanded, onToggleExpand }) {
                   <Text style={[styles.expandLabel, { color: colors.textMuted, width: undefined, marginLeft: 4 }]}>Calidad:</Text>
                 </View>
                 <Text style={[styles.expandValue, { color: colors.success }]}>
-                  {item.quality || 'Buena'}
+                  {item.quality != null ? Math.round(item.quality * 100) + '%' : 'Buena'}
                 </Text>
               </View>
+              <Text style={[styles.expandDesc, { color: colors.textMuted }]}>
+                {getQualityDescription(item.quality)}
+              </Text>
             </View>
           )}
         </TouchableOpacity>

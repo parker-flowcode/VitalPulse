@@ -265,7 +265,6 @@ export default function HomeScreen({ navigation }) {
             </View>
           </View>
         ) : (
-          {/* ───── Empty state ───── */}
           <View style={styles.emptyGlass}>
             <View style={styles.emptyIconWrap}>
               <Icon name="heart" size={22} color={colors.primary} />
