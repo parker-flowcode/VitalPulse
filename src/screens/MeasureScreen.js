@@ -50,7 +50,7 @@ const PREP_DELAY = 800;             // ms antes de empezar fase measuring
 const CAPTURE_START_DELAY = 100;    // ms antes de activar captura
 
 export default function MeasureScreen({ navigation }) {
-  const { colors } = useTheme();
+  const { colors, resolvedTheme } = useTheme();
 
   const insets = useSafeAreaInsets();
   const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = useWindowDimensions();
@@ -469,7 +469,7 @@ export default function MeasureScreen({ navigation }) {
   if (!hasPermission) {
     return (
       <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]}>
-        <StatusBar barStyle="dark-content" backgroundColor={colors.bg} />
+        <StatusBar barStyle={resolvedTheme === 'dark' ? 'light-content' : 'dark-content'} backgroundColor={colors.bg} />
         <View style={[styles.center, { backgroundColor: colors.bg }]}>
           <Icon name="camera" size={48} color={colors.primary} style={{ marginBottom: 16 }} />
           <Text style={[styles.permTitle, { color: colors.textPrimary, fontSize: Math.round(20 * fontScale) }]}>
@@ -489,7 +489,7 @@ export default function MeasureScreen({ navigation }) {
   if (!device) {
     return (
       <View style={[styles.center, { backgroundColor: colors.bg }]}>
-        <StatusBar barStyle="dark-content" backgroundColor={colors.bg} />
+        <StatusBar barStyle={resolvedTheme === 'dark' ? 'light-content' : 'dark-content'} backgroundColor={colors.bg} />
         <Text style={[styles.permText, { color: colors.textSecondary }]}>
           Camara trasera no disponible.
         </Text>
@@ -500,7 +500,7 @@ export default function MeasureScreen({ navigation }) {
   if (phase === 'processing') {
     return (
       <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]}>
-        <StatusBar barStyle="dark-content" backgroundColor={colors.bg} />
+        <StatusBar barStyle={resolvedTheme === 'dark' ? 'light-content' : 'dark-content'} backgroundColor={colors.bg} />
         <View style={[styles.center, { backgroundColor: colors.bg }]}>
           <Icon name="heart-pulse" size={64} color={colors.primary} style={{ marginBottom: 20 }} />
           <Text style={[styles.processingTitle, { color: colors.textPrimary, fontSize: Math.round(22 * fontScale) }]}>
@@ -517,10 +517,7 @@ export default function MeasureScreen({ navigation }) {
   // ─── Renderizado principal ───────────────────────────────────────────────
   return (
     <View style={[styles.container, { backgroundColor: colors.bg }]}>
-      <StatusBar
-        barStyle="dark-content"
-        backgroundColor={colors.bg}
-      />
+      <StatusBar barStyle={resolvedTheme === 'dark' ? 'light-content' : 'dark-content'} backgroundColor={colors.bg} />
       <Camera
         style={styles.hiddenCamera}
         device={device}

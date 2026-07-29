@@ -9,9 +9,9 @@ import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-nati
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { lightColors } from '../theme/designTokens';
+import { darkColors } from '../theme/designTokens';
 
-const C = lightColors;
+const C = darkColors;
 
 export default class ErrorBoundary extends Component {
   constructor(props) {
@@ -108,7 +108,7 @@ const styles = StyleSheet.create({
   card:            { backgroundColor: C.bgCard, borderRadius: 16, padding: 20, marginBottom: 20, borderWidth: 1, borderColor: C.border, width: '100%' },
   cardText:        { color: C.textSecondary, fontSize: 14, lineHeight: 22, textAlign: 'center' },
   primaryBtn:      { backgroundColor: C.primary, borderRadius: 16, padding: 18, alignItems: 'center', marginBottom: 12, width: '100%' },
-  primaryBtnText:  { color: '#fff', fontSize: 17, fontWeight: '700' },
+  primaryBtnText:  { color: C.textOnPrimary, fontSize: 17, fontWeight: '700' },
   dangerBtn:       { backgroundColor: 'transparent', borderRadius: 16, padding: 16, alignItems: 'center', marginBottom: 16, borderWidth: 1, borderColor: C.danger, width: '100%' },
   dangerBtnText:   { color: C.danger, fontSize: 15, fontWeight: '600' },
   hint:            { color: C.textMuted, fontSize: 12, textAlign: 'center', lineHeight: 18 },

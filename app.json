@@ -19,7 +19,7 @@
     "assetBundlePatterns": [
       "**/*"
     ],
-    "description": "Monitor cardiovascular personal. Mide tu pulso y estima tu presión arterial usando la cámara de tu móvil.",
+    "description": "Monitor cardiovascular personal. Mide tu pulso y estima tu presion arterial usando la camara de tu movil. IMPORTANTE: Esta app no es un dispositivo medico certificado. No sustituye el diagnostico profesional. Consulte siempre a su medico.",
     "githubUrl": "https://github.com/parker-flowcode/VitalPulse",
     "ios": {
       "supportsTablet": false,
@@ -37,7 +37,7 @@
         "backgroundColor": "#38BDF8"
       },
       "package": "com.vpstudios.vitalpulse",
-      "versionCode": 17,
+      "versionCode": 18,
       "permissions": [
         "android.permission.CAMERA"
       ]

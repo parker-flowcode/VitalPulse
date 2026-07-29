@@ -6,10 +6,12 @@ import AppNavigator from './src/navigation/AppNavigator';
 import ErrorBoundary from './src/components/ErrorBoundary';
 import { ThemeProvider } from './src/theme/ThemeContext';
 import { initAds } from './src/services/ads';
+import { initIAP } from './src/services/subscriptions';
 
 export default function App() {
   useEffect(() => {
     initAds();
+    initIAP();
   }, []);
 
   return (

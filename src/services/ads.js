@@ -77,6 +77,9 @@ export function getBannerUnitId() {
 
 export async function showInterstitialAd() {
   try {
+    const { isPro } = require('./subscriptions');
+    if (isPro()) return false;
+
     const now = Date.now();
     if (now - _lastInterstitialTime < 30000) return false;
 
