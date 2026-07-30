@@ -15,7 +15,7 @@ import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../theme/ThemeContext';
 import { generateCSV, shareCSV, getExportFilename } from '../services/exportService';
 import { isPro, getCurrentPlan, PLANS } from '../services/subscriptions';
-import BannerAd from '../components/BannerAd';
+import BottomWarningAdWrapper from '../components/BottomWarningAdWrapper';
 import { SPACING, RADIUS, SHADOWS } from '../theme/designTokens';
 
 // ─── Constants ───────────────────────────────────────────────────────────────────
@@ -837,11 +837,7 @@ export default function SettingsScreen() {
             </View>
           </AccordionSection>
 
-          {/* ─── Banner Ad ─────────────────────────────────────────────────── */}
-          <BannerAd />
-
-          {/* ─── Bottom spacing ────────────────────────────────────────────── */}
-          <View style={{ height: 20 }} />
+          <BottomWarningAdWrapper />
 
           {/* ─── Footer legal links (at end of scroll, not sticky) ─────────── */}
           <View style={styles.footer}>
