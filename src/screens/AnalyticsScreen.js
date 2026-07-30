@@ -658,7 +658,7 @@ export default function AnalyticsScreen() {
   // ─── Empty state ────────────────────────────────────────────────────
   if (history.length === 0) {
     return (
-      <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]}>
+      <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top', 'bottom']}>
         <View style={styles.header}>
           <Text style={[styles.title, { color: colors.textPrimary }]}>
             Análisis
@@ -680,6 +680,8 @@ export default function AnalyticsScreen() {
             Realiza al menos una medición para ver tus graficas y estadisticas.
           </Text>
         </View>
+
+        <BottomWarningAdWrapper />
       </SafeAreaView>
     );
   }
@@ -701,6 +703,7 @@ export default function AnalyticsScreen() {
       edges={['top', 'bottom']}
     >
       <ScrollView
+        style={{flex: 1}}
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
       >

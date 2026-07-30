@@ -5,6 +5,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import AppNavigator from './src/navigation/AppNavigator';
 import ErrorBoundary from './src/components/ErrorBoundary';
 import { ThemeProvider } from './src/theme/ThemeContext';
+import { LanguageProvider } from './src/theme/LanguageContext';
 import { initAds } from './src/services/ads';
 import { initIAP } from './src/services/subscriptions';
 
@@ -16,12 +17,14 @@ export default function App() {
 
   return (
     <ThemeProvider>
-      <SafeAreaProvider>
-        <StatusBar style="dark" />
-        <ErrorBoundary>
-          <AppNavigator />
-        </ErrorBoundary>
-      </SafeAreaProvider>
+      <LanguageProvider>
+        <SafeAreaProvider>
+          <StatusBar style="dark" />
+          <ErrorBoundary>
+            <AppNavigator />
+          </ErrorBoundary>
+        </SafeAreaProvider>
+      </LanguageProvider>
     </ThemeProvider>
   );
 }

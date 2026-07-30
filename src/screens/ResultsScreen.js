@@ -73,7 +73,7 @@ export default function ResultsScreen({ navigation, route }) {
   // ─── Empty / error state ──────────────────────────────────────────────
   if (!route?.params?.measurement) {
     return (
-      <SafeAreaView style={[styles.safe, { backgroundColor: colors.bgCard }]}>
+      <SafeAreaView style={[styles.safe, { backgroundColor: colors.bgCard }]} edges={['top', 'bottom']}>
         <StatusBar barStyle={resolvedTheme === 'dark' ? 'light-content' : 'dark-content'} backgroundColor={colors.bgCard} />
         <View style={styles.center}>
           <Icon name="alert" size={36} color={colors.warning} style={{ marginBottom: 14 }} />
@@ -87,6 +87,8 @@ export default function ResultsScreen({ navigation, route }) {
             <Text style={[styles.primaryBtnText, { color: colors.textOnPrimary }]}>Volver al inicio</Text>
           </TouchableOpacity>
         </View>
+
+        <BottomWarningAdWrapper />
       </SafeAreaView>
     );
   }
@@ -132,13 +134,14 @@ export default function ResultsScreen({ navigation, route }) {
   };
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: colors.bgCard }]}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: colors.bgCard }]} edges={['top', 'bottom']}>
       <StatusBar barStyle={resolvedTheme === 'dark' ? 'light-content' : 'dark-content'} backgroundColor={colors.bgCard} />
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <ScrollView
+          style={{flex: 1}}
           contentContainerStyle={[
             styles.scroll,
             { paddingBottom: Math.max(insets.bottom + 40, 40) },

@@ -251,8 +251,8 @@ export default function TutorialScreen({ navigation }) {
     const styles = createStyles(colors);
 
     return (
-      <SafeAreaView style={styles.safe}>
-        <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+      <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
+        <ScrollView style={{flex: 1}} contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
           <View style={styles.resultsHeader}>
             <View style={styles.resultsTitleRow}>
               <Icon name="check-circle" size={26} color={colors.success} />
@@ -324,8 +324,8 @@ export default function TutorialScreen({ navigation }) {
     const styles = createStyles(colors);
 
     return (
-      <SafeAreaView style={styles.safe}>
-        <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+      <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
+        <ScrollView style={{flex: 1}} contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
           <View style={styles.heroSection}>
             <Icon name="controller-classic" size={64} color={colors.primary} style={{marginBottom: 16}} />
             <Text style={styles.heroTitle}>Modo Tutorial</Text>
@@ -370,7 +370,7 @@ export default function TutorialScreen({ navigation }) {
   const styles = createStyles(colors);
 
   return (
-    <SafeAreaView style={styles.simSafe}>
+    <SafeAreaView style={styles.simSafe} edges={['top', 'bottom']}>
       <View style={styles.simContainer}>
         {/* Header */}
         <View style={styles.simHeader}>
@@ -422,6 +422,8 @@ export default function TutorialScreen({ navigation }) {
 
         <Text style={styles.framesText}>{rawValues.length} frames generados</Text>
       </View>
+
+      <BottomWarningAdWrapper />
     </SafeAreaView>
   );
 }

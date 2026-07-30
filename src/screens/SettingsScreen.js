@@ -13,6 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import useHealthStore from '../store/healthstore';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../theme/ThemeContext';
+import { useLanguage } from '../theme/LanguageContext';
 import { generateCSV, shareCSV, getExportFilename } from '../services/exportService';
 import { isPro, getCurrentPlan, PLANS } from '../services/subscriptions';
 import BottomWarningAdWrapper from '../components/BottomWarningAdWrapper';
@@ -109,6 +110,7 @@ const accordionContent = (colors) => ({
 // ─── Main Screen ─────────────────────────────────────────────────────────────────
 export default function SettingsScreen() {
   const { colors, resolvedTheme, theme, setTheme } = useTheme();
+  const { lang, setLang } = useLanguage();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const navigation = useNavigation();
 
@@ -123,7 +125,6 @@ export default function SettingsScreen() {
   const [expandedPro,     setExpandedPro]     = useState(false);
   const [expandedTheme,   setExpandedTheme]   = useState(true);  // Always expanded by default
   const [expandedLang,    setExpandedLang]    = useState(false);
-  const [selectedLang,    setSelectedLang]    = useState('es');
   const [expandedProfile, setExpandedProfile] = useState(false);
   const [expandedCal,     setExpandedCal]     = useState(false);
   const [expandedAlerts,  setExpandedAlerts]  = useState(false);
@@ -182,15 +183,6 @@ export default function SettingsScreen() {
   const togglePreferRegression = (value) => {
     setPreferRegression(value);
     updateSettings({ preferRegression: value });
-  };
-
-  const handleLanguageChange = (lang) => {
-    setSelectedLang(lang);
-    if (lang === 'es') {
-      Alert.alert('Idioma cambiado a Español');
-    } else {
-      Alert.alert('Language changed to English');
-    }
   };
 
   const handleClearCalibration = () => {
@@ -262,12 +254,13 @@ export default function SettingsScreen() {
 
   // ─── Render ────────────────────────────────────────────────────────────────────
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <ScrollView
+          style={{flex: 1}}
           contentContainerStyle={styles.scroll}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
@@ -432,25 +425,31 @@ export default function SettingsScreen() {
             </Text>
             <View style={styles.themeRow}>
               <TouchableOpacity
-                style={[styles.themePill, selectedLang === 'es' && styles.themePillActive]}
-                onPress={() => handleLanguageChange('es')}
+                style={[styles.themePill, lang === 'es' && styles.themePillActive]}
+                onPress={() => setLang('es')}
                 activeOpacity={0.7}
               >
-                <Icon name="earth" size={18} color={selectedLang === 'es' ? colors.textOnPrimary : colors.textSecondary} />
-                <Text style={[styles.themePillLabel, selectedLang === 'es' && styles.themePillLabelActive]}>
+                <Icon name="earth" size={18} color={lang === 'es' ? colors.textOnPrimary : colors.textSecondary} />
+                <Text style={[styles.themePillLabel, lang === 'es' && styles.themePillLabelActive]}>
                   Español
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.themePill, selectedLang === 'en' && styles.themePillActive]}
-                onPress={() => handleLanguageChange('en')}
+                style={[styles.themePill, lang === 'en' && styles.themePillActive]}
+                onPress={() => setLang('en')}
                 activeOpacity={0.7}
               >
-                <Icon name="earth" size={18} color={selectedLang === 'en' ? colors.textOnPrimary : colors.textSecondary} />
-                <Text style={[styles.themePillLabel, selectedLang === 'en' && styles.themePillLabelActive]}>
+                <Icon name="earth" size={18} color={lang === 'en' ? colors.textOnPrimary : colors.textSecondary} />
+                <Text style={[styles.themePillLabel, lang === 'en' && styles.themePillLabelActive]}>
                   English
                 </Text>
               </TouchableOpacity>
+            </View>
+            <View style={styles.themeHintRow}>
+              <Icon name="earth" size={12} color={colors.textMuted} />
+              <Text style={styles.themeHint}>
+                Actual: {lang === 'es' ? 'Español' : 'English'}
+              </Text>
             </View>
           </AccordionSection>
 
