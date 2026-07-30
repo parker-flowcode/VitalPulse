@@ -813,7 +813,6 @@ export default function AnalyticsScreen() {
               height={CHART_HEIGHT}
               padding={{ top: 10, bottom: 38, left: 50, right: 14 }}
               scale={{ x: 'time' }}
-              }
             >
               <VictoryAxis
                 style={axisStyle}
@@ -878,23 +877,6 @@ export default function AnalyticsScreen() {
               height={CHART_HEIGHT}
               padding={{ top: 10, bottom: 38, left: 56, right: 14 }}
               scale={{ x: 'time' }}
-              containerComponent={
-                <VictoryVoronoiContainer
-                  radius={40}
-                  labels={({ datum }) => datum.y + ' mmHg\n' + formatDate(datum.ts)}
-                  labelComponent={
-                    <VictoryTooltip
-                      constrainToVisibleArea
-                      style={{ fill: colors.textPrimary, fontSize: 14, fontWeight: '700' }}
-                      flyoutStyle={{ fill: colors.bg, stroke: colors.primary, strokeWidth: 1, opacity: 1 }}
-                      flyoutPadding={{ top: 10, bottom: 10, left: 14, right: 14 }}
-                      pointerLength={6}
-                      cornerRadius={10}
-                      pointerWidth={8}
-                    />
-                  }
-                />
-              }
             >
               <VictoryAxis
                 style={axisStyle}
@@ -1022,23 +1004,6 @@ export default function AnalyticsScreen() {
               height={CHART_HEIGHT}
               padding={{ top: 10, bottom: 38, left: 44, right: 14 }}
               scale={{ x: 'time' }}
-              containerComponent={
-                <VictoryVoronoiContainer
-                  radius={40}
-                  labels={({ datum }) => datum.y + ' ms\n' + formatDate(datum.ts)}
-                  labelComponent={
-                    <VictoryTooltip
-                      constrainToVisibleArea
-                      style={{ fill: colors.textPrimary, fontSize: 14, fontWeight: '700' }}
-                      flyoutStyle={{ fill: colors.bg, stroke: CARD_COLORS.hrv, strokeWidth: 1, opacity: 1 }}
-                      flyoutPadding={{ top: 10, bottom: 10, left: 14, right: 14 }}
-                      pointerLength={6}
-                      cornerRadius={10}
-                      pointerWidth={8}
-                    />
-                  }
-                />
-              }
             >
               <VictoryAxis
                 style={axisStyle}
