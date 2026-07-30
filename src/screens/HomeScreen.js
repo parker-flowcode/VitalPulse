@@ -313,9 +313,8 @@ export default function HomeScreen({ navigation }) {
           <Text style={styles.tutorialChevron}>{'›'}</Text>
         </TouchableOpacity>
 
+        <BottomWarningAdWrapper />
       </ScrollView>
-
-      <BottomWarningAdWrapper />
 
       {/* ───── Pro Features Modal ───── */}
       <ProFeaturesModal

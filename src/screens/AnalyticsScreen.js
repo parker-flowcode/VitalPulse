@@ -1242,9 +1242,8 @@ export default function AnalyticsScreen() {
           </View>
         </ChartCard>
 
+        <BottomWarningAdWrapper />
       </ScrollView>
-
-      <BottomWarningAdWrapper />
 
       {/* ── Metric Detail Modal ────────────────────────────────────────── */}
       {modalCard && MODAL_CONFIG[modalCard] && (

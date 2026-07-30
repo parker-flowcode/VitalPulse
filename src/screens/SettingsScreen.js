@@ -903,10 +903,9 @@ export default function SettingsScreen() {
 
           {/* Extra bottom padding so nothing is cut off */}
           <View style={{ height: 40 }} />
+          <BottomWarningAdWrapper />
         </ScrollView>
       </KeyboardAvoidingView>
-
-      <BottomWarningAdWrapper />
     </SafeAreaView>
   );
 }

@@ -313,8 +313,8 @@ export default function TutorialScreen({ navigation }) {
             </TouchableOpacity>
           </View>
 
-        </ScrollView>
           <BottomWarningAdWrapper />
+        </ScrollView>
       </SafeAreaView>
     );
   }
@@ -360,8 +360,8 @@ export default function TutorialScreen({ navigation }) {
             <Text style={styles.realBtnText}>Ir a medición real</Text>
           </TouchableOpacity>
 
-        </ScrollView>
           <BottomWarningAdWrapper />
+        </ScrollView>
       </SafeAreaView>
     );
   }

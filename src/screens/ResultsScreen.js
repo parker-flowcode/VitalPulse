@@ -454,10 +454,9 @@ export default function ResultsScreen({ navigation, route }) {
               <Text style={[styles.secondaryBtnText, { color: colors.primary }]}>Inicio</Text>
             </TouchableOpacity>
           </View>
+          <BottomWarningAdWrapper />
         </ScrollView>
       </KeyboardAvoidingView>
-
-      <BottomWarningAdWrapper />
     </SafeAreaView>
   );
 }
