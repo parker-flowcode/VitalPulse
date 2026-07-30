@@ -22,6 +22,6 @@ const styles = StyleSheet.create({
   footer: {
     marginTop: 8,
     paddingHorizontal: 20,
-    paddingBottom: 24,
+    paddingBottom: 32,
   },
 });
