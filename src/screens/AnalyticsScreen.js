@@ -817,16 +817,17 @@ export default function AnalyticsScreen() {
               scale={{ x: 'time' }}
               containerComponent={
                 <VictoryVoronoiContainer
-                  voronoiDimension="x"
                   radius={40}
-                  labels={({ datum }) => formatDate(datum.ts) + ': ' + datum.y + ' BPM'}
+                  labels={({ datum }) => datum.y + ' BPM\n' + formatDate(datum.ts)}
                   labelComponent={
                     <VictoryTooltip
                       constrainToVisibleArea
-                      style={{ fill: 'white', fontSize: 12, fontWeight: '500' }}
-                      flyoutStyle={{ fill: '#1E293B', stroke: CARD_COLORS.bpm, strokeWidth: 1.5 }}
-                      pointerLength={8}
-                      cornerRadius={6}
+                      style={{ fill: colors.textPrimary, fontSize: 14, fontWeight: '700' }}
+                      flyoutStyle={{ fill: colors.bg, stroke: CARD_COLORS.bpm, strokeWidth: 1, opacity: 1 }}
+                      flyoutPadding={{ top: 10, bottom: 10, left: 14, right: 14 }}
+                      pointerLength={6}
+                      cornerRadius={10}
+                      pointerWidth={8}
                     />
                   }
                 />
@@ -897,16 +898,17 @@ export default function AnalyticsScreen() {
               scale={{ x: 'time' }}
               containerComponent={
                 <VictoryVoronoiContainer
-                  voronoiDimension="x"
                   radius={40}
-                  labels={({ datum }) => formatDate(datum.ts) + ': ' + datum.y + ' mmHg'}
+                  labels={({ datum }) => datum.y + ' mmHg\n' + formatDate(datum.ts)}
                   labelComponent={
                     <VictoryTooltip
                       constrainToVisibleArea
-                      style={{ fill: 'white', fontSize: 12, fontWeight: '500' }}
-                      flyoutStyle={{ fill: '#1E293B', stroke: '#3B82F6', strokeWidth: 1.5 }}
-                      pointerLength={8}
-                      cornerRadius={6}
+                      style={{ fill: colors.textPrimary, fontSize: 14, fontWeight: '700' }}
+                      flyoutStyle={{ fill: colors.bg, stroke: colors.primary, strokeWidth: 1, opacity: 1 }}
+                      flyoutPadding={{ top: 10, bottom: 10, left: 14, right: 14 }}
+                      pointerLength={6}
+                      cornerRadius={10}
+                      pointerWidth={8}
                     />
                   }
                 />
@@ -1040,16 +1042,17 @@ export default function AnalyticsScreen() {
               scale={{ x: 'time' }}
               containerComponent={
                 <VictoryVoronoiContainer
-                  voronoiDimension="x"
                   radius={40}
-                  labels={({ datum }) => formatDate(datum.ts) + ': ' + datum.y + ' ms'}
+                  labels={({ datum }) => datum.y + ' ms\n' + formatDate(datum.ts)}
                   labelComponent={
                     <VictoryTooltip
                       constrainToVisibleArea
-                      style={{ fill: 'white', fontSize: 12, fontWeight: '500' }}
-                      flyoutStyle={{ fill: '#1E293B', stroke: CARD_COLORS.hrv, strokeWidth: 1.5 }}
-                      pointerLength={8}
-                      cornerRadius={6}
+                      style={{ fill: colors.textPrimary, fontSize: 14, fontWeight: '700' }}
+                      flyoutStyle={{ fill: colors.bg, stroke: CARD_COLORS.hrv, strokeWidth: 1, opacity: 1 }}
+                      flyoutPadding={{ top: 10, bottom: 10, left: 14, right: 14 }}
+                      pointerLength={6}
+                      cornerRadius={10}
+                      pointerWidth={8}
                     />
                   }
                 />
