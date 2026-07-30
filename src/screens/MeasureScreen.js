@@ -78,6 +78,7 @@ export default function MeasureScreen({ navigation }) {
   const lastBPMCheckRef        = useRef(0);
   const lastAutoCancelRef      = useRef(0);
   const captureStartRef        = useRef(null);
+  const qualitySmoothRef       = useRef([]);
 
   const isCapturingSV = useSharedValue(false);
 
@@ -94,6 +95,15 @@ export default function MeasureScreen({ navigation }) {
   const [fingerState, setFingerState]     = useState({ state: 'waiting', message: '' });
 
   const { calibration, userProfile, settings, addMeasurement } = useHealthStore();
+
+  // ─── Suavizado de calidad de senal ────────────────────────────────────────
+  const setSmoothedQuality = (raw) => {
+    const arr = qualitySmoothRef.current;
+    arr.push(raw);
+    if (arr.length > 3) arr.shift();
+    const avg = arr.reduce((s, v) => s + v, 0) / arr.length;
+    setSignalQuality(avg);
+  };
 
   // ─── Recibir valor de luminancia desde el worklet ─────────────────────────
   const timeLeftRef = useRef(MEASURE_DURATION);
@@ -134,13 +144,13 @@ export default function MeasureScreen({ navigation }) {
 
       if (!finger.fingerPresent) {
         if (finger.state === 'saturated_high') {
-          setSignalQuality(0.05);
+          setSmoothedQuality(0.05);
           setLiveBPM(0);
         } else if (finger.state === 'no_finger') {
-          setSignalQuality(0);
+          setSmoothedQuality(0);
           setLiveBPM(0);
         } else if (finger.state === 'low_ac') {
-          setSignalQuality(0.1);
+          setSmoothedQuality(0.1);
           setLiveBPM(0);
         }
         return;
@@ -149,7 +159,7 @@ export default function MeasureScreen({ navigation }) {
       const partial = processPPGSignal(localValuesRef.current, currentFps, Math.max(elapsed, 1));
       if (partial.ready && partial.bpm >= 40 && partial.bpm <= 200) {
         setLiveBPM(partial.bpm);
-        setSignalQuality(partial.quality);
+        setSmoothedQuality(partial.quality);
 
         if (partial.quality > 0.5) {
           Vibration.vibrate(30);
@@ -260,7 +270,7 @@ export default function MeasureScreen({ navigation }) {
     }
   };
 
-  // ─── Iniciar medicion ─────────────────────────────────────────────────────
+  // ─── Iniciar medición ────────────────────────────────────────────────────
   const startMeasurement = () => {
     if (!cameraReady) {
       Alert.alert('Camara no lista', 'Espera un momento y vuelve a intentarlo.');
@@ -414,6 +424,7 @@ export default function MeasureScreen({ navigation }) {
     lastChartUpdateRef.current = 0;
     lastBPMCheckRef.current = 0;
     lastAutoCancelRef.current = 0;
+    qualitySmoothRef.current = [];
     setDisplayValues([]);
     setLiveBPM(0);
     setSignalQuality(0);
@@ -757,7 +768,7 @@ export default function MeasureScreen({ navigation }) {
             >
               {cameraReady ? (
                 <Text style={[styles.startBtnText, { color: colors.textOnPrimary, fontSize: Math.round(18 * fontScale) }]}>
-                  Iniciar medicion
+                  Iniciar medición
                 </Text>
               ) : (
                 <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
@@ -980,6 +991,7 @@ const styles = StyleSheet.create({
     padding: 14,
     marginBottom: 16,
     borderWidth: 0,
+    alignItems: 'center',
   },
   qualityRow: {
     flexDirection: 'row',
@@ -995,6 +1007,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
     width: 100,
+    textAlign: 'center',
   },
   qualityDotRightGroup: {
     flexDirection: 'row',

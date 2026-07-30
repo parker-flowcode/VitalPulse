@@ -191,7 +191,7 @@ export function detectFinger(rawSignal) {
   }
 
   // R_mean en rango pero sin variación AC → hay dedo pero señal plana
-  if (std < 0.5) {
+  if (std < 0.3) {
     return {
       fingerPresent: false,
       state: 'low_ac',
@@ -405,6 +405,9 @@ export function calculateBPMFromPeaks(peaks, fps = 19) {
 }
 
 // ─── Calidad de señal ─────────────────────────────────────────────────────────
+// Buffer suavizado: mantiene las últimas 3 lecturas de calidad basadas en picos
+const _qualityHistory = [];
+
 export function signalQuality(signal, peaks, fps = 19) {
   if (signal.length < 10) return 0;
   const amplitude = Math.max(...signal) - Math.min(...signal);
@@ -419,7 +422,11 @@ export function signalQuality(signal, peaks, fps = 19) {
   const cv = meanInt > 0
     ? Math.sqrt(intervals.reduce((s, v) => s + (v - meanInt) ** 2, 0) / intervals.length) / meanInt
     : 1;
-  return Math.min(1, baseScore * 0.5 + Math.max(0, 1 - cv) * 0.5);
+  const raw = Math.min(1, baseScore * 0.5 + Math.max(0, 1 - cv) * 0.5);
+  // Suavizado: promedio móvil de las últimas 3 lecturas para evitar saltos bruscos
+  _qualityHistory.push(raw);
+  if (_qualityHistory.length > 3) _qualityHistory.shift();
+  return _qualityHistory.reduce((a, b) => a + b, 0) / _qualityHistory.length;
 }
 
 // ─── Morfología de onda ───────────────────────────────────────────────────────
