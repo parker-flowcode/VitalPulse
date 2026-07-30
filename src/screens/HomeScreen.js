@@ -21,8 +21,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import { useTheme } from '../theme/ThemeContext';
 import useHealthStore from '../store/healthstore';
-import LegalDisclaimer from '../components/LegalDisclaimer';
-import BannerAd from '../components/BannerAd';
+import BottomWarningAdWrapper from '../components/BottomWarningAdWrapper';
 import ProFeaturesModal from '../components/ProFeaturesModal';
 import { classifyBPM, classifyBP } from '../utils/bpEstimator';
 import { getCurrentPlan, getRemainingMeasurements, isPro } from '../services/subscriptions';
@@ -313,9 +312,7 @@ export default function HomeScreen({ navigation }) {
           <Text style={styles.tutorialChevron}>{'›'}</Text>
         </TouchableOpacity>
 
-        {/* ───── Disclaimer first, then BannerAd ───── */}
-        <LegalDisclaimer />
-        <BannerAd />
+        <BottomWarningAdWrapper />
       </ScrollView>
 
       {/* ───── Pro Features Modal ───── */}

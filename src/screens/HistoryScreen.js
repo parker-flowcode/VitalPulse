@@ -32,8 +32,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/ThemeContext';
 import useHealthStore from '../store/healthstore';
 import { classifyBPM, classifyBP } from '../utils/bpEstimator';
-import BannerAd from '../components/BannerAd';
-import LegalDisclaimer from '../components/LegalDisclaimer';
+import BottomWarningAdWrapper from '../components/BottomWarningAdWrapper';
 import { SPACING, RADIUS, SHADOWS } from '../theme/designTokens';
 
 // ─── Enable LayoutAnimation on Android ──────────────────────────────────────────
@@ -722,10 +721,7 @@ export default function HistoryScreen() {
       </View>
 
       {/* ── Footer (always visible at bottom) ──────────────────────────────── */}
-      <View style={styles.footer}>
-        <LegalDisclaimer />
-        <BannerAd compact />
-      </View>
+      <BottomWarningAdWrapper compactAd />
     </SafeAreaView>
   );
 }

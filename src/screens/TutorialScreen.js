@@ -19,7 +19,7 @@ import { useTheme } from '../theme/ThemeContext';
 import { processPPGSignal, resetKalman } from '../utils/ppgProcessor';
 import { estimateBPCalibrated, classifyBPM, classifyBP } from '../utils/bpEstimator';
 import useHealthStore from '../store/healthstore';
-import LegalDisclaimer from '../components/LegalDisclaimer';
+import BottomWarningAdWrapper from '../components/BottomWarningAdWrapper';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CHART_WIDTH = SCREEN_WIDTH - 48;
@@ -313,7 +313,7 @@ export default function TutorialScreen({ navigation }) {
             </TouchableOpacity>
           </View>
 
-          <LegalDisclaimer compact />
+          <BottomWarningAdWrapper />
         </ScrollView>
       </SafeAreaView>
     );
@@ -360,7 +360,7 @@ export default function TutorialScreen({ navigation }) {
             <Text style={styles.realBtnText}>Ir a medicion real</Text>
           </TouchableOpacity>
 
-          <LegalDisclaimer />
+          <BottomWarningAdWrapper />
         </ScrollView>
       </SafeAreaView>
     );

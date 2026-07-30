@@ -18,12 +18,13 @@ import {
   VictoryScatter,
   VictoryTooltip,
   VictoryVoronoiContainer,
+  VictoryArea,
 } from 'victory-native';
+import { Defs, LinearGradient, Stop } from 'react-native-svg';
 import { useTheme } from '../theme/ThemeContext';
 import useHealthStore from '../store/healthstore';
-import LegalDisclaimer from '../components/LegalDisclaimer';
 import { classifyBPM, classifyBP } from '../utils/bpEstimator';
-import BannerAd from '../components/BannerAd';
+import BottomWarningAdWrapper from '../components/BottomWarningAdWrapper';
 import { SPACING, RADIUS, SHADOWS } from '../theme/designTokens';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -50,16 +51,16 @@ const MODAL_CONFIG = {
 function createAxisStyle(colors) {
   return {
     axis: { stroke: colors.border, strokeWidth: 1 },
-    axisLabel: { padding: 30 },
+    axisLabel: { padding: 30, fontSize: 10, fill: colors.textMuted },
     tickLabels: {
       fill: colors.textMuted,
-      fontSize: 10,
+      fontSize: 9,
       fontFamily: 'System',
-      padding: 4,
+      padding: 3,
     },
     grid: {
-      stroke: colors.chartGrid || colors.borderLight,
-      strokeWidth: 1,
+      stroke: 'transparent',
+      strokeWidth: 0,
     },
   };
 }
@@ -67,10 +68,10 @@ function createAxisStyle(colors) {
 function createDependentAxisStyle(axisStyle) {
   return {
     ...axisStyle,
-    tickLabels: { ...axisStyle.tickLabels, fontSize: 9, padding: 4 },
+    tickLabels: { ...axisStyle.tickLabels, fontSize: 8, padding: 2 },
     grid: {
-      stroke: axisStyle.grid.stroke,
-      strokeWidth: 1,
+      stroke: 'transparent',
+      strokeWidth: 0,
     },
   };
 }
@@ -843,6 +844,22 @@ export default function AnalyticsScreen() {
                 style={depAxisStyle}
                 tickFormat={(t) => Math.round(t)}
               />
+              <Defs>
+                <LinearGradient id="bpmGradient" x1="0" y1="0" x2="0" y2="1">
+                  <Stop offset="0%" stopColor={bpmLineColor} stopOpacity={0.3} />
+                  <Stop offset="100%" stopColor={bpmLineColor} stopOpacity={0} />
+                </LinearGradient>
+              </Defs>
+              <VictoryArea
+                data={bpmChartData}
+                style={{
+                  data: {
+                    fill: 'url(#bpmGradient)',
+                    opacity: 0.15,
+                  },
+                }}
+                interpolation="natural"
+              />
               <VictoryLine
                 data={bpmChartData}
                 style={{
@@ -851,7 +868,7 @@ export default function AnalyticsScreen() {
                     strokeWidth: 2.5,
                   },
                 }}
-                interpolation="monotoneX"
+                interpolation="natural"
               />
               <VictoryScatter
                 data={bpmChartData}
@@ -907,7 +924,27 @@ export default function AnalyticsScreen() {
                 style={depAxisStyle}
                 tickFormat={(t) => Math.round(t)}
               />
+              <Defs>
+                <LinearGradient id="sysGradient" x1="0" y1="0" x2="0" y2="1">
+                  <Stop offset="0%" stopColor={sysLineColor} stopOpacity={0.3} />
+                  <Stop offset="100%" stopColor={sysLineColor} stopOpacity={0} />
+                </LinearGradient>
+                <LinearGradient id="diaGradient" x1="0" y1="0" x2="0" y2="1">
+                  <Stop offset="0%" stopColor={diaLineColor} stopOpacity={0.3} />
+                  <Stop offset="100%" stopColor={diaLineColor} stopOpacity={0} />
+                </LinearGradient>
+              </Defs>
               {/* Systolic */}
+              <VictoryArea
+                data={bpChartData.sys}
+                style={{
+                  data: {
+                    fill: 'url(#sysGradient)',
+                    opacity: 0.15,
+                  },
+                }}
+                interpolation="natural"
+              />
               <VictoryLine
                 data={bpChartData.sys}
                 style={{
@@ -916,7 +953,7 @@ export default function AnalyticsScreen() {
                     strokeWidth: 2.5,
                   },
                 }}
-                interpolation="monotoneX"
+                interpolation="natural"
               />
               <VictoryScatter
                 data={bpChartData.sys}
@@ -928,6 +965,16 @@ export default function AnalyticsScreen() {
                 }}
               />
               {/* Diastolic */}
+              <VictoryArea
+                data={bpChartData.dia}
+                style={{
+                  data: {
+                    fill: 'url(#diaGradient)',
+                    opacity: 0.15,
+                  },
+                }}
+                interpolation="natural"
+              />
               <VictoryLine
                 data={bpChartData.dia}
                 style={{
@@ -936,7 +983,7 @@ export default function AnalyticsScreen() {
                     strokeWidth: 2,
                   },
                 }}
-                interpolation="monotoneX"
+                interpolation="natural"
               />
               <VictoryScatter
                 data={bpChartData.dia}
@@ -1020,6 +1067,22 @@ export default function AnalyticsScreen() {
                 style={depAxisStyle}
                 tickFormat={(t) => Math.round(t)}
               />
+              <Defs>
+                <LinearGradient id="hrvGradient" x1="0" y1="0" x2="0" y2="1">
+                  <Stop offset="0%" stopColor={hrvLineColor} stopOpacity={0.3} />
+                  <Stop offset="100%" stopColor={hrvLineColor} stopOpacity={0} />
+                </LinearGradient>
+              </Defs>
+              <VictoryArea
+                data={hrvChartData}
+                style={{
+                  data: {
+                    fill: 'url(#hrvGradient)',
+                    opacity: 0.15,
+                  },
+                }}
+                interpolation="natural"
+              />
               <VictoryLine
                 data={hrvChartData}
                 style={{
@@ -1028,7 +1091,7 @@ export default function AnalyticsScreen() {
                     strokeWidth: 2.5,
                   },
                 }}
-                interpolation="monotoneX"
+                interpolation="natural"
               />
               <VictoryScatter
                 data={hrvChartData}
@@ -1228,8 +1291,7 @@ export default function AnalyticsScreen() {
 
         {/* ── Footer ───────────────────────────────────────────────── */}
         <View style={styles.footerSection}>
-          <LegalDisclaimer />
-          <BannerAd compact />
+          <BottomWarningAdWrapper />
         </View>
       </ScrollView>
 

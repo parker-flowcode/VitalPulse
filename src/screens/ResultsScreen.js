@@ -30,8 +30,7 @@ import {
   translateSaturated,
   validateMeasurement,
 } from '../utils/uxTranslations';
-import LegalDisclaimer from '../components/LegalDisclaimer';
-import BannerAd from '../components/BannerAd';
+import BottomWarningAdWrapper from '../components/BottomWarningAdWrapper';
 import { shareMeasurementSummary } from '../services/exportService';
 import { showInterstitialAd } from '../services/ads';
 import { SPACING, RADIUS, SHADOWS } from '../theme/designTokens';
@@ -435,11 +434,8 @@ export default function ResultsScreen({ navigation, route }) {
             <Text style={[styles.actionBtnText, { color: colors.primary }]}>Calibrar con tensiometro</Text>
           </TouchableOpacity>
 
-          {/* ─── Legal ─────────────────────────────────────────────── */}
-          <LegalDisclaimer />
-
-          {/* ─── Banner Ad ─────────────────────────────────────────── */}
-          <BannerAd />
+          {/* ─── Legal + Banner Ad (wrapper) ───────────────────────── */}
+          <BottomWarningAdWrapper />
 
           {/* ─── Bottom Buttons Row ────────────────────────────────── */}
           <View style={styles.actionsRow}>
