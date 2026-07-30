@@ -2,12 +2,12 @@
  * AnalyticsScreen.js — VitalPulse v9.5
  *
  * Pantalla de analisis premium con metricas coloreadas por tipo,
- * graficas con etiquetas de unidad, expansion inline de tarjetas
+ * graficas con etiquetas de unidad, modal popup para detalle de tarjetas
  * y distribucion de PA con colores clinicos.
  */
 import React, { useMemo, useCallback, useState } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, Dimensions, TouchableOpacity,
+  View, Text, StyleSheet, ScrollView, Dimensions, TouchableOpacity, Modal,
 } from 'react-native';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -36,6 +36,14 @@ const CARD_COLORS = {
   bp:    '#EF4444', // danger red
   hrv:   '#6366F1', // info indigo
   total: '#38BDF8', // primary sky blue
+};
+
+// ─── Modal config per metric card ────────────────────────────────────────
+const MODAL_CONFIG = {
+  bpm:   { title: 'Frecuencia Cardiaca',      icon: 'heart',         color: CARD_COLORS.bpm },
+  bp:    { title: 'Presion Arterial',          icon: 'water',         color: CARD_COLORS.bp },
+  hrv:   { title: 'Variabilidad Cardiaca (HRV)', icon: 'heart-pulse', color: CARD_COLORS.hrv },
+  total: { title: 'Total Mediciones',          icon: 'clipboard-text',color: CARD_COLORS.total },
 };
 
 // ─── Axis style factory ─────────────────────────────────────────────────
@@ -332,7 +340,7 @@ function TotalExpanded({ stats, cardColors, c }) {
 
 // ─── Metric Card ────────────────────────────────────────────────────────
 function MetricCard({
-  label, value, unit, color, icon, c, expanded, onPress, expandedContent,
+  label, value, unit, color, icon, c, onPress,
 }) {
   // When icon is explicitly null, hide both the accent bar and the icon.
   // When icon is a string, show both.
@@ -348,7 +356,7 @@ function MetricCard({
         SHADOWS.card,
         {
           backgroundColor: c.bg,
-          borderColor: expanded ? color + '50' : c.borderLight,
+          borderColor: c.borderLight,
         },
       ]}
     >
@@ -368,12 +376,6 @@ function MetricCard({
               ]}
             >
               <Icon name={icon} size={15} color={color || c.primary} />
-            </View>
-          )}
-          {/* Collapse indicator when expanded */}
-          {expanded && (
-            <View style={styles.expandBadge}>
-              <Icon name="chevron-up" size={13} color={color || c.primary} />
             </View>
           )}
         </View>
@@ -397,13 +399,6 @@ function MetricCard({
           {label}
         </Text>
       </View>
-
-      {/* Expanded detail area */}
-      {expanded && expandedContent && (
-        <View style={[styles.expandedContainer, { borderTopColor: color + '25' }]}>
-          {expandedContent}
-        </View>
-      )}
     </TouchableOpacity>
   );
 }
@@ -444,11 +439,16 @@ export default function AnalyticsScreen() {
   const { colors } = useTheme();
   const { history } = useHealthStore();
   const [selectedFilter, setSelectedFilter] = useState('Todo');
-  const [expandedCard, setExpandedCard] = useState(null);
+  const [modalCard, setModalCard] = useState(null);
 
-  // Toggle which card is expanded (or close it)
-  const toggleCard = useCallback((cardKey) => {
-    setExpandedCard((prev) => (prev === cardKey ? null : cardKey));
+  // Open modal for the given card key
+  const openModal = useCallback((cardKey) => {
+    setModalCard(cardKey);
+  }, []);
+
+  // Close the detail modal
+  const closeModal = useCallback(() => {
+    setModalCard(null);
   }, []);
 
   // ─── Data processing ─────────────────────────────────────────────────
@@ -748,7 +748,7 @@ export default function AnalyticsScreen() {
           ))}
         </View>
 
-        {/* ── Summary Grid (2x2) with inline expansion ──────────────── */}
+        {/* ── Summary Grid (2x2) with modal expansion ───────────────── */}
         <View style={styles.summaryGrid}>
           {/* Promedio BPM — success green */}
           <MetricCard
@@ -758,26 +758,18 @@ export default function AnalyticsScreen() {
             color={CARD_COLORS.bpm}
             icon="heart"
             c={colors}
-            expanded={expandedCard === 'bpm'}
-            onPress={() => toggleCard('bpm')}
-            expandedContent={
-              <BpmExpanded stats={extraStats} cardColors={CARD_COLORS} c={colors} />
-            }
+            onPress={() => openModal('bpm')}
           />
 
-          {/* Ultima PA — danger red, no accent bar, no icon */}
+          {/* Ultima PA — danger red, water drop icon */}
           <MetricCard
             label="Ultima PA"
             value={summaryMetrics.lastBpStr}
             unit="mmHg"
             color={CARD_COLORS.bp}
-            icon={null}
+            icon="water"
             c={colors}
-            expanded={expandedCard === 'bp'}
-            onPress={() => toggleCard('bp')}
-            expandedContent={
-              <BpExpanded stats={extraStats} cardColors={CARD_COLORS} c={colors} />
-            }
+            onPress={() => openModal('bp')}
           />
 
           {/* HRV Promedio — info indigo */}
@@ -792,11 +784,7 @@ export default function AnalyticsScreen() {
             color={CARD_COLORS.hrv}
             icon="heart-pulse"
             c={colors}
-            expanded={expandedCard === 'hrv'}
-            onPress={() => toggleCard('hrv')}
-            expandedContent={
-              <HrvExpanded stats={extraStats} cardColors={CARD_COLORS} c={colors} />
-            }
+            onPress={() => openModal('hrv')}
           />
 
           {/* Total Mediciones — primary sky blue */}
@@ -806,11 +794,7 @@ export default function AnalyticsScreen() {
             color={CARD_COLORS.total}
             icon="clipboard-text"
             c={colors}
-            expanded={expandedCard === 'total'}
-            onPress={() => toggleCard('total')}
-            expandedContent={
-              <TotalExpanded stats={extraStats} cardColors={CARD_COLORS} c={colors} />
-            }
+            onPress={() => openModal('total')}
           />
         </View>
 
@@ -832,9 +816,12 @@ export default function AnalyticsScreen() {
               scale={{ x: 'time' }}
               containerComponent={
                 <VictoryVoronoiContainer
+                  voronoiDimension="x"
+                  radius={40}
                   labels={({ datum }) => formatDate(datum.ts) + ': ' + datum.y + ' BPM'}
                   labelComponent={
                     <VictoryTooltip
+                      constrainToVisibleArea
                       style={{ fill: 'white', fontSize: 12, fontWeight: '500' }}
                       flyoutStyle={{ fill: '#1E293B', stroke: CARD_COLORS.bpm, strokeWidth: 1.5 }}
                       pointerLength={8}
@@ -893,9 +880,12 @@ export default function AnalyticsScreen() {
               scale={{ x: 'time' }}
               containerComponent={
                 <VictoryVoronoiContainer
+                  voronoiDimension="x"
+                  radius={40}
                   labels={({ datum }) => formatDate(datum.ts) + ': ' + datum.y + ' mmHg'}
                   labelComponent={
                     <VictoryTooltip
+                      constrainToVisibleArea
                       style={{ fill: 'white', fontSize: 12, fontWeight: '500' }}
                       flyoutStyle={{ fill: '#1E293B', stroke: '#3B82F6', strokeWidth: 1.5 }}
                       pointerLength={8}
@@ -1003,9 +993,12 @@ export default function AnalyticsScreen() {
               scale={{ x: 'time' }}
               containerComponent={
                 <VictoryVoronoiContainer
+                  voronoiDimension="x"
+                  radius={40}
                   labels={({ datum }) => formatDate(datum.ts) + ': ' + datum.y + ' ms'}
                   labelComponent={
                     <VictoryTooltip
+                      constrainToVisibleArea
                       style={{ fill: 'white', fontSize: 12, fontWeight: '500' }}
                       flyoutStyle={{ fill: '#1E293B', stroke: CARD_COLORS.hrv, strokeWidth: 1.5 }}
                       pointerLength={8}
@@ -1239,6 +1232,84 @@ export default function AnalyticsScreen() {
           <BannerAd compact />
         </View>
       </ScrollView>
+
+      {/* ── Metric Detail Modal ────────────────────────────────────────── */}
+      {modalCard && MODAL_CONFIG[modalCard] && (
+        <Modal
+          visible={modalCard !== null}
+          transparent
+          animationType="fade"
+          onRequestClose={closeModal}
+        >
+          <View style={styles.modalOverlay}>
+            <View
+              style={[
+                styles.modalCard,
+                SHADOWS.card,
+                {
+                  backgroundColor: colors.bg,
+                  borderColor: colors.borderLight,
+                },
+              ]}
+            >
+              {/* Top accent bar */}
+              <View
+                style={[
+                  styles.modalAccent,
+                  { backgroundColor: MODAL_CONFIG[modalCard].color },
+                ]}
+              />
+
+              {/* Close button */}
+              <TouchableOpacity
+                onPress={closeModal}
+                style={styles.modalClose}
+              >
+                <Icon
+                  name="close"
+                  size={20}
+                  color={colors.textSecondary}
+                />
+              </TouchableOpacity>
+
+              {/* Header */}
+              <View style={styles.modalHeader}>
+                <View
+                  style={[
+                    styles.modalIconWrap,
+                    { backgroundColor: MODAL_CONFIG[modalCard].color + '18' },
+                  ]}
+                >
+                  <Icon
+                    name={MODAL_CONFIG[modalCard].icon}
+                    size={20}
+                    color={MODAL_CONFIG[modalCard].color}
+                  />
+                </View>
+                <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
+                  {MODAL_CONFIG[modalCard].title}
+                </Text>
+              </View>
+
+              {/* Body */}
+              <View style={styles.modalContent}>
+                {modalCard === 'bpm' && (
+                  <BpmExpanded stats={extraStats} cardColors={CARD_COLORS} c={colors} />
+                )}
+                {modalCard === 'bp' && (
+                  <BpExpanded stats={extraStats} cardColors={CARD_COLORS} c={colors} />
+                )}
+                {modalCard === 'hrv' && (
+                  <HrvExpanded stats={extraStats} cardColors={CARD_COLORS} c={colors} />
+                )}
+                {modalCard === 'total' && (
+                  <TotalExpanded stats={extraStats} cardColors={CARD_COLORS} c={colors} />
+                )}
+              </View>
+            </View>
+          </View>
+        </Modal>
+      )}
     </SafeAreaView>
   );
 }
@@ -1368,20 +1439,7 @@ const styles = StyleSheet.create({
     marginTop: 1,
   },
 
-  /* ── Expanded card area ──────────────────────────────────────────────── */
-  expandBadge: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  expandedContainer: {
-    borderTopWidth: 1,
-    paddingHorizontal: 14,
-    paddingBottom: 14,
-    paddingTop: 10,
-  },
+  /* ── Expanded detail area (used inside Modal) ────────────────────────── */
   expandedBody: {
     gap: 10,
   },
@@ -1592,6 +1650,62 @@ const styles = StyleSheet.create({
   statusLabel: {
     fontSize: 12,
     fontWeight: '700',
+  },
+
+  /* ── Modal ───────────────────────────────────────────────────────────── */
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  modalCard: {
+    width: '100%',
+    maxWidth: 400,
+    borderRadius: RADIUS.lg,
+    borderWidth: 1,
+    overflow: 'hidden',
+  },
+  modalAccent: {
+    height: 4,
+  },
+  modalClose: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    zIndex: 10,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(0,0,0,0.06)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 4,
+  },
+  modalIconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    flex: 1,
+  },
+  modalContent: {
+    paddingHorizontal: 20,
+    paddingBottom: 24,
+    paddingTop: 8,
   },
 
   /* ── Footer ──────────────────────────────────────────────────────────── */
