@@ -16,8 +16,6 @@ import {
   VictoryLine,
   VictoryAxis,
   VictoryScatter,
-  VictoryTooltip,
-  VictoryVoronoiContainer,
   VictoryArea,
 } from 'victory-native';
 import { Defs, LinearGradient, Stop } from 'react-native-svg';
@@ -815,22 +813,6 @@ export default function AnalyticsScreen() {
               height={CHART_HEIGHT}
               padding={{ top: 10, bottom: 38, left: 50, right: 14 }}
               scale={{ x: 'time' }}
-              containerComponent={
-                <VictoryVoronoiContainer
-                  radius={40}
-                  labels={({ datum }) => datum.y + ' BPM\n' + formatDate(datum.ts)}
-                  labelComponent={
-                    <VictoryTooltip
-                      constrainToVisibleArea
-                      style={{ fill: colors.textPrimary, fontSize: 14, fontWeight: '700' }}
-                      flyoutStyle={{ fill: colors.bg, stroke: CARD_COLORS.bpm, strokeWidth: 1, opacity: 1 }}
-                      flyoutPadding={{ top: 10, bottom: 10, left: 14, right: 14 }}
-                      pointerLength={6}
-                      cornerRadius={10}
-                      pointerWidth={8}
-                    />
-                  }
-                />
               }
             >
               <VictoryAxis
