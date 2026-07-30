@@ -192,7 +192,7 @@ export default function ResultsScreen({ navigation, route }) {
               SHADOWS.elevated,
             ]}
           >
-            <Text style={[styles.cardLabel, { color: colors.textMuted }]}>FRECUENCIA CARDIACA</Text>
+            <Text style={[styles.cardLabel, { color: colors.textMuted }]}>FRECUENCIA CARDÍACA</Text>
             <Text
               style={[
                 styles.bpmValue,
@@ -231,7 +231,7 @@ export default function ResultsScreen({ navigation, route }) {
                   <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
                     <Icon name="lightning-bolt" size={10} color={colors.warning} />
                     <Text style={[styles.calibrationBadgeText, { color: colors.warning, marginLeft: 4 }]}>
-                      Sin calibracion — valores orientativos
+                      Sin calibración — valores orientativos
                     </Text>
                   </View>
                 </View>
@@ -272,7 +272,7 @@ export default function ResultsScreen({ navigation, route }) {
 
           {/* ─── Quality Grid ──────────────────────────────────────── */}
           <View style={[styles.glassCard, styles.qualityCard]}>
-            <Text style={[styles.cardLabel, { color: colors.textMuted }]}>CALIDAD DE LA MEDICION</Text>
+            <Text style={[styles.cardLabel, { color: colors.textMuted }]}>CALIDAD DE LA MEDICIÓN</Text>
             <View style={[styles.qualityGrid, { gap: gridGap }]}>
               {/* Signal */}
               <View style={[styles.qualityCell, { width: qualityCellWidth }]}>
@@ -346,7 +346,7 @@ export default function ResultsScreen({ navigation, route }) {
           {/* ─── HRV Card ──────────────────────────────────────────── */}
           {showAdvancedHRV ? (
             <View style={[styles.glassCard, styles.hrvCard]}>
-              <Text style={[styles.cardLabel, { color: colors.textMuted }]}>VARIABILIDAD CARDIACA (HRV)</Text>
+              <Text style={[styles.cardLabel, { color: colors.textMuted }]}>VARIABILIDAD CARDÍACA (HRV)</Text>
               <View style={styles.hrvHeader}>
                 <Icon name="heart-pulse" size={20} color={hrvUX.color} />
                 <Text style={[styles.hrvTitle, { color: hrvUX.color }]}>{hrvUX.label}</Text>
@@ -402,14 +402,14 @@ export default function ResultsScreen({ navigation, route }) {
             </View>
           ) : (
             <View style={[styles.glassCard, styles.hrvCard]}>
-              <Text style={[styles.cardLabel, { color: colors.textMuted }]}>VARIABILIDAD CARDIACA (HRV)</Text>
+              <Text style={[styles.cardLabel, { color: colors.textMuted }]}>VARIABILIDAD CARDÍACA (HRV)</Text>
               <View style={styles.hrvEmptyState}>
                 <Icon name="timer-outline" size={28} color={colors.textSecondary} style={{ marginBottom: 8 }} />
                 <Text style={[styles.hrvEmptyTitle, { color: colors.textSecondary }]}>Datos insuficientes</Text>
                 <Text style={[styles.hrvEmptyText, { color: colors.textMuted }]}>
                   {hasCriticalIssue
-                    ? 'La medicion fue demasiado corta. Manten el dedo quieto sobre la camara durante 60 segundos completos.'
-                    : 'Se necesitan mas latidos para analizar la variabilidad cardiaca.'}
+                    ? 'La medición fue demasiado corta. Manten el dedo quieto sobre la camara durante 60 segundos completos.'
+                    : 'Se necesitan mas latidos para analizar la variabilidad cardíaca.'}
                 </Text>
               </View>
             </View>
@@ -434,9 +434,6 @@ export default function ResultsScreen({ navigation, route }) {
             <Text style={[styles.actionBtnText, { color: colors.primary }]}>Calibrar con tensiometro</Text>
           </TouchableOpacity>
 
-          {/* ─── Legal + Banner Ad (wrapper) ───────────────────────── */}
-          <BottomWarningAdWrapper />
-
           {/* ─── Bottom Buttons Row ────────────────────────────────── */}
           <View style={styles.actionsRow}>
             <TouchableOpacity
@@ -444,7 +441,7 @@ export default function ResultsScreen({ navigation, route }) {
               onPress={() => navigation.push('Measure')}
               activeOpacity={0.8}
             >
-              <Text style={[styles.primaryBtnText, { color: colors.textOnPrimary }]}>Nueva medicion</Text>
+              <Text style={[styles.primaryBtnText, { color: colors.textOnPrimary }]}>Nueva medición</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.secondaryBtn, { backgroundColor: colors.bgCard, borderColor: colors.primary }]}
@@ -456,6 +453,8 @@ export default function ResultsScreen({ navigation, route }) {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      <BottomWarningAdWrapper />
     </SafeAreaView>
   );
 }

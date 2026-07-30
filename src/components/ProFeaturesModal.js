@@ -24,7 +24,7 @@ const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 const PRO_FEATURES = [
   'Mediciones ilimitadas',
   'Sin anuncios',
-  'Calibracion avanzada',
+  'Calibración avanzada',
   'Exportar datos CSV',
   'Graficas detalladas',
   'Metricas SNR avanzadas',

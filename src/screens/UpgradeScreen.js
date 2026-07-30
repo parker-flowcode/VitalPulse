@@ -20,7 +20,7 @@ import { SPACING, RADIUS, SHADOWS } from '../theme/designTokens';
 
 const FEATURES = [
   { icon: 'check-circle', text: 'Mediciones ilimitadas' },
-  { icon: 'check-circle', text: 'Calibracion multi-punto avanzada' },
+  { icon: 'check-circle', text: 'Calibración multi-punto avanzada' },
   { icon: 'check-circle', text: 'Exportacion de datos a CSV' },
   { icon: 'check-circle', text: 'Graficas detalladas de tendencias' },
   { icon: 'check-circle', text: 'SNR y metricas de calidad avanzadas' },
@@ -210,7 +210,7 @@ export default function UpgradeScreen({ navigation }) {
                 <Text style={[styles.compValuePro, { color: colors.success }]}>No</Text>
               </View>
               <View style={[styles.compRow, { borderBottomColor: colors.divider }]}>
-                <Text style={[styles.compLabel, { color: colors.textSecondary }]}>Calibracion avanzada</Text>
+                <Text style={[styles.compLabel, { color: colors.textSecondary }]}>Calibración avanzada</Text>
                 <Text style={[styles.compValueFree, { color: colors.danger }]}>No</Text>
                 <Text style={[styles.compValuePro, { color: colors.success }]}>Si</Text>
               </View>

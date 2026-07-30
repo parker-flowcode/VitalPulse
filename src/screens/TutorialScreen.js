@@ -1,7 +1,7 @@
 /**
  * TutorialScreen.js — VitalPulse v5.0
  *
- * Modo tutorial interactivo: simula una medicion PPG completa SIN camara real.
+ * Modo tutorial interactivo: simula una medición PPG completa SIN camara real.
  * Genera datos PPG sinteticos y ejecuta todo el pipeline de procesamiento
  * para que el usuario vea el flujo completo antes de usar la camara real.
  *
@@ -259,13 +259,13 @@ export default function TutorialScreen({ navigation }) {
               <Text style={styles.resultsTitle}>Simulacion completada</Text>
             </View>
             <Text style={styles.resultsSub}>
-              Datos generados artificialmente — no es una medicion real
+              Datos generados artificialmente — no es una medición real
             </Text>
           </View>
 
           {/* BPM */}
           <View style={[styles.resultCard, { borderColor: bpmClass.color + '44' }]}>
-            <Text style={styles.cardLabel}>FRECUENCIA CARDIACA</Text>
+            <Text style={styles.cardLabel}>FRECUENCIA CARDÍACA</Text>
             <Text style={[styles.bigValue, { color: bpmClass.color }]}>{result.bpm}</Text>
             <Text style={styles.bigUnit}>{'BPM (objetivo: '}{SYNTHETIC_BPM}{')'}</Text>
             <View style={[styles.badge, { backgroundColor: bpmClass.color + '22' }]}>
@@ -313,8 +313,8 @@ export default function TutorialScreen({ navigation }) {
             </TouchableOpacity>
           </View>
 
-          <BottomWarningAdWrapper />
         </ScrollView>
+          <BottomWarningAdWrapper />
       </SafeAreaView>
     );
   }
@@ -347,7 +347,7 @@ export default function TutorialScreen({ navigation }) {
           <View style={styles.infoCard}>
             <Text style={styles.infoTitle}>Como medir realmente</Text>
             <Text style={styles.infoText}>
-              En una medicion real, coloca tu dedo indice sobre la camara trasera,
+              En una medición real, coloca tu dedo indice sobre la camara trasera,
               cubriendo tambien el flash. Manten el movil quieto durante 60 segundos.
             </Text>
           </View>
@@ -357,11 +357,11 @@ export default function TutorialScreen({ navigation }) {
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.realBtn} onPress={() => navigation.navigate('Main')}>
-            <Text style={styles.realBtnText}>Ir a medicion real</Text>
+            <Text style={styles.realBtnText}>Ir a medición real</Text>
           </TouchableOpacity>
 
-          <BottomWarningAdWrapper />
         </ScrollView>
+          <BottomWarningAdWrapper />
       </SafeAreaView>
     );
   }

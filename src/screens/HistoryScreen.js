@@ -48,10 +48,10 @@ const FILTER_TABS = ['Hoy', 'Semana', 'Mes', 'Todo'];
 function getBpmDescription(label) {
   const map = {
     'Normal':             'Ritmo cardiaco normal en reposo (60-100 BPM).',
-    'Bradicardia':        'Frecuencia cardiaca baja (50-59 BPM). Comun en atletas.',
+    'Bradicardia':        'Frecuencia cardíaca baja (50-59 BPM). Comun en atletas.',
     'Bradicardia severa': 'Frecuencia peligrosamente baja (<50 BPM). Consulte medico.',
     'Taquicardia leve':   'Frecuencia ligeramente elevada (100-110 BPM).',
-    'Taquicardia':        'Frecuencia cardiaca elevada (110-130 BPM). Monitoree.',
+    'Taquicardia':        'Frecuencia cardíaca elevada (110-130 BPM). Monitoree.',
     'Taquicardia severa': 'Frecuencia muy elevada (>130 BPM). Consulte medico.',
   };
   return map[label] || '';
@@ -81,9 +81,9 @@ function getHrvDescription(sdnn) {
 // ─── Quality description (Spanish) ─────────────────────────────────────────
 function getQualityDescription(quality) {
   if (quality == null) return '';
-  if (quality > 0.8) return 'Excelente calidad de senal. Medicion confiable.';
+  if (quality > 0.8) return 'Excelente calidad de senal. Medición confiable.';
   if (quality > 0.6) return 'Buena calidad de senal. Resultado aceptable.';
-  if (quality > 0.4) return 'Calidad regular. Considere repetir la medicion.';
+  if (quality > 0.4) return 'Calidad regular. Considere repetir la medición.';
   return 'Calidad baja. Cubra mejor la camara y evite movimiento.';
 }
 
@@ -319,8 +319,8 @@ function SwipeableItem({ item, onDelete, colors, isExpanded, onToggleExpand }) {
   // ─── Delete confirmation ──────────────────────────────────────────────────
   const handleDelete = () => {
     Alert.alert(
-      'Eliminar medicion',
-      'Eliminar la medicion del ' +
+      'Eliminar medición',
+      'Eliminar la medición del ' +
         new Date(item.timestamp).toLocaleDateString('es-ES') +
         '?',
       [
@@ -602,7 +602,7 @@ export default function HistoryScreen() {
           </Text>
           {hasData && (
             <Text style={[styles.headerCount, { color: colors.textMuted }]}>
-              {history.length} {history.length === 1 ? 'medicion' : 'mediciones'}
+              {history.length} {history.length === 1 ? 'medición' : 'mediciones'}
             </Text>
           )}
         </View>

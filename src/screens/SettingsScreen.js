@@ -27,7 +27,7 @@ const THEME_OPTIONS = [
 
 const PRO_FEATURES = [
   { icon: 'chart-bar', title: 'Mediciones ilimitadas',         desc: 'Sin limite diario de mediciones' },
-  { icon: 'chart-line', title: 'Calibracion avanzada',           desc: 'Calibracion multi-punto con regresion' },
+  { icon: 'chart-line', title: 'Calibración avanzada',           desc: 'Calibración multi-punto con regresión' },
   { icon: 'share-variant', title: 'Exportacion a CSV',               desc: 'Descarga tus datos completos' },
   { icon: 'chart-line', title: 'Graficas de tendencias',          desc: 'Visualiza tu evolucion cardiovascular' },
   { icon: 'target', title: 'Metricas de calidad',             desc: 'SNR y metricas avanzadas de senal' },
@@ -122,6 +122,8 @@ export default function SettingsScreen() {
   // ─── Accordion expanded states ───────────────────────────────────────────────
   const [expandedPro,     setExpandedPro]     = useState(false);
   const [expandedTheme,   setExpandedTheme]   = useState(true);  // Always expanded by default
+  const [expandedLang,    setExpandedLang]    = useState(false);
+  const [selectedLang,    setSelectedLang]    = useState('es');
   const [expandedProfile, setExpandedProfile] = useState(false);
   const [expandedCal,     setExpandedCal]     = useState(false);
   const [expandedAlerts,  setExpandedAlerts]  = useState(false);
@@ -182,10 +184,19 @@ export default function SettingsScreen() {
     updateSettings({ preferRegression: value });
   };
 
+  const handleLanguageChange = (lang) => {
+    setSelectedLang(lang);
+    if (lang === 'es') {
+      Alert.alert('Idioma cambiado a Español');
+    } else {
+      Alert.alert('Language changed to English');
+    }
+  };
+
   const handleClearCalibration = () => {
     Alert.alert(
-      'Borrar calibracion',
-      'Eliminar todos los puntos de calibracion de PA?',
+      'Borrar calibración',
+      'Eliminar todos los puntos de calibración de PA?',
       [
         { text: 'Cancelar', style: 'cancel' },
         { text: 'Borrar', style: 'destructive', onPress: clearCalibration },
@@ -196,7 +207,7 @@ export default function SettingsScreen() {
   const handleClearAll = () => {
     Alert.alert(
       'Borrar todos los datos',
-      'Se eliminaran mediciones, calibracion, perfil y configuracion. Esta accion no se puede deshacer.',
+      'Se eliminaran mediciones, calibración, perfil y configuración. Esta accion no se puede deshacer.',
       [
         { text: 'Cancelar', style: 'cancel' },
         {
@@ -333,7 +344,7 @@ export default function SettingsScreen() {
               <>
                 <Text style={styles.proIntroText}>
                   Desbloquea el maximo potencial de VitalPulse. Mide sin limites,
-                  exporta tus datos y obten analisis avanzados.
+                  exporta tus datos y obten análisis avanzados.
                 </Text>
                 <View style={styles.proFeaturesList}>
                   {PRO_FEATURES.map((f, i) => (
@@ -407,7 +418,44 @@ export default function SettingsScreen() {
           </AccordionSection>
 
           {/* ═══════════════════════════════════════════════════════════════════
-              3. PERFIL PERSONAL
+              3. IDIOMA / LANGUAGE
+              ═══════════════════════════════════════════════════════════════════ */}
+          <AccordionSection
+            expanded={expandedLang}
+            onToggle={() => setExpandedLang(!expandedLang)}
+            icon="translate"
+            title="🌐 Idioma / Language"
+            colors={colors}
+          >
+            <Text style={styles.sectionDesc}>
+              Selecciona el idioma de la aplicacion. / Select the app language.
+            </Text>
+            <View style={styles.themeRow}>
+              <TouchableOpacity
+                style={[styles.themePill, selectedLang === 'es' && styles.themePillActive]}
+                onPress={() => handleLanguageChange('es')}
+                activeOpacity={0.7}
+              >
+                <Icon name="earth" size={18} color={selectedLang === 'es' ? colors.textOnPrimary : colors.textSecondary} />
+                <Text style={[styles.themePillLabel, selectedLang === 'es' && styles.themePillLabelActive]}>
+                  Español
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.themePill, selectedLang === 'en' && styles.themePillActive]}
+                onPress={() => handleLanguageChange('en')}
+                activeOpacity={0.7}
+              >
+                <Icon name="earth" size={18} color={selectedLang === 'en' ? colors.textOnPrimary : colors.textSecondary} />
+                <Text style={[styles.themePillLabel, selectedLang === 'en' && styles.themePillLabelActive]}>
+                  English
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </AccordionSection>
+
+          {/* ═══════════════════════════════════════════════════════════════════
+              4. PERFIL PERSONAL
               ═══════════════════════════════════════════════════════════════════ */}
           <AccordionSection
             expanded={expandedProfile}
@@ -551,18 +599,18 @@ export default function SettingsScreen() {
           </AccordionSection>
 
           {/* ═══════════════════════════════════════════════════════════════════
-              4. CALIBRACION PA
+              5. CALIBRACIÓN PA
               ═══════════════════════════════════════════════════════════════════ */}
           <AccordionSection
             expanded={expandedCal}
             onToggle={() => setExpandedCal(!expandedCal)}
             icon="ruler"
-            title="Calibracion PA"
+            title="Calibración PA"
             colors={colors}
           >
             <Text style={styles.sectionDesc}>
               Puedes calibrar la estimacion de presion arterial desde la pantalla
-              de resultados despues de cada medicion, introduciendo la lectura de
+              de resultados despues de cada medición, introduciendo la lectura de
               tu tensiometro real.
             </Text>
             {calibration?.points?.length > 0 ? (
@@ -572,7 +620,7 @@ export default function SettingsScreen() {
                     <Icon name="check-circle" size={14} color={colors.primary} />
                     <Text style={styles.calStatusText}>
                       {' '}{calibration.points.length} punto
-                      {calibration.points.length > 1 ? 's' : ''} de calibracion
+                      {calibration.points.length > 1 ? 's' : ''} de calibración
                       guardado{calibration.points.length > 1 ? 's' : ''}
                     </Text>
                   </View>
@@ -588,18 +636,18 @@ export default function SettingsScreen() {
                   onPress={handleClearCalibration}
                 >
                   <Text style={styles.dangerBtnSmallText}>
-                    Borrar calibracion
+                    Borrar calibración
                   </Text>
                 </TouchableOpacity>
               </>
             ) : (
               <Text style={styles.calEmptyText}>
-                Sin calibracion. Usa el boton en la pantalla de resultados.
+                Sin calibración. Usa el boton en la pantalla de resultados.
               </Text>
             )}
             <View style={styles.switchRow}>
               <Text style={styles.switchLabel}>
-                Preferir calibracion por regresion
+                Preferir calibración por regresión
               </Text>
               <Switch
                 value={preferRegression}
@@ -613,7 +661,7 @@ export default function SettingsScreen() {
           </AccordionSection>
 
           {/* ═══════════════════════════════════════════════════════════════════
-              5. ALERTAS BPM
+              6. ALERTAS BPM
               ═══════════════════════════════════════════════════════════════════ */}
           <AccordionSection
             expanded={expandedAlerts}
@@ -623,7 +671,7 @@ export default function SettingsScreen() {
             colors={colors}
           >
             <Text style={styles.sectionDesc}>
-              Recibe una notificacion si tu frecuencia cardiaca supera o baja de
+              Recibe una notificacion si tu frecuencia cardíaca supera o baja de
               estos limites.
             </Text>
             <Text style={styles.label}>Alerta BPM alto (por encima de)</Text>
@@ -650,7 +698,7 @@ export default function SettingsScreen() {
           </AccordionSection>
 
           {/* ═══════════════════════════════════════════════════════════════════
-              6. EXPORTAR DATOS
+              7. EXPORTAR DATOS
               ═══════════════════════════════════════════════════════════════════ */}
           <AccordionSection
             expanded={expandedExport}
@@ -661,7 +709,7 @@ export default function SettingsScreen() {
           >
             <Text style={styles.sectionDesc}>
               Exporta tu historial completo como archivo CSV compatible con Excel,
-              Google Sheets y otros programas de analisis.
+              Google Sheets y otros programas de análisis.
             </Text>
             {userIsPro ? (
               <TouchableOpacity
@@ -689,7 +737,7 @@ export default function SettingsScreen() {
                     </Text>
                     <Text style={styles.proGateDesc}>
                       Actualiza a Pro y obten exportacion ilimitada de tus
-                      mediciones, calibracion avanzada y mas.
+                      mediciones, calibración avanzada y mas.
                     </Text>
                   </View>
                 </View>
@@ -706,7 +754,7 @@ export default function SettingsScreen() {
           </AccordionSection>
 
           {/* ═══════════════════════════════════════════════════════════════════
-              7. GESTION DE DATOS
+              8. GESTION DE DATOS
               ═══════════════════════════════════════════════════════════════════ */}
           <AccordionSection
             expanded={expandedData}
@@ -762,7 +810,7 @@ export default function SettingsScreen() {
           </AccordionSection>
 
           {/* ═══════════════════════════════════════════════════════════════════
-              8. ZONA DE PELIGRO
+              9. ZONA DE PELIGRO
               ═══════════════════════════════════════════════════════════════════ */}
           <AccordionSection
             expanded={expandedDanger}
@@ -808,14 +856,14 @@ export default function SettingsScreen() {
                   Borrar todos los datos
                 </Text>
                 <Text style={styles.dangerActionSub}>
-                  Mediciones, calibracion, perfil y configuracion
+                  Mediciones, calibración, perfil y configuración
                 </Text>
               </View>
             </TouchableOpacity>
           </AccordionSection>
 
           {/* ═══════════════════════════════════════════════════════════════════
-              9. ACERCA DE
+              10. ACERCA DE
               ═══════════════════════════════════════════════════════════════════ */}
           <AccordionSection
             expanded={expandedAbout}
@@ -836,8 +884,6 @@ export default function SettingsScreen() {
               </View>
             </View>
           </AccordionSection>
-
-          <BottomWarningAdWrapper />
 
           {/* ─── Footer legal links (at end of scroll, not sticky) ─────────── */}
           <View style={styles.footer}>
@@ -860,6 +906,8 @@ export default function SettingsScreen() {
           <View style={{ height: 40 }} />
         </ScrollView>
       </KeyboardAvoidingView>
+
+      <BottomWarningAdWrapper />
     </SafeAreaView>
   );
 }

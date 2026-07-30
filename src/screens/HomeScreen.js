@@ -72,7 +72,7 @@ export default function HomeScreen({ navigation }) {
     if (rewarded) {
       Alert.alert(
         'Recompensa obtenida',
-        'Gracias por ver el anuncio. Tienes 1 medicion extra disponible.',
+        'Gracias por ver el anuncio. Tienes 1 medición extra disponible.',
         [
           {
             text: 'Medir ahora',
@@ -148,7 +148,7 @@ export default function HomeScreen({ navigation }) {
           <View style={styles.measureAccent} />
           <View style={styles.measureContent}>
             <Icon name="heart-pulse" size={40} color={colors.primary} />
-            <Text style={styles.measureTitle}>Iniciar Medicion</Text>
+            <Text style={styles.measureTitle}>Iniciar Medición</Text>
             <Text style={styles.measureSub}>~60 seg · Camara trasera</Text>
           </View>
           <View style={styles.measureChevron}>
@@ -185,7 +185,7 @@ export default function HomeScreen({ navigation }) {
             <View style={styles.lastHeader}>
               <View style={styles.lastLabelRow}>
                 <View style={styles.lastDot} />
-                <Text style={styles.lastLabel}>Ultima medicion</Text>
+                <Text style={styles.lastLabel}>Ultima medición</Text>
               </View>
               <Text style={styles.lastDate}>
                 {new Date(last.timestamp).toLocaleString('es-ES', {
@@ -270,7 +270,7 @@ export default function HomeScreen({ navigation }) {
             </View>
             <Text style={styles.emptyTitle}>Sin mediciones</Text>
             <Text style={styles.emptySub}>
-              Realiza tu primera medicion para comenzar a monitorear tu salud
+              Realiza tu primera medición para comenzar a monitorear tu salud
               cardiovascular.
             </Text>
             <TouchableOpacity
@@ -278,7 +278,7 @@ export default function HomeScreen({ navigation }) {
               onPress={handleStartMeasurement}
               activeOpacity={0.85}
             >
-              <Text style={styles.emptyCtaText}>Comenzar medicion</Text>
+              <Text style={styles.emptyCtaText}>Comenzar medición</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -312,8 +312,9 @@ export default function HomeScreen({ navigation }) {
           <Text style={styles.tutorialChevron}>{'›'}</Text>
         </TouchableOpacity>
 
-        <BottomWarningAdWrapper />
       </ScrollView>
+
+      <BottomWarningAdWrapper />
 
       {/* ───── Pro Features Modal ───── */}
       <ProFeaturesModal

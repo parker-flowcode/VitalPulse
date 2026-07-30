@@ -1,8 +1,8 @@
 /**
  * CalibrationScreen.js — VitalPulse v5.0
  *
- * Pantalla para que el usuario introduzca una medicion real de presion arterial
- * y la asocie a la ultima medicion de PPG, creando un punto de calibracion.
+ * Pantalla para que el usuario introduzca una medición real de presion arterial
+ * y la asocie a la ultima medición de PPG, creando un punto de calibración.
  * Soporta tema dinamico mediante ThemeContext.
  */
 import React, { useState, useMemo } from 'react';
@@ -17,7 +17,7 @@ export default function CalibrationScreen({ navigation, route }) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const { addCalibrationPoint, calibration } = useHealthStore();
-  // La pantalla puede recibir la medicion reciente para asociar datos de morfologia y BPM
+  // La pantalla puede recibir la medición reciente para asociar datos de morfologia y BPM
   const measurement = route?.params?.measurement || null;
   const [systolic, setSystolic] = useState('');
   const [diastolic, setDiastolic] = useState('');
@@ -29,7 +29,7 @@ export default function CalibrationScreen({ navigation, route }) {
       Alert.alert('Valores invalidos', 'Introduce valores de presion arterial reales y dentro de rangos razonables.');
       return;
     }
-    // Si disponemos de la medicion original, incluimos sus datos para la calibracion multipunto
+    // Si disponemos de la medición original, incluimos sus datos para la calibración multipunto
     const extra = measurement
       ? {
           morphology: measurement.bp?.morphology || measurement.morphology,
@@ -38,14 +38,14 @@ export default function CalibrationScreen({ navigation, route }) {
         }
       : {};
     await addCalibrationPoint({ realSystolic: sys, realDiastolic: dia, ...extra });
-    Alert.alert('Calibracion guardada', 'El punto de calibracion se ha anadido.');
+    Alert.alert('Calibración guardada', 'El punto de calibración se ha añadido.');
     navigation.goBack();
   };
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]}>
       <View style={styles.container}>
-        <Text style={[styles.title, { color: colors.textPrimary }]}>Calibracion manual</Text>
+        <Text style={[styles.title, { color: colors.textPrimary }]}>Calibración manual</Text>
         <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
           Introduce los valores de tu tensiometro real para mejorar la precision.
         </Text>
@@ -68,7 +68,7 @@ export default function CalibrationScreen({ navigation, route }) {
           placeholderTextColor={colors.textMuted}
         />
         <TouchableOpacity style={[styles.saveBtn, { backgroundColor: colors.primary }]} onPress={handleSave}>
-          <Text style={[styles.saveBtnText, { color: colors.textOnPrimary }]}>Guardar punto de calibracion</Text>
+          <Text style={[styles.saveBtnText, { color: colors.textOnPrimary }]}>Guardar punto de calibración</Text>
         </TouchableOpacity>
         {calibration?.points?.length > 0 && (
           <View style={[styles.infoCard, { backgroundColor: colors.primarySubtle, borderColor: colors.primaryMuted }]}>

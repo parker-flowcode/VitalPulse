@@ -24,7 +24,7 @@ const TUTORIAL_SLIDES = [
   {
     icon:  'heart',
     title: 'Bienvenido a VitalPulse',
-    body:  'Tu monitor cardiovascular personal. Mide tu frecuencia cardiaca y estima tu presion arterial usando unicamente la camara de tu movil.',
+    body:  'Tu monitor cardiovascular personal. Mide tu frecuencia cardíaca y estima tu presion arterial usando unicamente la camara de tu movil.',
   },
   {
     icon:  'camera',
@@ -34,7 +34,7 @@ const TUTORIAL_SLIDES = [
   {
     icon:  'target',
     title: 'Para mayor precision',
-    body:  'Manten el movil apoyado en una superficie durante la medicion. Cuantos mas datos personales nos des, mas precisa sera la estimacion de tu presion arterial.',
+    body:  'Manten el movil apoyado en una superficie durante la medición. Cuantos mas datos personales nos des, mas precisa sera la estimacion de tu presion arterial.',
   },
 ];
 

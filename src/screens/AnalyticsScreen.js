@@ -1,7 +1,7 @@
 /**
  * AnalyticsScreen.js — VitalPulse v9.5
  *
- * Pantalla de analisis premium con metricas coloreadas por tipo,
+ * Pantalla de análisis premium con metricas coloreadas por tipo,
  * graficas con etiquetas de unidad, modal popup para detalle de tarjetas
  * y distribucion de PA con colores clinicos.
  */
@@ -39,9 +39,9 @@ const CARD_COLORS = {
 
 // ─── Modal config per metric card ────────────────────────────────────────
 const MODAL_CONFIG = {
-  bpm:   { title: 'Frecuencia Cardiaca',      icon: 'heart',         color: CARD_COLORS.bpm },
+  bpm:   { title: 'Frecuencia Cardíaca',      icon: 'heart',         color: CARD_COLORS.bpm },
   bp:    { title: 'Presion Arterial',          icon: 'water',         color: CARD_COLORS.bp },
-  hrv:   { title: 'Variabilidad Cardiaca (HRV)', icon: 'heart-pulse', color: CARD_COLORS.hrv },
+  hrv:   { title: 'Variabilidad Cardíaca (HRV)', icon: 'heart-pulse', color: CARD_COLORS.hrv },
   total: { title: 'Total Mediciones',          icon: 'clipboard-text',color: CARD_COLORS.total },
 };
 
@@ -661,7 +661,7 @@ export default function AnalyticsScreen() {
       <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]}>
         <View style={styles.header}>
           <Text style={[styles.title, { color: colors.textPrimary }]}>
-            Analisis
+            Análisis
           </Text>
         </View>
         <View style={styles.empty}>
@@ -677,7 +677,7 @@ export default function AnalyticsScreen() {
             Sin datos disponibles
           </Text>
           <Text style={[styles.emptySub, { color: colors.textSecondary }]}>
-            Realiza al menos una medicion para ver tus graficas y estadisticas.
+            Realiza al menos una medición para ver tus graficas y estadisticas.
           </Text>
         </View>
       </SafeAreaView>
@@ -708,10 +708,10 @@ export default function AnalyticsScreen() {
         <View style={styles.header}>
           <View>
             <Text style={[styles.title, { color: colors.textPrimary }]}>
-              Analisis
+              Análisis
             </Text>
             <Text style={[styles.headerMeta, { color: colors.textMuted }]}>
-              {filteredHistory.length} de {history.length} {history.length === 1 ? 'medicion' : 'mediciones'}
+              {filteredHistory.length} de {history.length} {history.length === 1 ? 'medición' : 'mediciones'}
             </Text>
           </View>
         </View>
@@ -800,7 +800,7 @@ export default function AnalyticsScreen() {
         {/* ── BPM Trend Chart ──────────────────────────────────────── */}
         {showBpmChart && (
           <ChartCard
-            title="Frecuencia Cardiaca"
+            title="Frecuencia Cardíaca"
             subtitle={
               'Tendencia de las ultimas ' +
               bpmChartData.length +
@@ -991,7 +991,7 @@ export default function AnalyticsScreen() {
         {/* ── HRV Trend Chart ──────────────────────────────────────── */}
         {showHrvChart && hasHrvData && (
           <ChartCard
-            title="Variabilidad Cardiaca (SDNN)"
+            title="Variabilidad Cardíaca (SDNN)"
             subtitle={
               'Tendencia de las ultimas ' +
               hrvChartData.length +
@@ -1239,11 +1239,9 @@ export default function AnalyticsScreen() {
           </View>
         </ChartCard>
 
-        {/* ── Footer ───────────────────────────────────────────────── */}
-        <View style={styles.footerSection}>
-          <BottomWarningAdWrapper />
-        </View>
       </ScrollView>
+
+      <BottomWarningAdWrapper />
 
       {/* ── Metric Detail Modal ────────────────────────────────────────── */}
       {modalCard && MODAL_CONFIG[modalCard] && (
