@@ -114,12 +114,12 @@ export const SHADOWS = {
   card:    { shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 10, elevation: 2 },
   elevated:{ shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.10, shadowRadius: 12, elevation: 4 },
   none:    { shadowColor: 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 0, elevation: 0 },
+};
 
 // ─── Preset de carta unificada ─────────────────────────────────────────────
 export const CARD_PRESET = {
   borderRadius: 16,
   ...SHADOWS.card,
-};
 };
 
 // ─── Iconos ──────────────────────────────────────────────────────────────────
