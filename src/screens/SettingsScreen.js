@@ -884,26 +884,27 @@ export default function SettingsScreen() {
             </View>
           </AccordionSection>
 
-          {/* ─── Footer legal links (at end of scroll, not sticky) ─────────── */}
+          {/* Extra bottom padding so nothing is cut off */}
+          <View style={{ height: 20 }} />
+          <BottomWarningAdWrapper />
+
+          {/* ─── Footer legal links (below banners) ───────────────────────── */}
           <View style={styles.footer}>
             <TouchableOpacity
               onPress={() => navigation.navigate('PrivacyPolicy')}
               activeOpacity={0.7}
             >
-              <Text style={styles.footerLinkText}>Politica de Privacidad</Text>
+              <Text style={styles.footerLinkText}>Política de Privacidad</Text>
             </TouchableOpacity>
             <Text style={styles.footerDivider}>·</Text>
             <TouchableOpacity
               onPress={() => navigation.navigate('Terms')}
               activeOpacity={0.7}
             >
-              <Text style={styles.footerLinkText}>Terminos de Uso</Text>
+              <Text style={styles.footerLinkText}>Términos de Uso</Text>
             </TouchableOpacity>
           </View>
-
-          {/* Extra bottom padding so nothing is cut off */}
           <View style={{ height: 40 }} />
-          <BottomWarningAdWrapper />
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
